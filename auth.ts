@@ -3,9 +3,8 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import prisma from "./prisma";
-import { saltAndHashPassword } from "./utils/helper";
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+export const { signIn, signOut, auth } = NextAuth({
 	adapter: PrismaAdapter(prisma),
 	session: { strategy: "jwt" },
 	providers: [
@@ -15,7 +14,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 				email: {
 					label: "Email",
 					type: "email",
-					placeholder: "email@example.com",
 				},
 				password: {
 					label: "Password",
@@ -32,21 +30,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 				}
 
 				const email = credentials.email as string;
-				const hash = saltAndHashPassword(credentials.password);
 
-				let user = await prisma.user.findUnique({
+				const user = await prisma.user.findUnique({
 					where: {
 						email,
 					},
 				});
 
 				if (!user) {
-					user = await prisma.user.create({
-						data: {
-							email,
-							password: hash,
-						},
-					});
+					return null;
 				} else {
 					const isMatch = bcrypt.compareSync(
 						credentials.password as string,

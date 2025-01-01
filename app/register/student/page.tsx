@@ -1,115 +1,97 @@
 "use client";
 
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function Register() {
+	const router = useRouter();
 	const [formData, setFormData] = useState({
 		email: "",
 		password: "",
+		phoneNumber: "",
 		firstName: "",
 		lastName: "",
-		phoneNumber: "",
-		role: "student",
-		bio: "",
 	});
+	const [error, setError] = useState<string | null>(null);
+	const [success, setSuccess] = useState<string | null>(null);
+
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const { name, value } = e.target;
+		setFormData((prev) => ({ ...prev, [name]: value }));
+	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		const res = await fetch("/api/auth/register-student", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify(formData),
-		});
-		const data = await res.json();
-		if (res.ok) {
-			redirect("/login");
-		} else {
-			alert(data.message);
+		setError(null);
+		setSuccess(null);
+
+		try {
+			const response = await fetch("/api/auth/register/student", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(formData),
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				setError(errorData.error || "Registration failed.");
+				return;
+			}
+
+			router.push("/login");
+		} catch (err) {
+			console.log(err);
+			setError("An unexpected error occurred.");
 		}
 	};
 
 	return (
-		<form onSubmit={handleSubmit}>
-			<label className="m-2 input input-bordered flex items-center gap-2">
-				<input
-					type="email"
-					name="email"
-					value={formData.email}
-					onChange={(e) =>
-						setFormData({ ...formData, email: e.target.value })
-					}
-					placeholder="Email"
-					required
-					className="grow"
-				/>
-			</label>
-			<label className="m-2 input input-bordered flex items-center gap-2">
-				<input
-					type="password"
-					name="password"
-					value={formData.password}
-					onChange={(e) =>
-						setFormData({ ...formData, password: e.target.value })
-					}
-					placeholder="Password"
-					required
-					className="grow"
-				/>
-			</label>
-			<label className="m-2 input input-bordered flex items-center gap-2">
+		<div>
+			<h1>Register</h1>
+			{error && <p style={{ color: "red" }}>{error}</p>}
+			{success && <p style={{ color: "green" }}>{success}</p>}
+			<form onSubmit={handleSubmit}>
 				<input
 					type="text"
 					name="firstName"
-					value={formData.firstName}
-					onChange={(e) =>
-						setFormData({ ...formData, firstName: e.target.value })
-					}
 					placeholder="First Name"
+					value={formData.firstName}
+					onChange={handleChange}
 					required
-					className="grow"
 				/>
-			</label>
-			<label className="m-2 input input-bordered flex items-center gap-2">
 				<input
 					type="text"
 					name="lastName"
-					value={formData.lastName}
-					onChange={(e) =>
-						setFormData({ ...formData, lastName: e.target.value })
-					}
 					placeholder="Last Name"
+					value={formData.lastName}
+					onChange={handleChange}
 					required
-					className="grow"
 				/>
-			</label>
-			<label className="m-2 input input-bordered flex items-center gap-2">
+				<input
+					type="email"
+					name="email"
+					placeholder="Email"
+					value={formData.email}
+					onChange={handleChange}
+					required
+				/>
+				<input
+					type="password"
+					name="password"
+					placeholder="Password"
+					value={formData.password}
+					onChange={handleChange}
+					required
+				/>
 				<input
 					type="text"
 					name="phoneNumber"
-					value={formData.phoneNumber}
-					onChange={(e) =>
-						setFormData({
-							...formData,
-							phoneNumber: e.target.value,
-						})
-					}
 					placeholder="Phone Number"
+					value={formData.phoneNumber}
+					onChange={handleChange}
 				/>
-			</label>
-			<textarea
-				name="bio"
-				value={formData.bio}
-				onChange={(e) =>
-					setFormData({ ...formData, bio: e.target.value })
-				}
-				placeholder="Bio"
-				className="m-2 textarea textarea-bordered textarea-sm w-full max-w-xs"
-			/>
-			<span className="badge badge-info">Optional</span>
-			<button type="submit">Register</button>
-		</form>
+				<button type="submit">Register</button>
+			</form>
+		</div>
 	);
 }

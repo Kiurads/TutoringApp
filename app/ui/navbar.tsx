@@ -1,6 +1,7 @@
 import Link from "next/link";
 import ThemeChanger from "./theme-changer";
 import Logo from "./logo";
+import { signOut } from "@/auth";
 
 export default function Navbar() {
 	return (
@@ -20,6 +21,17 @@ export default function Navbar() {
 						<i className="fa-solid fa-user text-l"></i>
 						Login
 					</Link>
+					<form
+						action={async () => {
+							"use server";
+							await signOut();
+						}}
+					>
+						<button type="submit" className="btn btn-outline">
+							<i className="fa-solid fa-user text-l"></i>
+							Logout
+						</button>
+					</form>
 					<ThemeChanger />
 				</div>
 			</div>

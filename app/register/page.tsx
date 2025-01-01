@@ -1,13 +1,6 @@
-import { signIn } from "@/auth";
-
-export default async function SignIn() {
+export default function SignIn() {
 	return (
-		<form
-			action={async (formData) => {
-				"use server";
-				await signIn("credentials", formData);
-			}}
-		>
+		<form>
 			<label>
 				Email
 				<input name="email" type="email" />
