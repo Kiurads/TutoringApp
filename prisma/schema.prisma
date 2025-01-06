@@ -7,6 +7,23 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum RegularClassStatus {
+  active
+  inactive
+}
+
+enum Status {
+  requested
+  scheduled
+  completed
+  cancelled
+}
+
+enum RequestedBy {
+  student
+  teacher
+}
+
 enum Role {
   admin
   student
@@ -25,11 +42,97 @@ model User {
   accounts      Account[]
   sessions      Session[]
   role          Role            @default(student)
+  bio           String?
   // Optional for WebAuthn support
   Authenticator Authenticator[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  teacher       Teacher[]
+  class         Class[]
+  regularClass  RegularClass[]
+  teacherRating TeacherRating[]
+}
+
+model Teacher {
+  id           String  @id @default(cuid())
+  userId       String
+  pricePerHour Decimal
+
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teacherSubject TeacherSubject[]
+  class          Class[]
+  regularClass   RegularClass[]
+  teacherRating  TeacherRating[]
+}
+
+model Subject {
+  id             String           @id @default(cuid())
+  name           String           @unique
+  teacherSubject TeacherSubject[]
+  class          Class[]
+  regularClass   RegularClass[]
+}
+
+model TeacherSubject {
+  id        String @id @default(cuid())
+  teacherId String
+  subjectId String
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+}
+
+model Class {
+  id              String      @id @default(cuid())
+  studentId       String
+  teacherId       String
+  subjectId       String
+  startTime       DateTime
+  durationInHours Decimal
+  totalPrice      Decimal
+  status          Status      @default(requested)
+  requestedBy     RequestedBy
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  student       User            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher       Teacher         @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  subject       Subject         @relation(fields: [subjectId], references: [id])
+  teacherRating TeacherRating[]
+}
+
+model RegularClass {
+  id              String             @id @default(cuid())
+  studentId       String
+  teacherId       String
+  subjectId       String
+  dayOfWeek       Int
+  startTime       DateTime
+  durationInHours Decimal
+  totalPrice      Decimal
+  status          RegularClassStatus @default(active)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  student User    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id])
+}
+
+model TeacherRating {
+  id        String   @id @default(cuid())
+  studentId String
+  teacherId String
+  classId   String
+  rating    Int
+  review    String?
+  createdAt DateTime @default(now())
+
+  student User    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  class   Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
 }
 
 model Account {
