@@ -25,13 +25,19 @@ export default function Opinions() {
 	];
 
 	return (
-		<div className="flex space-x-4 overflow-x-auto bg-base-100 p-20">
-			{opinions.map((opinion) => (
-				<OpinionCard
-					key={opinions.indexOf(opinion)}
-					opinion={opinion}
-				/>
-			))}
-		</div>
+		<section className="bg-base-200">
+			<div className="mx-auto max-w-screen-xl px-2 py-6 sm:px-6 lg:px-4 lg:py-8">
+				<h2 className="text-center text-4xl font-bold tracking-tight text-base-content sm:text-5xl">
+					Read <span className="text-accent">trusted reviews</span>{" "}
+					from our customers
+				</h2>
+
+				<div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-5 md:gap-8">
+					{opinions.map((opinion, index) => (
+						<OpinionCard key={index} opinion={opinion} />
+					))}
+				</div>
+			</div>
+		</section>
 	);
 }

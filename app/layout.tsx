@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Script from "next/script";
+
+import { poppins } from "@/app/ui/fonts";
 import Navbar from "./ui/navbar";
-import Footer from "./ui/footer";
 
 export const metadata: Metadata = {
 	title: "Create Next App",
@@ -17,10 +18,11 @@ export default function RootLayout({
 	return (
 		<html data-theme="light" lang="en">
 			<Script src="https://kit.fontawesome.com/c0fa11f9f4.js"></Script>
-			<body className="bg-base-100 text-base-content">
+			<body
+				className={`${poppins.className} bg-base-100 text-base-content w-full`}
+			>
 				<Navbar />
 				{children}
-				<Footer />
 			</body>
 		</html>
 	);

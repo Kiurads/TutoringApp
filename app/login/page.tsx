@@ -1,13 +1,18 @@
-import { signIn } from "@/auth";
+"use client";
 
-export default async function SignIn() {
+import { useActionState } from "react";
+
+import { authenticate } from "@/app/lib/auth/authenticate";
+
+export default function SignIn() {
+	const [errorMessage, formAction, isPending] = useActionState(
+		authenticate,
+		undefined
+	);
+
 	return (
-		<form
-			action={async (formData) => {
-				"use server";
-				await signIn("credentials", formData);
-			}}
-		>
+		<form action={formAction}>
+			{errorMessage && <div>{errorMessage}</div>}
 			<label>
 				Email
 				<input name="email" type="email" />
@@ -16,7 +21,7 @@ export default async function SignIn() {
 				Password
 				<input name="password" type="password" />
 			</label>
-			<button>Sign In</button>
+			<button aria-disabled={isPending}>Sign In</button>
 		</form>
 	);
 }

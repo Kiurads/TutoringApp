@@ -1,6 +1,6 @@
 export default function ThemeChanger() {
 	return (
-		<label className="swap swap-rotate text-base-content">
+		<label className="swap swap-rotate text-base-content px-2">
 			{/* this hidden checkbox controls the state */}
 			<input type="checkbox" className="theme-controller" value="dark" />
 
