@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/prisma";
 import buildResponse from "@/app/utils/build-response";

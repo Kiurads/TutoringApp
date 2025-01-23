@@ -6,9 +6,7 @@ export default async function NavbarButtons() {
 	const session = await auth();
 
 	if (session) {
-		const avatar =
-			"https://api.dicebear.com/9.x/avataaars-neutral/svg?&seed=" +
-			session.user?.email;
+		const avatar = `https://api.dicebear.com/9.x/avataaars-neutral/svg?&seed=${session.user?.email}`;
 
 		return (
 			<div className="dropdown dropdown-end">
@@ -19,7 +17,7 @@ export default async function NavbarButtons() {
 				>
 					<div className="w-10 rounded-full">
 						<Image
-							alt="Tailwind CSS Navbar component"
+							alt="User Avatar"
 							width={1000}
 							height={1000}
 							src={avatar}
@@ -40,32 +38,29 @@ export default async function NavbarButtons() {
 						<a>Settings</a>
 					</li>
 					<li>
-						<form
-							action={async () => {
-								"use server";
-								await signOut();
-							}}
-						>
-							<button type="submit">Logout</button>
-						</form>
+						<Link href="/signout" className="justify-between">
+							Logout
+						</Link>
 					</li>
 				</ul>
 			</div>
 		);
 	} else {
-		return [
-			<div key="register" className="mx-2">
-				<Link href="/register/student" className="btn btn-primary">
-					<i className="fa-solid fa-user-plus text-l"></i>
-					Register
-				</Link>
-			</div>,
-			<div key="login" className="mx-2">
-				<Link href="/login" className="btn btn-outline">
-					<i className="fa-solid fa-user text-l"></i>
-					Login
-				</Link>
-			</div>,
-		];
+		return (
+			<div className="flex items-center">
+				<div className="mx-2">
+					<Link href="/register/student" className="btn btn-primary">
+						<i className="fa-solid fa-user-plus text-l"></i>
+						Register
+					</Link>
+				</div>
+				<div className="mx-2">
+					<Link href="/login" className="btn btn-outline">
+						<i className="fa-solid fa-user text-l"></i>
+						Login
+					</Link>
+				</div>
+			</div>
+		);
 	}
 }
