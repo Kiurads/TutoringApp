@@ -1,27 +1,15 @@
 "use client";
 
-import { useActionState } from "react";
-
-import { authenticate } from "@/app/lib/auth/authenticate";
+import LoginForm from "@/app/ui/login/login-form";
 
 export default function SignIn() {
-	const [errorMessage, formAction, isPending] = useActionState(
-		authenticate,
-		undefined
-	);
-
 	return (
-		<form action={formAction}>
-			{errorMessage && <div>{errorMessage}</div>}
-			<label>
-				Email
-				<input name="email" type="email" />
-			</label>
-			<label>
-				Password
-				<input name="password" type="password" />
-			</label>
-			<button aria-disabled={isPending}>Sign In</button>
-		</form>
+		<div className="hero bg-base-200 min-h-screen">
+			<div className="hero-content flex-col lg:flex-row">
+				<div className="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
+					<LoginForm />
+				</div>
+			</div>
+		</div>
 	);
 }

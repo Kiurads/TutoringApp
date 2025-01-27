@@ -6,13 +6,20 @@ import NavbarButtons from "./navbar-buttons";
 export default async function Navbar() {
 	return (
 		<div className="navbar bg-base-300">
+			{/* Left Section */}
 			<div className="flex-1">
 				<Link href="/" className="btn btn-ghost text-xl">
 					<Logo />
 				</Link>
 			</div>
-			<NavbarButtons />
-			<ThemeChanger />
+
+			{/* Right Section */}
+			<div className="flex items-center gap-4">
+				{/* NavbarButtons: Hidden on small screens */}
+				<NavbarButtons />
+				{/* ThemeChanger: Always visible */}
+				<ThemeChanger />
+			</div>
 		</div>
 	);
 }

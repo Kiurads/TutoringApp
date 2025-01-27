@@ -13,6 +13,9 @@ export async function fetchUserByEmail(email: string) {
 	try {
 		const user = await prisma.user.findUnique({
 			where: { email: email },
+			include: {
+				class: true,
+			},
 		});
 
 		return user;

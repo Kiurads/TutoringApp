@@ -1,4 +1,4 @@
-import { auth, signOut } from "@/auth";
+import { auth } from "@/auth";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -6,7 +6,7 @@ export default async function NavbarButtons() {
 	const session = await auth();
 
 	if (session) {
-		const avatar = `https://api.dicebear.com/9.x/avataaars-neutral/svg?&seed=${session.user?.email}`;
+		const avatar = `https://api.dicebear.com/9.x/big-ears-neutral/svg?&seed=${session.user?.email}`;
 
 		return (
 			<div className="dropdown dropdown-end">
@@ -47,7 +47,7 @@ export default async function NavbarButtons() {
 		);
 	} else {
 		return (
-			<div className="flex items-center">
+			<div className="items-center hidden md:flex">
 				<div className="mx-2">
 					<Link href="/register/student" className="btn btn-primary">
 						<i className="fa-solid fa-user-plus text-l"></i>

@@ -31,13 +31,19 @@ export default function OpinionCard(props: {
 	}
 
 	return (
-		<blockquote className="rounded-lg bg-base-300 p-6 shadow-sm hover:bg-base-100 sm:p-8">
-			<div className="flex items-center gap-4">
-				<div className="rating rating-lg rating-half">{rating}</div>
+		<div className="flex justify-center items-center">
+			<div className="card items-center justify-center bg-base-300 w-full h-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl shadow-xl hover:shadow-2xl hover:bg-base-200 transition-all">
+				<div className="card-body sm:p-2 md:p-4">
+					<p className="font-bold text-center md:text-sm">
+						{props.opinion.text}
+					</p>
+					<div className="card-actions justify-center mt-4">
+						<div className="rating rating-lg rating-half">
+							{rating}
+						</div>
+					</div>
+				</div>
 			</div>
-			<p className="mt-4 text-center text-base-content">
-				{props.opinion.text}
-			</p>
-		</blockquote>
+		</div>
 	);
 }

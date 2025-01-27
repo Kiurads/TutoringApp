@@ -1,5 +1,5 @@
 import { fetchTeachersBySubjects } from "../utils/teachers.api";
-import { fetchUsers } from "../utils/users.api";
+import { fetchUsers } from "../utils/users.actions";
 
 export default async function UsersPage() {
 	await fetchTeachersBySubjects(["biology"]);
