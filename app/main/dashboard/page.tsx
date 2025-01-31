@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 
 import DashboardHeader from "@/app/ui/main/dashboard/header";
-import UpcomingClasses from "@/app/ui/main/dashboard/upcoming-classes";
+import UpcomingClasses from "@/app/ui/main/dashboard/upcoming-classes/upcoming-classes";
 
 export default async function DashboardStudent() {
 	const session = await auth();

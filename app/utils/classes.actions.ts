@@ -22,10 +22,10 @@ export async function fetchClassesByUser(user: User) {
 }
 
 export async function fetchUpcomingClassesByUser(userEmail: string) {
-	return await prisma.class.findMany({
+	const classes = await prisma.class.findMany({
 		where: {
 			startTime: {
-				lt: new Date(),
+				gt: new Date(),
 			},
 			OR: [
 				{
@@ -42,7 +42,17 @@ export async function fetchUpcomingClassesByUser(userEmail: string) {
 				},
 			],
 		},
+		include: {
+			teacher: {
+				include: {
+					user: true,
+				},
+			},
+			subject: true,
+		},
 	});
+
+	return classes;
 }
 
 export async function fetchBookedClassesByUser(userEmail: string) {
@@ -62,6 +72,14 @@ export async function fetchBookedClassesByUser(userEmail: string) {
 					},
 				},
 			],
+		},
+		include: {
+			teacher: {
+				include: {
+					user: true,
+				},
+			},
+			subject: true,
 		},
 	});
 }

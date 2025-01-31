@@ -1,20 +1,18 @@
-import { fetchBookedClassesByUser } from "@/app/utils/classes.actions";
+import { fetchUpcomingClassesByUser } from "@/app/utils/classes.actions";
 import decimalToHours from "@/utils/decimal-to-time";
-import AddClassButton from "./add-class-button";
 
-export default async function BookedClasses(props: { userEmail: string }) {
-	const bookedClasses = await fetchBookedClassesByUser(props.userEmail);
+export default async function UpcomingClasses(props: { userEmail: string }) {
+	const upcomingClasses = await fetchUpcomingClassesByUser(props.userEmail);
 
-	if (!bookedClasses || bookedClasses.length === 0) {
+	if (!upcomingClasses || upcomingClasses.length === 0) {
 		return (
 			<div className="overflow-x-auto rounded-lg border border-base-content">
 				<h2 className="text-center text-lg font-bold py-4">
 					<i className="fa-solid fa-chalkboard-user text-l"></i>{" "}
-					Booked classes
+					Upcoming classes
 				</h2>
-				<AddClassButton />
 				<h2 className="text-center text-lg py-4">
-					You have no booked classes{" "}
+					You have no upcoming classes{" "}
 					<i className="fa-solid fa-face-laugh-wink"></i>
 				</h2>
 			</div>
@@ -23,12 +21,11 @@ export default async function BookedClasses(props: { userEmail: string }) {
 		return (
 			<div className="overflow-x-auto rounded-lg border border-base-content">
 				<h2 className="text-center text-lg font-bold py-4">
-					Booked classes{" "}
+					Upcoming classes{" "}
 					<div className="badge badge-outline">
-						{bookedClasses.length}
+						{upcomingClasses.length}
 					</div>
 				</h2>
-				<AddClassButton />
 				<table className="min-w-full divide-y-2 divide-base-300 bg-base text-sm table-auto">
 					<thead className="ltr:text-left rtl:text-right">
 						<tr>
@@ -54,7 +51,7 @@ export default async function BookedClasses(props: { userEmail: string }) {
 					</thead>
 
 					<tbody className="divide-y divide-base-300">
-						{bookedClasses.map((classData) => (
+						{upcomingClasses.map((classData) => (
 							<tr
 								key={classData.id}
 								className="hover:bg-base-200 transition-all"
