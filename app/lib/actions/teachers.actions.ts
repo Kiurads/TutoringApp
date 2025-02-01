@@ -1,15 +1,27 @@
+"use server";
+
 import prisma from "@/prisma";
 
-export async function fetchTeachersBySubjects(subjects?: string[]) {
+export async function fetchTeachersBySubjectsId(subjects?: string[]) {
 	const teachers = await prisma.teacher.findMany({
 		where: {
 			teacherSubject: {
 				some: {
 					subject: {
-						name: {
+						id: {
 							in: subjects,
 						},
 					},
+				},
+			},
+		},
+		select: {
+			id: true,
+			user: {
+				select: {
+					id: true,
+					firstName: true,
+					lastName: true,
 				},
 			},
 		},

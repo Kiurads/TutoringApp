@@ -1,5 +1,5 @@
-import { fetchClassesByUser } from "@/app/utils/classes.actions";
-import { fetchUserByEmail } from "@/app/utils/users.actions";
+import { fetchClassesByUser } from "@/app/lib/actions/classes.actions";
+import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
 import Image from "next/image";
 
 export default async function DashboardHeader(props: { userEmail: string }) {

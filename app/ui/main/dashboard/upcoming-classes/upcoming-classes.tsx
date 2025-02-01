@@ -1,4 +1,4 @@
-import { fetchUpcomingClassesByUser } from "@/app/utils/classes.actions";
+import { fetchUpcomingClassesByUser } from "@/app/lib/actions/classes.actions";
 import decimalToHours from "@/utils/decimal-to-time";
 
 export default async function UpcomingClasses(props: { userEmail: string }) {

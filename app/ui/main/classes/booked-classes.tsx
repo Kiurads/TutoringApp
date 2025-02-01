@@ -1,6 +1,7 @@
-import { fetchBookedClassesByUser } from "@/app/utils/classes.actions";
+import { fetchBookedClassesByUser } from "@/app/lib/actions/classes.actions";
 import decimalToHours from "@/utils/decimal-to-time";
 import AddClassButton from "./add-class-button";
+import Link from "next/link";
 
 export default async function BookedClasses(props: { userEmail: string }) {
 	const bookedClasses = await fetchBookedClassesByUser(props.userEmail);
@@ -80,6 +81,14 @@ export default async function BookedClasses(props: { userEmail: string }) {
 									<div className="badge badge-outline">
 										{classData.status}
 									</div>
+								</td>
+								<td className="whitespace-nowrap px-4 py-2 text-base-content">
+									<Link
+										href={`/main/classes/${classData.id}/cancel`}
+										className="btn btn-error btn-sm"
+									>
+										Cancel
+									</Link>
 								</td>
 							</tr>
 						))}
