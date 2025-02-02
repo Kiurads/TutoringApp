@@ -4,7 +4,7 @@ export default function AddClassButton() {
 	return (
 		<Link
 			href="/main/classes/request"
-			className="btn btn-primary absolute top-10 right-10"
+			className="btn btn-primary absolute top-6 right-6"
 		>
 			<span className="hidden text-primary-content md:block">
 				New Class{" "}

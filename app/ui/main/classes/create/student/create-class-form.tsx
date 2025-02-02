@@ -16,6 +16,7 @@ import SubjectSelect from "./subject-select";
 import StartTimeInput from "./start-time-input";
 import DurationSelect from "./duration-select";
 import TeacherSelect from "./teacher-select";
+import GoBackButton from "@/app/ui/go-back-button";
 
 export default function RequestClassForm() {
 	const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -75,16 +76,17 @@ export default function RequestClassForm() {
 				selectedSubject={selectedSubject}
 			/>
 
-			<div className="col-span-6 sm:flex sm:items-center sm:gap-4">
-				<button className="btn btn-primary" aria-disabled={isPending}>
+			<div className="col-span-6 mt-4 sm:flex sm:items-center sm:gap-4">
+				<button
+					className="btn btn-primary flex-grow"
+					aria-disabled={isPending}
+				>
 					Create Class
 				</button>
 
-				<p className="mt-4 text-sm text-gray-500 sm:mt-0">
-					<Link href="/classes" className="text-gray-700 underline">
-						Back to Classes
-					</Link>
-				</p>
+				<div>
+					<GoBackButton url="/main/classes" />
+				</div>
 			</div>
 		</form>
 	);
