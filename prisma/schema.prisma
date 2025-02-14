@@ -16,12 +16,7 @@ enum Status {
   requested
   scheduled
   completed
-  cancelled
-}
-
-enum RequestedBy {
-  student
-  teacher
+  refused
 }
 
 enum Role {
@@ -50,7 +45,8 @@ model User {
   updatedAt DateTime @updatedAt
 
   teacher       Teacher[]
-  class         Class[]
+  class         Class[]         @relation("Student")
+  request       Class[]         @relation("Requester")
   regularClass  RegularClass[]
   teacherRating TeacherRating[]
 }
@@ -85,20 +81,21 @@ model TeacherSubject {
 }
 
 model Class {
-  id              String      @id @default(cuid())
+  id              String   @id @default(cuid())
   studentId       String
   teacherId       String
   subjectId       String
   startTime       DateTime
   durationInHours Decimal
   totalPrice      Decimal
-  status          Status      @default(requested)
-  requestedBy     RequestedBy
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  status          Status   @default(requested)
+  requesterId     String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  student       User            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student       User            @relation("Student", fields: [studentId], references: [id], onDelete: Cascade)
   teacher       Teacher         @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  requester     User            @relation("Requester", fields: [requesterId], references: [id], onDelete: Cascade)
   subject       Subject         @relation(fields: [subjectId], references: [id])
   teacherRating TeacherRating[]
 }

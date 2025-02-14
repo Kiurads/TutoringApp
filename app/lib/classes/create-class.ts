@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import prisma from "@/prisma";
-import { Resend } from "resend";
 
 export async function createClass(
 	prevState: string | undefined,
@@ -78,23 +77,9 @@ export async function createClass(
 			durationInHours,
 			totalPrice,
 			status: "requested",
-			requestedBy: "student",
+			requesterId: student.id,
 		},
 	});
-
-	const resendKey = process.env.RESEND_KEY;
-
-	if (resendKey) {
-		console.log("Sending...");
-		const resend = new Resend(resendKey);
-
-		await resend.emails.send({
-			from: "EstudYou <info@estudyou.dev>",
-			to: [session.user.email, teacher.email],
-			subject: "Class requested",
-			html: "<p>it works!</p>",
-		});
-	}
 
 	// Redirect to the classes page after successful creation
 	redirect("/main/classes");
