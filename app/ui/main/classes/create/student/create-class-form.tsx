@@ -21,7 +21,7 @@ import GoBackButton from "@/app/ui/go-back-button";
 export default function RequestClassForm() {
 	const [subjects, setSubjects] = useState<Subject[]>([]);
 	const [teachers, setTeachers] = useState<
-		{ id: string; user: { firstName: string; lastName: string } }[]
+		{ id: string; firstName: string; lastName: string }[]
 	>([]);
 	const [selectedSubject, setSelectedSubject] = useState("");
 	const [errorMessage, formAction, isPending] = useActionState(

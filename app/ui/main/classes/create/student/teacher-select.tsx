@@ -1,7 +1,7 @@
 import { FC } from "react";
 
 interface TeacherSelectProps {
-	teachers: { id: string; user: { firstName: string; lastName: string } }[];
+	teachers: { id: string; firstName: string; lastName: string }[];
 	selectedSubject: string;
 }
 
@@ -23,7 +23,7 @@ const TeacherSelect: FC<TeacherSelectProps> = ({
 			<option value="">Select a teacher</option>
 			{teachers.map((teacher) => (
 				<option key={teacher.id} value={teacher.id}>
-					{teacher.user.firstName} {teacher.user.lastName}
+					{teacher.firstName} {teacher.lastName}
 				</option>
 			))}
 		</select>

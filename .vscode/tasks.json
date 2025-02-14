@@ -1,0 +1,42 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Prisma Update",
+			"type": "shell",
+			"command": "pnpm add prisma@latest && pnpm add @prisma/client@latest",
+			"group": "none",
+			"presentation": {
+				"reveal": "always"
+			}
+		},
+		{
+			"label": "Prisma Generate",
+			"type": "shell",
+			"command": "npx prisma generate",
+			"group": "none",
+			"presentation": {
+				"reveal": "always"
+			}
+		},
+		{
+			"label": "Prisma Migrate",
+			"type": "shell",
+			"command": "npx prisma migrate dev",
+			"group": "none",
+			"presentation": {
+				"reveal": "always"
+			}
+		},
+		{
+			"label": "Run",
+			"type": "shell",
+			"command": "pnpm run dev",
+			"group": "none",
+			"isBackground": false,
+			"presentation": {
+				"reveal": "always"
+			}
+		}
+	]
+}

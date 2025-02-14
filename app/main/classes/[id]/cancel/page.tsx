@@ -1,17 +1,46 @@
-import {
-	cancelClassById,
-	fetchClassById,
-} from "@/app/lib/actions/classes.actions";
+"use client";
+
+import { fetchClassById } from "@/app/lib/actions/classes.actions";
 import GoBackButton from "@/app/ui/go-back-button";
 import CancelButton from "@/app/ui/main/classes/cancel/cancel-button";
-import { redirect } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
-export default async function CancelBookingPage(props: {
-	params: Promise<{ id: string }>;
-}) {
-	const params = await props.params;
-	const classId = params.id;
-	const classData = await fetchClassById(classId);
+export default function CancelBookingPage() {
+	const { id } = useParams();
+
+	const [classData, setClassData] = useState<{
+		subject: {
+			name: string;
+		};
+		teacher: {
+			user: {
+				firstName: string;
+				lastName: string;
+			};
+		};
+		student: {
+			firstName: string;
+			lastName: string;
+		};
+		requester: {
+			id: string;
+		};
+	} | null>(null);
+
+	useEffect(() => {
+		async function fetchClassDetails() {
+			if (typeof id === "string") {
+				setClassData(await fetchClassById(id));
+			}
+		}
+
+		if (id) fetchClassDetails();
+	}, [id]);
+
+	if (!id || typeof id !== "string") {
+		return <h1>Invalid class ID</h1>;
+	}
 
 	return (
 		<div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg mt-10">
@@ -30,7 +59,7 @@ export default async function CancelBookingPage(props: {
 				</p>
 			)}
 			<div className="col-span-6 mt-4 sm:flex sm:items-center sm:gap-4">
-				<CancelButton id={classId} />
+				<CancelButton id={id} />
 				<GoBackButton url="/main/classes" />
 			</div>
 		</div>
