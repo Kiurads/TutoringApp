@@ -15,12 +15,8 @@ export async function fetchClassById(id: string) {
 		select: {
 			teacher: {
 				select: {
-					user: {
-						select: {
-							firstName: true,
-							lastName: true,
-						},
-					},
+					firstName: true,
+					lastName: true,
 				},
 			},
 			student: {
@@ -44,23 +40,19 @@ export async function fetchClassById(id: string) {
 }
 
 export async function fetchClassesByUser(user: User) {
-	if (user.role === "student") {
-		return await prisma.class.findMany({
-			where: {
-				student: {
-					id: user.id,
-				},
-			},
-		});
-	} else {
-		return await prisma.class.findMany({
-			where: {
-				teacher: {
-					id: user.id,
-				},
-			},
-		});
-	}
+	const classes = await prisma.class.findMany({
+		where: {
+			OR: [
+				{ studentId: user.id }, // Classes where the user is the student
+				{ teacherId: user.id }, // Classes where the user is the requester
+			],
+		},
+		orderBy: {
+			startTime: "desc", // Sort by startTime in descending order (most recent first)
+		},
+	});
+
+	return classes;
 }
 
 export async function fetchUpcomingClassesByUser(userEmail: string) {
@@ -77,20 +69,17 @@ export async function fetchUpcomingClassesByUser(userEmail: string) {
 				},
 				{
 					teacher: {
-						user: {
-							email: userEmail,
-						},
+						email: userEmail,
 					},
 				},
 			],
 		},
 		include: {
-			teacher: {
-				include: {
-					user: true,
-				},
-			},
+			teacher: true,
 			subject: true,
+		},
+		orderBy: {
+			startTime: "desc",
 		},
 	});
 
@@ -108,20 +97,34 @@ export async function fetchBookedClassesByUser(userEmail: string) {
 				},
 				{
 					teacher: {
-						user: {
-							email: userEmail,
-						},
+						email: userEmail,
 					},
 				},
 			],
 		},
-		include: {
-			teacher: {
-				include: {
-					user: true,
+		select: {
+			id: true,
+			durationInHours: true,
+			startTime: true,
+			totalPrice: true,
+			status: true,
+			student: {
+				select: {
+					firstName: true,
+					lastName: true,
 				},
 			},
-			subject: true,
+			teacher: {
+				select: {
+					firstName: true,
+					lastName: true,
+				},
+			},
+			subject: {
+				select: {
+					name: true,
+				},
+			},
 		},
 	});
 }

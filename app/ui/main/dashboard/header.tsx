@@ -1,10 +1,9 @@
 import { fetchClassesByUser } from "@/app/lib/actions/classes.actions";
 import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
+import getAvatar from "@/utils/get-avatar";
 import Image from "next/image";
 
 export default async function DashboardHeader(props: { userEmail: string }) {
-	const avatar = `https://api.dicebear.com/9.x/big-ears-neutral/svg?&seed=${props.userEmail}`;
-
 	const user = await fetchUserByEmail(props.userEmail);
 
 	if (!user) {
@@ -29,7 +28,7 @@ export default async function DashboardHeader(props: { userEmail: string }) {
 							alt=""
 							width={1000}
 							height={1000}
-							src={avatar}
+							src={getAvatar(user.email)}
 							className="size-16 rounded-lg object-cover shadow-sm"
 						/>
 					</div>

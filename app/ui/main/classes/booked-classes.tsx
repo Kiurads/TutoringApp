@@ -1,7 +1,6 @@
 import { fetchBookedClassesByUser } from "@/app/lib/actions/classes.actions";
 import decimalToHours from "@/utils/decimal-to-time";
 import AddClassButton from "./add-class-button";
-import Link from "next/link";
 import ClassesTableButtons from "./table-buttons";
 
 export default async function BookedClasses(props: { userEmail: string }) {
@@ -65,9 +64,9 @@ export default async function BookedClasses(props: { userEmail: string }) {
 									{classData.subject.name}
 								</td>
 								<td className="whitespace-nowrap px-4 py-2 text-base-content capitalize">
-									{classData.teacher.user.firstName +
+									{classData.teacher.firstName +
 										" " +
-										classData.teacher.user.lastName}
+										classData.teacher.lastName}
 								</td>
 								<td className="whitespace-nowrap px-4 py-2 text-base-content">
 									{classData.startTime.toUTCString()}

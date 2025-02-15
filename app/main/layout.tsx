@@ -37,6 +37,9 @@ export default function RootLayout({
 					<li>
 						<Link href="/main/classes">Classes</Link>
 					</li>
+					<li>
+						<Link href="/main/teachers">Teachers</Link>
+					</li>
 				</ul>
 			</div>
 		</div>

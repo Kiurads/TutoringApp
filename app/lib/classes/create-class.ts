@@ -47,19 +47,15 @@ export async function createClass(
 	}
 
 	// Fetch teacher's hourly rate
-	const teacher = await prisma.teacher.findUnique({
+	const teacher = await prisma.user.findUnique({
 		where: { id: teacherId },
 		select: {
 			pricePerHour: true,
-			user: {
-				select: {
-					email: true,
-				},
-			},
+			email: true,
 		},
 	});
 
-	if (!teacher) {
+	if (!teacher || !teacher.pricePerHour) {
 		return "Teacher not found.";
 	}
 

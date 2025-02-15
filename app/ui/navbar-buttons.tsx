@@ -1,13 +1,12 @@
 import { auth } from "@/auth";
+import getAvatar from "@/utils/get-avatar";
 import Image from "next/image";
 import Link from "next/link";
 
 export default async function NavbarButtons() {
 	const session = await auth();
 
-	if (session) {
-		const avatar = `https://api.dicebear.com/9.x/big-ears-neutral/svg?&seed=${session.user?.email}`;
-
+	if (session && session.user && session.user.email) {
 		return (
 			<div className="dropdown dropdown-end">
 				<div
@@ -20,7 +19,7 @@ export default async function NavbarButtons() {
 							alt="User Avatar"
 							width={1000}
 							height={1000}
-							src={avatar}
+							src={getAvatar(session.user.email)}
 						/>
 					</div>
 				</div>
