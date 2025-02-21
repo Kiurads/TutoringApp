@@ -26,22 +26,22 @@ enum Role {
 }
 
 model User {
-  id            String          @id @default(cuid())
+  id            String    @id @default(cuid())
   firstName     String
   lastName      String
-  email         String          @unique
+  email         String    @unique
   emailVerified DateTime?
   password      String
   image         String?
   phoneNumber   String?
   accounts      Account[]
   sessions      Session[]
-  role          Role            @default(student)
+  role          Role      @default(student)
   bio           String?
 
   // Teacher-specific fields
-  pricePerHour  Decimal?        // Nullable for non-teachers
-  teacherRating TeacherRating[] @relation("TeacherRatingStudent")
+  pricePerHour   Decimal? // Nullable for non-teachers
+  teacherRating  TeacherRating[]  @relation("TeacherRatingStudent")
   teacherSubject TeacherSubject[]
 
   // Optional for WebAuthn support
@@ -51,11 +51,11 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  classesAsStudent  Class[]         @relation("Student")
-  classesAsTeacher  Class[]         @relation("Teacher")
-  classesAsRequester Class[]        @relation("Requester")
-  regularClassesAsStudent RegularClass[] @relation("RegularClassStudent")
-  regularClassesAsTeacher RegularClass[] @relation("RegularClassTeacher")
+  classesAsStudent        Class[]         @relation("Student")
+  classesAsTeacher        Class[]         @relation("Teacher")
+  classesAsRequester      Class[]         @relation("Requester")
+  regularClassesAsStudent RegularClass[]  @relation("RegularClassStudent")
+  regularClassesAsTeacher RegularClass[]  @relation("RegularClassTeacher")
   teacherRatingsAsTeacher TeacherRating[] @relation("TeacherRatingTeacher")
 }
 
@@ -72,7 +72,7 @@ model TeacherSubject {
   teacherId String
   subjectId String
 
-  teacher User   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  teacher User    @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 }
 
@@ -85,6 +85,7 @@ model Class {
   durationInHours Decimal
   totalPrice      Decimal
   status          Status   @default(requested)
+  paid            Boolean  @default(false)
   requesterId     String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -125,9 +126,9 @@ model TeacherRating {
   createdAt DateTime @default(now())
 
   // Disambiguated relations
-  student User    @relation("TeacherRatingStudent", fields: [studentId], references: [id], onDelete: Cascade)
-  teacher User    @relation("TeacherRatingTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
-  class   Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student User  @relation("TeacherRatingStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  teacher User  @relation("TeacherRatingTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
 }
 
 model Account {

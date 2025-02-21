@@ -57,7 +57,7 @@ export default async function DashboardHeader(props: { userEmail: string }) {
 
 					<div className="flex flex-col-reverse">
 						<dt className="text-sm font-medium text-gray-600">
-							Classes attended
+							Classes booked
 						</dt>
 						<dd className="text-xs text-gray-500">
 							{classes.length}

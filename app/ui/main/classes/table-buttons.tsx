@@ -9,16 +9,16 @@ export default async function ClassesTableButtons(props: {
 
 	if (requestedBySelf) {
 		return (
-			<div className="flex flex-row gap-2">
+			<div className="join flex flex-row">
 				<Link
 					href={`/main/classes/${props.classId}`}
-					className="btn btn-info btn-sm basis-1/2"
+					className="btn btn-info btn-sm join-item basis-1/2"
 				>
 					<i className="fa-solid fa-info"></i>
 				</Link>
 				<Link
 					href={`/main/classes/${props.classId}/cancel`}
-					className="btn btn-error btn-sm basis-1/2"
+					className="btn btn-error btn-sm join-item basis-1/2"
 				>
 					<i className="fa-solid fa-trash"></i>
 				</Link>
@@ -27,16 +27,16 @@ export default async function ClassesTableButtons(props: {
 	} else {
 		if (props.classStatus === "requested") {
 			return (
-				<div className="flex flex-row gap-2">
+				<div className="join flex flex-row gap-2">
 					<Link
 						href={`/main/classes/${props.classId}/accept`}
-						className="btn btn-success btn-sm basis-1/2"
+						className="btn btn-success btn-sm join-item basis-1/2"
 					>
 						<i className="fa-solid fa-check"></i>
 					</Link>
 					<Link
 						href={`/main/classes/${props.classId}/refuse`}
-						className="btn btn-error btn-sm basis-1/2"
+						className="btn btn-error btn-sm join-item basis-1/2"
 					>
 						<i className="fa-solid fa-x"></i>
 					</Link>
@@ -45,10 +45,10 @@ export default async function ClassesTableButtons(props: {
 		}
 
 		return (
-			<div className="flex flex-row gap-2">
+			<div className="join flex flex-row">
 				<Link
 					href={`/main/classes/${props.classId}`}
-					className="btn btn-info btn-sm basis-1/2"
+					className="btn btn-info btn-sm join-item basis-1/2"
 				>
 					<i className="fa-solid fa-info"></i>
 				</Link>

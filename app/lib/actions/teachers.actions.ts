@@ -8,6 +8,7 @@ export async function fetchTeachers() {
 			role: "teacher",
 		},
 		select: {
+			id: true,
 			email: true,
 			firstName: true,
 			lastName: true,
@@ -41,8 +42,6 @@ export async function fetchTeachers() {
 			pricePerHour, // Add formatted pricePerHour as a string
 		};
 	});
-
-	console.log(teachersWithRatingAndPrice);
 
 	return teachersWithRatingAndPrice;
 }

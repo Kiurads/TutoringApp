@@ -7,7 +7,7 @@ import { useActionState } from "react";
 
 // Server actions
 import { Subject } from "@prisma/client";
-import { createClass } from "@/app/lib/classes/create-class";
+import { createClassAsStudent } from "@/app/lib/classes/create-class-as-student";
 import { fetchTeachersBySubjectsId } from "@/app/lib/actions/teachers.actions";
 import { fetchSubjectsWithTeachers } from "@/app/lib/actions/subjects.actions";
 
@@ -25,7 +25,7 @@ export default function RequestClassForm() {
 	>([]);
 	const [selectedSubject, setSelectedSubject] = useState("");
 	const [errorMessage, formAction, isPending] = useActionState(
-		createClass,
+		createClassAsStudent,
 		undefined
 	);
 

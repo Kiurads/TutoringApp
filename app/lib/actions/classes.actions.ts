@@ -8,21 +8,27 @@ import { redirect } from "next/navigation";
 import { fetchUserByEmail } from "./users.actions";
 
 export async function fetchClassById(id: string) {
-	return await prisma.class.findFirst({
+	const classData = await prisma.class.findFirst({
 		where: {
 			id: id,
 		},
-		select: {
+		include: {
 			teacher: {
 				select: {
+					id: true,
 					firstName: true,
 					lastName: true,
+					email: true,
+					role: true,
 				},
 			},
 			student: {
 				select: {
+					id: true,
 					firstName: true,
 					lastName: true,
+					email: true,
+					role: true,
 				},
 			},
 			subject: {
@@ -37,6 +43,17 @@ export async function fetchClassById(id: string) {
 			},
 		},
 	});
+
+	if (!classData) {
+		return null;
+	}
+
+	// Convert totalPrice and durationInHours to strings
+	return {
+		...classData,
+		totalPrice: classData.totalPrice.toString(),
+		durationInHours: classData.durationInHours.toString(),
+	};
 }
 
 export async function fetchClassesByUser(user: User) {
@@ -101,6 +118,9 @@ export async function fetchBookedClassesByUser(userEmail: string) {
 					},
 				},
 			],
+		},
+		orderBy: {
+			startTime: "desc",
 		},
 		select: {
 			id: true,

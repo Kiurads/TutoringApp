@@ -9,6 +9,7 @@ export default async function TeacherGrid() {
 			{teachers.map((teacher) => (
 				<TeacherCard
 					key={teacher.email}
+					id={teacher.id}
 					email={teacher.email}
 					firstName={teacher.firstName}
 					lastName={teacher.lastName}

@@ -2,18 +2,14 @@ import getAvatar from "@/utils/get-avatar";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function TeacherCard(props: {
+export default function UserCard(props: {
 	id: string;
 	email: string;
 	firstName: string;
 	lastName: string;
-	bio: string | null;
-	ratingAverage: number | null;
-	pricePerHour: string;
+	role: string;
 }) {
-	const { id, email, firstName, lastName, bio, ratingAverage, pricePerHour } =
-		props;
-
+	const { id, email, firstName, lastName, role } = props;
 	return (
 		<Link
 			href={`/main/users/${id}`}
@@ -30,6 +26,10 @@ export default function TeacherCard(props: {
 					<p className="mt-1 text-xs font-medium text-base-content">
 						{email}
 					</p>
+
+					<p className="mt-1 text-sm font-medium text-base-content badge badge-outline capitalize">
+						{role}
+					</p>
 				</div>
 
 				<div className="hidden sm:block sm:shrink-0">
@@ -42,31 +42,6 @@ export default function TeacherCard(props: {
 					/>
 				</div>
 			</div>
-
-			<div className="mt-4">
-				<p className="text-sm text-pretty text-base-content">{bio}</p>
-			</div>
-
-			<dl className="mt-6 flex gap-4 sm:gap-6">
-				<div className="flex flex-col-reverse">
-					<dt className="text-sm font-medium text-base-content">
-						Rating
-					</dt>
-					<dd className="text-xs text-base-content">
-						{ratingAverage !== null
-							? `${ratingAverage.toFixed(1)}/5` // Safely call .toFixed() if ratingAverage is not null
-							: "No ratings yet"}
-					</dd>
-				</div>
-				<div className="flex flex-col-reverse">
-					<dt className="text-sm font-medium text-base-content">
-						Price/Hour
-					</dt>
-					<dd className="text-xs text-base-content">
-						{pricePerHour + "€"}
-					</dd>
-				</div>
-			</dl>
 		</Link>
 	);
 }

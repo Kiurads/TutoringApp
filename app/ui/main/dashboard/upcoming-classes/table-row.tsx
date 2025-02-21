@@ -2,7 +2,7 @@
 
 "use client";
 
-import decimalToHours from "@/utils/decimal-to-time";
+import { decimalToHours } from "@/utils/decimal-to-time";
 import { $Enums } from "@prisma/client";
 
 export default function UpcomingClassesTableRow(props: {

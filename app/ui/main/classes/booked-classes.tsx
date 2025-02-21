@@ -1,7 +1,8 @@
 import { fetchBookedClassesByUser } from "@/app/lib/actions/classes.actions";
-import decimalToHours from "@/utils/decimal-to-time";
+import { decimalToHours } from "@/utils/decimal-to-time";
 import AddClassButton from "./add-class-button";
 import ClassesTableButtons from "./table-buttons";
+import ClassStatusBadge from "./class-status-badge";
 
 export default async function BookedClasses(props: { userEmail: string }) {
 	const bookedClasses = await fetchBookedClassesByUser(props.userEmail);
@@ -78,9 +79,9 @@ export default async function BookedClasses(props: { userEmail: string }) {
 									{classData.totalPrice.toString() + "€"}
 								</td>
 								<td className="whitespace-nowrap px-4 py-2 text-base-content capitalize">
-									<div className="badge badge-outline">
-										{classData.status}
-									</div>
+									<ClassStatusBadge
+										status={classData.status}
+									/>
 								</td>
 								<td className="whitespace-nowrap px-4 py-2 text-base-content">
 									<ClassesTableButtons

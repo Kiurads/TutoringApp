@@ -9,6 +9,18 @@ export async function fetchUsers() {
 	}
 }
 
+export async function fetchUserById(id: string) {
+	try {
+		const user = await prisma.user.findUnique({
+			where: { id: id },
+		});
+
+		return user;
+	} catch (error) {
+		console.log(error);
+	}
+}
+
 export async function fetchUserByEmail(email: string) {
 	try {
 		const user = await prisma.user.findUnique({
