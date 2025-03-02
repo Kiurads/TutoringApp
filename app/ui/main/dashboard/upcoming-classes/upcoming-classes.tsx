@@ -1,15 +1,16 @@
 import { fetchUpcomingClassesByUser } from "@/app/lib/actions/classes.actions";
 import { decimalToHours } from "@/utils/decimal-to-time";
+import ClassStatusBadge from "../../classes/class-status-badge";
 
 export default async function UpcomingClasses(props: { userEmail: string }) {
 	const upcomingClasses = await fetchUpcomingClassesByUser(props.userEmail);
 
 	if (!upcomingClasses || upcomingClasses.length === 0) {
 		return (
-			<div className="overflow-x-auto rounded-lg border border-base-content">
+			<div className="overflow-x-auto rounded-lg border border-base-content bg-base-100">
 				<h2 className="text-center text-lg font-bold py-4">
 					<i className="fa-solid fa-chalkboard-user text-l"></i>{" "}
-					Upcoming classes
+					Upcoming Classes
 				</h2>
 				<h2 className="text-center text-lg py-4">
 					You have no upcoming classes{" "}
@@ -19,9 +20,9 @@ export default async function UpcomingClasses(props: { userEmail: string }) {
 		);
 	} else {
 		return (
-			<div className="overflow-x-auto rounded-lg border border-base-content">
+			<div className="overflow-x-auto rounded-lg border border-base-content bg-base-100">
 				<h2 className="text-center text-lg font-bold py-4">
-					Upcoming classes{" "}
+					Upcoming Classes{" "}
 					<div className="badge badge-outline">
 						{upcomingClasses.length}
 					</div>
@@ -74,9 +75,9 @@ export default async function UpcomingClasses(props: { userEmail: string }) {
 									{classData.totalPrice.toString() + "€"}
 								</td>
 								<td className="whitespace-nowrap px-4 py-2 text-base-content capitalize">
-									<div className="badge badge-outline">
-										{classData.status}
-									</div>
+									<ClassStatusBadge
+										status={classData.status}
+									/>
 								</td>
 							</tr>
 						))}

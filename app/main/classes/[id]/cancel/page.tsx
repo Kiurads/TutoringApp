@@ -14,10 +14,8 @@ export default function CancelBookingPage() {
 			name: string;
 		};
 		teacher: {
-			user: {
-				firstName: string;
-				lastName: string;
-			};
+			firstName: string;
+			lastName: string;
 		};
 		student: {
 			firstName: string;
@@ -52,8 +50,8 @@ export default function CancelBookingPage() {
 					Are you sure you want to cancel{" "}
 					<strong>{classData.subject.name}</strong> class with{" "}
 					<strong>
-						{classData.teacher.user.firstName}{" "}
-						{classData.teacher.user.lastName}
+						{classData.teacher.firstName}{" "}
+						{classData.teacher.lastName}
 					</strong>
 					?
 				</p>

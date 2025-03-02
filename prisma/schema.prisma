@@ -40,7 +40,7 @@ model User {
   bio           String?
 
   // Teacher-specific fields
-  pricePerHour   Decimal? // Nullable for non-teachers
+  pricePerHour   Decimal?
   teacherRating  TeacherRating[]  @relation("TeacherRatingStudent")
   teacherSubject TeacherSubject[]
 
@@ -57,6 +57,8 @@ model User {
   regularClassesAsStudent RegularClass[]  @relation("RegularClassStudent")
   regularClassesAsTeacher RegularClass[]  @relation("RegularClassTeacher")
   teacherRatingsAsTeacher TeacherRating[] @relation("TeacherRatingTeacher")
+  paymentsAsStudent       Payment[]       @relation("PaymentStudent")
+  paymentsAsTeacher       Payment[]       @relation("PaymentTeacher")
 }
 
 model Subject {
@@ -74,6 +76,8 @@ model TeacherSubject {
 
   teacher User    @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, subjectId])
 }
 
 model Class {
@@ -95,6 +99,11 @@ model Class {
   requester     User            @relation("Requester", fields: [requesterId], references: [id], onDelete: Cascade)
   subject       Subject         @relation(fields: [subjectId], references: [id])
   teacherRating TeacherRating[]
+  payments      Payment[]
+
+  @@index([studentId])
+  @@index([teacherId])
+  @@index([status])
 }
 
 model RegularClass {
@@ -110,10 +119,12 @@ model RegularClass {
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 
-  // Disambiguated relations
   student User    @relation("RegularClassStudent", fields: [studentId], references: [id], onDelete: Cascade)
   teacher User    @relation("RegularClassTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
   subject Subject @relation(fields: [subjectId], references: [id])
+
+  @@index([studentId])
+  @@index([teacherId])
 }
 
 model TeacherRating {
@@ -121,14 +132,32 @@ model TeacherRating {
   studentId String
   teacherId String
   classId   String
-  rating    Int
+  rating    Int      @default(5)
   review    String?
   createdAt DateTime @default(now())
 
-  // Disambiguated relations
   student User  @relation("TeacherRatingStudent", fields: [studentId], references: [id], onDelete: Cascade)
   teacher User  @relation("TeacherRatingTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
   class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId])
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  studentId String
+  teacherId String
+  classId   String
+  amount    Decimal
+  createdAt DateTime @default(now())
+
+  student User  @relation("PaymentStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  teacher User  @relation("PaymentTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([teacherId])
+  @@index([classId])
 }
 
 model Account {
@@ -175,7 +204,6 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Optional for WebAuthn support
 model Authenticator {
   credentialID         String  @unique
   userId               String

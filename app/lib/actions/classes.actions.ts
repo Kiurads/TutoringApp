@@ -162,6 +162,39 @@ export async function fetchClassRequestedBySelf(classId: string) {
 	return classRequested?.requester.id == user?.id;
 }
 
+export async function fetchClassSubjectsBySelf() {
+	const session = await auth();
+
+	if (!session || !session.user || !session.user.email) {
+		return false;
+	}
+
+	const user = await fetchUserByEmail(session.user.email);
+	const classes = await prisma.class.findMany({
+		where: {
+			OR: [
+				{
+					studentId: user?.id,
+				},
+				{
+					teacherId: user?.id,
+				},
+			],
+		},
+		select: {
+			subject: {
+				select: {
+					name: true,
+				},
+			},
+		},
+	});
+
+	return classes.map((c) => ({
+		subjectName: c.subject,
+	}));
+}
+
 export async function cancelClassById(classId: string) {
 	await prisma.class.delete({
 		where: {

@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `Class` ADD COLUMN `paid` BOOLEAN NOT NULL DEFAULT false;

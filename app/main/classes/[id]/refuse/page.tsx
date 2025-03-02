@@ -17,8 +17,8 @@ export default async function CancelBookingPage(props: {
 					Are you sure you want to refuse{" "}
 					<strong>{classData.subject.name}</strong> class with{" "}
 					<strong>
-						{classData.teacher.user.firstName}{" "}
-						{classData.teacher.user.lastName}
+						{classData.teacher.firstName}{" "}
+						{classData.teacher.lastName}
 					</strong>
 					?
 				</p>

@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import prisma from "@/prisma";
-import resend from "@/resend";
 import { EmailTemplate } from "@/email/email-template";
 
 export async function createClassAsStudent(
@@ -78,17 +77,6 @@ export async function createClassAsStudent(
 			requesterId: student.id,
 		},
 	});
-
-	const { data, error } = await resend.emails.send({
-		from: "Acme <confirmation@estudyou.com>",
-		to: ["gcuradosilva@gmail.com"],
-		subject: "Hello world",
-		react: await EmailTemplate({ firstName: "John" }),
-	});
-
-	if (error) {
-		console.error("Failed to send email", error);
-	}
 
 	// Redirect to the classes page after successful creation
 	redirect("/main/classes");

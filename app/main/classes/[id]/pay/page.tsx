@@ -18,10 +18,6 @@ export default async function ClassPayPage(props: {
 	const { client_secret: clientSecret } = await stripe.paymentIntents.create({
 		amount: classPrice,
 		currency: "eur",
-		// In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
-		automatic_payment_methods: {
-			enabled: true,
-		},
 	});
 
 	return (
