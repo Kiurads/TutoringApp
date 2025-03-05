@@ -1,20 +1,40 @@
-import { fetchBookedClassesByUser } from "@/app/lib/actions/classes.actions";
-import { decimalToHours } from "@/utils/decimal-to-time";
+"use client";
+
 import AddClassButton from "./add-class-button";
 import ClassesTableButtons from "./table-buttons";
 import ClassStatusBadge from "./class-status-badge";
 
-export default async function BookedClasses(props: { userEmail: string }) {
-	const bookedClasses = await fetchBookedClassesByUser(props.userEmail);
+export interface BookedClass {
+	id: string;
+	durationInHours: string;
+	startTime: Date;
+	totalPrice: string;
+	status: string;
+	requestedBySelf: boolean;
+	student: {
+		name: string;
+	};
+	teacher: {
+		name: string;
+	};
+	subject: {
+		name: string;
+	};
+}
+
+export default function BookedClasses(props: { bookedClasses: BookedClass[] }) {
+	const { bookedClasses } = props;
 
 	if (!bookedClasses || bookedClasses.length === 0) {
 		return (
 			<div className="overflow-x-auto rounded-lg border border-base-content">
-				<h2 className="text-center text-lg font-bold py-4">
-					<i className="fa-solid fa-chalkboard-user text-l"></i>{" "}
-					Booked classes
+				<h2 className="text-lg font-semibold flex items-center justify-between px-4 py-4">
+					<span className="flex items-center gap-2">
+						<i className="fa-solid fa-chalkboard-user"></i> Booked
+						Classes
+					</span>
+					<AddClassButton />
 				</h2>
-				<AddClassButton />
 				<h2 className="text-center text-lg py-4">
 					You have no booked classes{" "}
 					<i className="fa-solid fa-face-laugh-wink"></i>
@@ -24,13 +44,15 @@ export default async function BookedClasses(props: { userEmail: string }) {
 	} else {
 		return (
 			<div className="overflow-x-auto rounded-lg border border-base-content">
-				<h2 className="text-center text-lg font-bold py-4">
-					Booked classes{" "}
-					<div className="badge badge-outline">
-						{bookedClasses.length}
-					</div>
+				<h2 className="text-lg font-semibold flex items-center justify-between px-4 py-4">
+					<span className="flex items-center gap-2">
+						Booked classes{" "}
+						<div className="badge badge-outline">
+							{bookedClasses.length}
+						</div>
+					</span>
+					<AddClassButton />
 				</h2>
-				<AddClassButton />
 				<table className="min-w-full divide-y-2 divide-base-300 bg-base text-sm table-auto">
 					<thead className="ltr:text-left rtl:text-right">
 						<tr>
@@ -65,18 +87,16 @@ export default async function BookedClasses(props: { userEmail: string }) {
 									{classData.subject.name}
 								</td>
 								<td className="whitespace-nowrap px-4 py-2 text-base-content capitalize">
-									{classData.teacher.firstName +
-										" " +
-										classData.teacher.lastName}
+									{classData.teacher.name}
 								</td>
 								<td className="whitespace-nowrap px-4 py-2 text-base-content">
 									{classData.startTime.toUTCString()}
 								</td>
 								<td className="whitespace-nowrap px-4 py-2 text-base-content">
-									{decimalToHours(classData.durationInHours)}
+									{classData.durationInHours}
 								</td>
 								<td className="whitespace-nowrap px-4 py-2 text-base-content">
-									{classData.totalPrice.toString() + "€"}
+									{classData.totalPrice + "€"}
 								</td>
 								<td className="whitespace-nowrap px-4 py-2 text-base-content capitalize">
 									<ClassStatusBadge
@@ -85,8 +105,7 @@ export default async function BookedClasses(props: { userEmail: string }) {
 								</td>
 								<td className="whitespace-nowrap px-4 py-2 text-base-content">
 									<ClassesTableButtons
-										classId={classData.id}
-										classStatus={classData.status}
+										bookedClass={classData}
 									/>
 								</td>
 							</tr>

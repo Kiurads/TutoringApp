@@ -4,7 +4,7 @@ import UpcomingClasses from "@/app/ui/main/dashboard/upcoming-classes/upcoming-c
 import StudentPayments from "@/app/ui/main/dashboard/student-payments";
 import { fetchPaymentsByUserId } from "@/app/lib/actions/paymets.actions";
 import { fetchClassSubjectsBySelf } from "@/app/lib/actions/classes.actions";
-import ClassSubjectChart from "@/app/ui/main/dashboard/class-subject-chart";
+// import ClassSubjectChart from "@/app/ui/main/dashboard/class-subject-chart";
 
 export default async function DashboardStudent() {
 	const session = await auth();
@@ -17,7 +17,7 @@ export default async function DashboardStudent() {
 
 	// Fetch user payments on the server
 	const payments = await fetchPaymentsByUserId(userEmail);
-	const subjects = await fetchClassSubjectsBySelf();
+	// const subjects = await fetchClassSubjectsBySelf();
 
 	return (
 		<div className="flex flex-col items-center gap-2 justify-start w-full">
@@ -40,9 +40,13 @@ export default async function DashboardStudent() {
 			</div>
 
 			{/* Pie Chart Section - Classes per Subject */}
-			<div className="w-full px-4 sm:px-8 lg:px-12 py-4">
-				<ClassSubjectChart classes={subjects} />
-			</div>
+			{/* <div className="flex flex-col md:flex-row w-full px-4 sm:px-8 lg:px-12 py-4 gap-4">
+				<div className="w-full">
+					<div className="w-full max-w-lg">
+						<ClassSubjectChart classes={subjects} />
+					</div>
+				</div>
+			</div> */}
 		</div>
 	);
 }

@@ -24,7 +24,10 @@ export default async function ClassPayPage(props: {
 		<div className="hero bg-base-100 min-h-screen" id="checkout">
 			<div className="hero-content flex-col lg:flex-row">
 				<div className="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
-					<CheckoutForm clientSecret={clientSecret} />
+					<CheckoutForm
+						clientSecret={clientSecret}
+						classId={classData.id}
+					/>
 				</div>
 			</div>
 		</div>

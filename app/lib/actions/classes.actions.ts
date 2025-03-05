@@ -6,6 +6,7 @@ import { User } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { fetchUserByEmail } from "./users.actions";
+import { decimalToHours } from "@/utils/decimal-to-time";
 
 export async function fetchClassById(id: string) {
 	const classData = await prisma.class.findFirst({
@@ -104,7 +105,15 @@ export async function fetchUpcomingClassesByUser(userEmail: string) {
 }
 
 export async function fetchBookedClassesByUser(userEmail: string) {
-	return await prisma.class.findMany({
+	const session = await auth();
+
+	if (!session || !session.user || !session.user.email) {
+		return false;
+	}
+
+	const user = await fetchUserByEmail(session.user.email);
+
+	const classes = await prisma.class.findMany({
 		where: {
 			OR: [
 				{
@@ -134,6 +143,11 @@ export async function fetchBookedClassesByUser(userEmail: string) {
 					lastName: true,
 				},
 			},
+			requester: {
+				select: {
+					id: true,
+				},
+			},
 			teacher: {
 				select: {
 					firstName: true,
@@ -147,6 +161,24 @@ export async function fetchBookedClassesByUser(userEmail: string) {
 			},
 		},
 	});
+
+	return classes.map((c) => ({
+		id: c.id,
+		durationInHours: decimalToHours(c.durationInHours),
+		startTime: c.startTime,
+		totalPrice: c.totalPrice.toString(),
+		status: c.status,
+		requestedBySelf: c.requester.id == user?.id,
+		student: {
+			name: c.student.firstName + " " + c.student.lastName,
+		},
+		teacher: {
+			name: c.teacher.firstName + " " + c.teacher.lastName,
+		},
+		subject: {
+			name: c.subject.name,
+		},
+	}));
 }
 
 export async function fetchClassRequestedBySelf(classId: string) {
@@ -191,7 +223,7 @@ export async function fetchClassSubjectsBySelf() {
 	});
 
 	return classes.map((c) => ({
-		subjectName: c.subject,
+		subjectName: c.subject.name,
 	}));
 }
 

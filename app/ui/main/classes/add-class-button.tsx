@@ -4,12 +4,12 @@ export default function AddClassButton() {
 	return (
 		<Link
 			href="/main/classes/request"
-			className="btn btn-primary absolute top-6 right-6"
+			className="btn btn-primary flex items-center gap-2 px-4 py-2"
 		>
-			<span className="hidden text-primary-content md:block">
-				New Class{" "}
-			</span>
 			<i className="fa-solid fa-calendar-plus text-primary-content"></i>
+			<span className="hidden text-primary-content md:inline">
+				New Class
+			</span>
 		</Link>
 	);
 }

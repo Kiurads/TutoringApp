@@ -21,6 +21,8 @@ interface Class {
 export default function ClassSubjectChart(props: { classes: Class[] }) {
 	const classes = props.classes;
 
+	console.log(classes);
+
 	const [chartData, setChartData] = useState<any>(null);
 
 	useEffect(() => {

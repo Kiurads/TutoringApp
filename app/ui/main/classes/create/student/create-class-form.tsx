@@ -54,40 +54,58 @@ export default function RequestClassForm() {
 		.slice(0, 16);
 
 	return (
-		<form action={formAction} className="card-body">
-			{errorMessage && (
-				<div role="alert" className="alert alert-error">
-					<span>{errorMessage}</span>
-				</div>
-			)}
+		<div className="max-w-xl mx-auto p-6 bg-base-100 shadow-lg rounded-xl border border-base-300">
+			<h2 className="text-xl font-semibold text-center mb-4">
+				Request a New Class
+			</h2>
 
-			<SubjectSelect
-				subjects={subjects}
-				selectedSubject={selectedSubject}
-				onSelectSubject={setSelectedSubject}
-			/>
+			<form action={formAction} className="grid gap-4">
+				{/* Error Alert */}
+				{errorMessage && (
+					<div role="alert" className="alert alert-error text-sm">
+						<i className="fa-solid fa-triangle-exclamation mr-2"></i>
+						<span>{errorMessage}</span>
+					</div>
+				)}
 
-			<StartTimeInput minDate={minStartDate} />
+				{/* Form Fields */}
+				<SubjectSelect
+					subjects={subjects}
+					selectedSubject={selectedSubject}
+					onSelectSubject={setSelectedSubject}
+				/>
 
-			<DurationSelect durations={durations} />
+				<StartTimeInput minDate={minStartDate} />
 
-			<TeacherSelect
-				teachers={teachers}
-				selectedSubject={selectedSubject}
-			/>
+				<DurationSelect durations={durations} />
 
-			<div className="col-span-6 mt-4 sm:flex sm:items-center sm:gap-4">
-				<button
-					className="btn btn-primary flex-grow"
-					aria-disabled={isPending}
-				>
-					Create Class
-				</button>
+				<TeacherSelect
+					teachers={teachers}
+					selectedSubject={selectedSubject}
+				/>
 
-				<div>
+				{/* Buttons */}
+				<div className="flex items-center gap-4 mt-4">
+					<button
+						className="btn btn-primary flex-grow"
+						aria-disabled={isPending}
+					>
+						{isPending ? (
+							<>
+								<i className="fa-solid fa-spinner animate-spin"></i>
+								Creating...
+							</>
+						) : (
+							<>
+								<i className="fa-solid fa-calendar-plus"></i>
+								Create Class
+							</>
+						)}
+					</button>
+
 					<GoBackButton url="/main/classes" />
 				</div>
-			</div>
-		</form>
+			</form>
+		</div>
 	);
 }
