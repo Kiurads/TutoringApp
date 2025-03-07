@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import AddClassButton from "./add-class-button";
 import ClassesTableButtons from "./table-buttons";
 import ClassStatusBadge from "./class-status-badge";
@@ -11,6 +12,7 @@ export interface BookedClass {
 	totalPrice: string;
 	status: string;
 	requestedBySelf: boolean;
+	paid: boolean;
 	student: {
 		name: string;
 	};
@@ -24,6 +26,7 @@ export interface BookedClass {
 
 export default function BookedClasses(props: { bookedClasses: BookedClass[] }) {
 	const { bookedClasses } = props;
+	const router = useRouter();
 
 	if (!bookedClasses || bookedClasses.length === 0) {
 		return (
@@ -74,6 +77,9 @@ export default function BookedClasses(props: { bookedClasses: BookedClass[] }) {
 							<th className="whitespace-nowrap px-4 py-2 font-medium text-base-content text-left">
 								Status
 							</th>
+							<th className="whitespace-nowrap px-4 py-2 font-medium text-base-content text-left">
+								Actions
+							</th>
 						</tr>
 					</thead>
 
@@ -81,7 +87,10 @@ export default function BookedClasses(props: { bookedClasses: BookedClass[] }) {
 						{bookedClasses.map((classData) => (
 							<tr
 								key={classData.id}
-								className="hover:bg-base-200 transition-all"
+								className="hover:bg-base-200 transition-all cursor-pointer"
+								onClick={() =>
+									router.push(`/main/classes/${classData.id}`)
+								}
 							>
 								<td className="whitespace-nowrap px-4 py-2 font-medium text-base-content capitalize">
 									{classData.subject.name}
@@ -103,7 +112,18 @@ export default function BookedClasses(props: { bookedClasses: BookedClass[] }) {
 										status={classData.status}
 									/>
 								</td>
-								<td className="whitespace-nowrap px-4 py-2 text-base-content">
+								<td className="whitespace-nowrap px-4 py-2 text-base-content capitalize">
+									{classData.paid ? (
+										<p>Paid</p>
+									) : (
+										<p>Unpaid</p>
+									)}
+								</td>
+								{/* Exclude buttons from navigation */}
+								<td
+									className="whitespace-nowrap px-4 py-2 text-base-content"
+									onClick={(e) => e.stopPropagation()} // Prevent row click from triggering
+								>
 									<ClassesTableButtons
 										bookedClass={classData}
 									/>

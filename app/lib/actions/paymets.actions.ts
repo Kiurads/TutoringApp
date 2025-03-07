@@ -1,4 +1,7 @@
+"use server";
+
 import prisma from "@/prisma";
+import { revalidatePath } from "next/cache";
 
 export async function fetchPaymentsByUserId(email: string) {
 	// Get student ID from email
@@ -34,4 +37,59 @@ export async function fetchPaymentsByUserId(email: string) {
 		teacherName: `${p.teacher.firstName} ${p.teacher.lastName}`,
 		date: p.createdAt,
 	}));
+}
+
+export async function createPaymentForClass(
+	classId: string,
+	paymentIntentId: string
+) {
+	const classData = await prisma.class.findFirst({
+		where: {
+			id: classId,
+		},
+		include: {
+			student: true,
+			teacher: true,
+			subject: true,
+		},
+	});
+
+	if (!classData) {
+		return null;
+	}
+
+	await prisma.payment.create({
+		data: {
+			amount: classData.totalPrice,
+			intentId: paymentIntentId,
+			classId: classData.id,
+			studentId: classData.studentId,
+			teacherId: classData.teacherId,
+		},
+	});
+
+	await prisma.class.update({
+		where: {
+			id: classId,
+		},
+		data: {
+			paid: true,
+		},
+	});
+
+	return {
+		startTime: classData.startTime,
+		status: classData.status,
+		student: {
+			name:
+				classData.student.firstName + " " + classData.student.lastName,
+		},
+		teacher: {
+			name:
+				classData.teacher.firstName + " " + classData.teacher.lastName,
+		},
+		subject: {
+			name: classData.subject.name,
+		},
+	};
 }

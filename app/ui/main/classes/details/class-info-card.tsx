@@ -92,7 +92,7 @@ export default function ClassInfoCard(props: { classDetails: any }) {
 				</div>
 
 				{/* Pay Now Button (Conditional Rendering) */}
-				{!classDetails.paid && (
+				{!classDetails.paid && classDetails.status === "scheduled" && (
 					<div className="mt-6 flex justify-end">
 						<Link
 							href={`/main/classes/${classDetails.id}/pay`}

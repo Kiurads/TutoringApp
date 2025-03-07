@@ -137,6 +137,7 @@ export async function fetchBookedClassesByUser(userEmail: string) {
 			startTime: true,
 			totalPrice: true,
 			status: true,
+			paid: true,
 			student: {
 				select: {
 					firstName: true,
@@ -168,6 +169,7 @@ export async function fetchBookedClassesByUser(userEmail: string) {
 		startTime: c.startTime,
 		totalPrice: c.totalPrice.toString(),
 		status: c.status,
+		paid: c.paid,
 		requestedBySelf: c.requester.id == user?.id,
 		student: {
 			name: c.student.firstName + " " + c.student.lastName,

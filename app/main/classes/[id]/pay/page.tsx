@@ -18,6 +18,11 @@ export default async function ClassPayPage(props: {
 	const { client_secret: clientSecret } = await stripe.paymentIntents.create({
 		amount: classPrice,
 		currency: "eur",
+		metadata: {
+			classId: classData.id,
+			studentId: classData.studentId,
+			teacherId: classData.teacherId,
+		},
 	});
 
 	return (

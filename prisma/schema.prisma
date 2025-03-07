@@ -144,12 +144,13 @@ model TeacherRating {
 }
 
 model Payment {
-  id        String   @id @default(cuid())
-  studentId String
-  teacherId String
-  classId   String
-  amount    Decimal
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  studentId    String
+  teacherId    String
+  classId      String
+  amount       Decimal
+  intentId     String
+  createdAt    DateTime @default(now())
 
   student User  @relation("PaymentStudent", fields: [studentId], references: [id], onDelete: Cascade)
   teacher User  @relation("PaymentTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
