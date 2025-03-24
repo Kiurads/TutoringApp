@@ -7,8 +7,33 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { fetchUserByEmail } from "./users.actions";
 import { decimalToHours } from "@/utils/decimal-to-time";
+export interface ClassData {
+	id: string;
+	totalPrice: string;
+	durationInHours: string;
+	teacher: {
+		id: string;
+		firstName: string;
+		lastName: string;
+		email: string;
+		role: string;
+	};
+	student: {
+		id: string;
+		firstName: string;
+		lastName: string;
+		email: string;
+		role: string;
+	};
+	subject: {
+		name: string;
+	};
+	requester: {
+		id: string;
+	};
+}
 
-export async function fetchClassById(id: string) {
+export async function fetchClassById(id: string): Promise<ClassData> {
 	const classData = await prisma.class.findFirst({
 		where: {
 			id: id,

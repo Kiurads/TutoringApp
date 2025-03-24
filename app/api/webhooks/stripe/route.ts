@@ -1,5 +1,4 @@
 import { createPaymentForClass } from "@/app/lib/actions/paymets.actions";
-import { revalidatePath } from "next/cache";
 import Stripe from "stripe";
 
 export async function POST(req) {

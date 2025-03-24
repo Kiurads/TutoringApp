@@ -1,14 +1,17 @@
 import { fetchClassById } from "@/app/lib/actions/classes.actions";
+import ClassStatusBadge from "@/app/ui/main/classes/class-status-badge";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
-type PaymentSuccessPageProps = {
+// Define the component props
+interface PaymentSuccessPageProps {
 	params: { id: string };
 	searchParams: {
 		payment_intent: string;
 		payment_intent_client_secret: string;
 		redirect_status: string;
 	};
-};
+}
 
 export default async function PaymentSuccessPage({
 	params,
@@ -28,49 +31,56 @@ export default async function PaymentSuccessPage({
 		notFound();
 	}
 
-	// Trigger revalidation of the /main/classes path
-	const apiUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/revalidate`; // Use absolute URL with site domain
-	await fetch(apiUrl, {
-		method: "POST",
-		body: JSON.stringify({ path: "/main/classes" }),
-		headers: {
-			"Content-Type": "application/json",
-		},
-	});
-
 	return (
-		<div className="flex flex-col items-center justify-center p-6">
-			<div className="alert alert-success mb-4">
-				<span>The class was paid successfully!</span>
+		<div className="flex flex-col items-center justify-center min-h-screen p-6 bg-base-100">
+			<div className="alert alert-success shadow-lg w-full max-w-lg mb-6">
+				<div>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						className="h-6 w-6 stroke-current"
+						fill="none"
+						viewBox="0 0 24 24"
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							strokeWidth="2"
+							d="M5 13l4 4L19 7"
+						/>
+					</svg>
+					<span>
+						Payment successful! Your class has been confirmed!
+					</span>
+				</div>
 			</div>
 
-			<div className="card w-full max-w-md bg-base-100 shadow-md">
+			<div className="card w-full max-w-lg bg-base-100 shadow-xl">
 				<div className="card-body">
-					<h2 className="card-title">Class Details</h2>
-					<p>
+					<p className="text-lg">
 						<strong>Class time:</strong>{" "}
 						{new Date(classData.startTime).toLocaleString()}
 					</p>
-					<p>
-						<strong>Status:</strong> {classData.status}
+					<p className="text-lg flex items-center gap-2">
+						<strong>Status:</strong>{" "}
+						<ClassStatusBadge status={classData.status} />
 					</p>
-					<p>
-						<strong>Student:</strong>{" "}
-						{classData.student.firstName +
-							" " +
-							classData.student.lastName}
+					<p className="text-lg">
+						<strong>Student:</strong> {classData.student.firstName}{" "}
+						{classData.student.lastName}
 					</p>
-					<p>
-						<strong>Teacher:</strong>{" "}
-						{classData.teacher.firstName +
-							" " +
-							classData.teacher.lastName}
+					<p className="text-lg">
+						<strong>Teacher:</strong> {classData.teacher.firstName}{" "}
+						{classData.teacher.lastName}
 					</p>
-					<p>
+					<p className="text-lg">
 						<strong>Subject:</strong> {classData.subject.name}
 					</p>
 				</div>
 			</div>
+
+			<Link href="/main/classes" className="btn btn-primary mt-6">
+				Go to Classes
+			</Link>
 		</div>
 	);
 }
