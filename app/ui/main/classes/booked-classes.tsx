@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import AddClassButton from "./add-class-button";
 import ClassesTableButtons from "./table-buttons";
 import ClassStatusBadge from "./class-status-badge";
+import ClassPaidIcon from "./paid-icon";
 
 export interface BookedClass {
 	id: string;
@@ -78,7 +79,7 @@ export default function BookedClasses(props: { bookedClasses: BookedClass[] }) {
 								Status
 							</th>
 							<th className="whitespace-nowrap px-4 py-2 font-medium text-base-content text-left">
-								Actions
+								Paid
 							</th>
 						</tr>
 					</thead>
@@ -113,11 +114,7 @@ export default function BookedClasses(props: { bookedClasses: BookedClass[] }) {
 									/>
 								</td>
 								<td className="whitespace-nowrap px-4 py-2 text-base-content capitalize">
-									{classData.paid ? (
-										<p>Paid</p>
-									) : (
-										<p>Unpaid</p>
-									)}
+									<ClassPaidIcon status={classData.paid} />
 								</td>
 								{/* Exclude buttons from navigation */}
 								<td

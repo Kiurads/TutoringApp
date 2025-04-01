@@ -1,8 +1,12 @@
 import { fetchClassById } from "@/app/lib/actions/classes.actions";
 import ClassStatusBadge from "@/app/ui/main/classes/class-status-badge";
 import Link from "next/link";
+import ClassStatusBadge from "@/app/ui/main/classes/class-status-badge";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
+// Define the component props
+interface PaymentSuccessPageProps {
 // Define the component props
 interface PaymentSuccessPageProps {
 	params: { id: string };
@@ -11,6 +15,7 @@ interface PaymentSuccessPageProps {
 		payment_intent_client_secret: string;
 		redirect_status: string;
 	};
+}
 }
 
 export default async function PaymentSuccessPage({
@@ -31,18 +36,8 @@ export default async function PaymentSuccessPage({
 		notFound();
 	}
 
-	// Trigger revalidation of the /main/classes path
-	const apiUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/revalidate`;
-	await fetch(apiUrl, {
-		method: "POST",
-		body: JSON.stringify({ path: "/main/classes" }),
-		headers: {
-			"Content-Type": "application/json",
-		},
-	});
-
 	return (
-		<div className="flex flex-col items-center justify-center min-h-screen p-6 bg-base-200">
+		<div className="flex flex-col items-center justify-center min-h-screen p-6 bg-base-100">
 			<div className="alert alert-success shadow-lg w-full max-w-lg mb-6">
 				<div>
 					<svg
