@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { fetchUserByEmail } from "./users.actions";
 import { decimalToHours } from "@/utils/decimal-to-time";
+import { Decimal } from "@prisma/client/runtime/library";
 export interface ClassData {
 	id: string;
 	totalPrice: string;
@@ -25,12 +26,24 @@ export interface ClassData {
 		email: string;
 		role: string;
 	};
+	startTime: Date;
+	status: string;
 	subject: {
 		name: string;
 	};
 	requester: {
 		id: string;
 	};
+}
+
+export interface ClassDataCalendar {
+	subject: string;
+	teacherName: string;
+	studentName: string;
+	day: string;
+	startTime: string;
+	duration: Decimal;
+	status: string;
 }
 
 export async function fetchClassById(id: string): Promise<ClassData> {
@@ -251,6 +264,65 @@ export async function fetchClassSubjectsBySelf() {
 
 	return classes.map((c) => ({
 		subjectName: c.subject.name,
+	}));
+}
+
+export async function fetchClassBySelfCalendar(): Promise<
+	ClassDataCalendar[] | null
+> {
+	const session = await auth();
+
+	if (!session || !session.user || !session.user.email) {
+		return null;
+	}
+
+	const user = await fetchUserByEmail(session.user.email);
+
+	const classes = await prisma.class.findMany({
+		where: {
+			OR: [
+				{
+					studentId: user?.id,
+				},
+				{
+					teacherId: user?.id,
+				},
+			],
+		},
+		select: {
+			subject: {
+				select: {
+					name: true,
+				},
+			},
+			startTime: true,
+			durationInHours: true,
+			status: true,
+			teacher: {
+				select: {
+					firstName: true,
+					lastName: true,
+				},
+			},
+			student: {
+				select: {
+					firstName: true,
+					lastName: true,
+				},
+			},
+		},
+	});
+
+	return classes.map((c) => ({
+		subject: c.subject.name,
+		teacherName: `${c.teacher.firstName} ${c.teacher.lastName}`,
+		studentName: `${c.student.firstName} ${c.student.lastName}`,
+		day: new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(
+			c.startTime
+		),
+		startTime: c.startTime.toISOString().split("T")[1].slice(0, 5),
+		duration: c.durationInHours,
+		status: c.status,
 	}));
 }
 

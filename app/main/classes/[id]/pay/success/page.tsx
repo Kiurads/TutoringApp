@@ -1,12 +1,8 @@
 import { fetchClassById } from "@/app/lib/actions/classes.actions";
 import ClassStatusBadge from "@/app/ui/main/classes/class-status-badge";
 import Link from "next/link";
-import ClassStatusBadge from "@/app/ui/main/classes/class-status-badge";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-// Define the component props
-interface PaymentSuccessPageProps {
 // Define the component props
 interface PaymentSuccessPageProps {
 	params: { id: string };
@@ -15,7 +11,6 @@ interface PaymentSuccessPageProps {
 		payment_intent_client_secret: string;
 		redirect_status: string;
 	};
-}
 }
 
 export default async function PaymentSuccessPage({

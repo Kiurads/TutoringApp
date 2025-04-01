@@ -32,13 +32,21 @@ export default function RootLayout({
 				<ul className="menu bg-base-200 text-base-content min-h-full w-80 p-4">
 					{/* Sidebar content here */}
 					<li>
-						<Link href="/main/dashboard">Dashboard</Link>
+						<Link href="/main/dashboard">
+							<i className="fa-solid fa-house-user"></i> Dashboard
+						</Link>
+					</li>
+					<div className="divider"></div>
+					<li>
+						<Link href="/main/classes">
+							<i className="fa-solid fa-school"></i> Classes
+						</Link>
 					</li>
 					<li>
-						<Link href="/main/classes">Classes</Link>
-					</li>
-					<li>
-						<Link href="/main/teachers">Teachers</Link>
+						<Link href="/main/teachers">
+							<i className="fa-solid fa-chalkboard-user"></i>{" "}
+							Teachers
+						</Link>
 					</li>
 				</ul>
 			</div>

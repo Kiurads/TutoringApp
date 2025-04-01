@@ -132,7 +132,7 @@ model TeacherRating {
   studentId String
   teacherId String
   classId   String
-  rating    Int      @default(5)
+  rating    Decimal  @default(5)
   review    String?
   createdAt DateTime @default(now())
 
