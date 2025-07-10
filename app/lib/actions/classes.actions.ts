@@ -8,33 +8,8 @@ import { redirect } from "next/navigation";
 import { fetchUserByEmail } from "./users.actions";
 import { decimalToHours } from "@/utils/decimal-to-time";
 import { Decimal } from "@prisma/client/runtime/library";
-export interface ClassData {
-	id: string;
-	totalPrice: string;
-	durationInHours: string;
-	teacher: {
-		id: string;
-		firstName: string;
-		lastName: string;
-		email: string;
-		role: string;
-	};
-	student: {
-		id: string;
-		firstName: string;
-		lastName: string;
-		email: string;
-		role: string;
-	};
-	startTime: Date;
-	status: string;
-	subject: {
-		name: string;
-	};
-	requester: {
-		id: string;
-	};
-}
+import ClassData from "../types/classes.types";
+import { formatUser } from "../types/user.types";
 
 export interface ClassDataCalendar {
 	subject: string;
@@ -46,7 +21,7 @@ export interface ClassDataCalendar {
 	status: string;
 }
 
-export async function fetchClassById(id: string): Promise<ClassData> {
+export async function fetchClassById(id: string): Promise<ClassData | null> {
 	const classData = await prisma.class.findFirst({
 		where: {
 			id: id,
@@ -83,15 +58,20 @@ export async function fetchClassById(id: string): Promise<ClassData> {
 		},
 	});
 
-	if (!classData) {
-		return null;
-	}
+	if (!classData) return null;
 
-	// Convert totalPrice and durationInHours to strings
 	return {
-		...classData,
-		totalPrice: classData.totalPrice.toString(),
+		id: classData.id,
+		teacher: formatUser(classData.teacher),
+		student: formatUser(classData.student),
+		status: classData.status,
+		subject: classData.subject.name,
+		requesterId: classData.requester.id,
+		startTime: classData.startTime.toISOString(),
 		durationInHours: classData.durationInHours.toString(),
+		paid: classData.paid,
+		totalPrice: classData.totalPrice.toString(),
+		createdAt: classData.createdAt.toISOString(),
 	};
 }
 
@@ -231,7 +211,7 @@ export async function fetchClassRequestedBySelf(classId: string) {
 	const user = await fetchUserByEmail(session.user.email);
 	const classRequested = await fetchClassById(classId);
 
-	return classRequested?.requester.id == user?.id;
+	return classRequested?.requesterId == user?.id;
 }
 
 export async function fetchClassSubjectsBySelf() {

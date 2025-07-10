@@ -3,8 +3,9 @@ import UserCard from "../../users/user-card";
 import ClassStatusBadge from "../class-status-badge";
 import { decimalStringToHours } from "@/utils/decimal-to-time";
 import Link from "next/link";
+import ClassData from "@/app/lib/types/classes.types";
 
-export default function ClassInfoCard(props: { classDetails: any }) {
+export default function ClassInfoCard(props: { classDetails: ClassData }) {
 	const { classDetails } = props;
 
 	return (
@@ -22,20 +23,8 @@ export default function ClassInfoCard(props: { classDetails: any }) {
 				<div className="space-y-6 text-base-content">
 					{/* Student and Teacher Cards */}
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<UserCard
-							id={classDetails.student.id}
-							email={classDetails.student.email}
-							firstName={classDetails.student.firstName}
-							lastName={classDetails.student.lastName}
-							role={classDetails.student.role}
-						/>
-						<UserCard
-							id={classDetails.teacher.id}
-							email={classDetails.teacher.email}
-							firstName={classDetails.teacher.firstName}
-							lastName={classDetails.teacher.lastName}
-							role={classDetails.teacher.role}
-						/>
+						<UserCard user={classDetails.student} />
+						<UserCard user={classDetails.teacher} />
 					</div>
 
 					{/* Class Details */}
@@ -43,15 +32,13 @@ export default function ClassInfoCard(props: { classDetails: any }) {
 						<div className="flex flex-col space-y-2">
 							<strong>Subject:</strong>
 							<span className="text-base-content">
-								{classDetails.subject.name}
+								{classDetails.subject}
 							</span>
 						</div>
 						<div className="flex flex-col space-y-2">
 							<strong>Start Time:</strong>
 							<span className="text-base-content">
-								{new Date(
-									classDetails.startTime
-								).toLocaleString()}
+								{classDetails.startTime}
 							</span>
 						</div>
 						<div className="flex flex-col space-y-2">
@@ -83,9 +70,7 @@ export default function ClassInfoCard(props: { classDetails: any }) {
 						<div className="flex flex-col space-y-2">
 							<strong>Created At:</strong>
 							<span className="text-base-content">
-								{new Date(
-									classDetails.createdAt
-								).toLocaleString()}
+								{classDetails.createdAt}
 							</span>
 						</div>
 					</div>

@@ -7,6 +7,10 @@ export default async function ClassDetailsPage(props: {
 	const { id } = await props.params;
 	const classData = await fetchClassById(id);
 
+	if (!classData) {
+		return <div className="text-center text-error">Class not found</div>;
+	}
+
 	return (
 		<div className="container mx-auto p-4">
 			<ClassInfoCard classDetails={classData} />

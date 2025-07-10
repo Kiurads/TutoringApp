@@ -27,16 +27,13 @@ export default async function ClassPayPage(props: {
 				{/* Left side content with class details */}
 				<div className="w-full lg:w-1/3 mb-10 lg:mb-0 card shadow-xl bg-base-100 p-6">
 					<h2 className="text-2xl font-semibold text-center mb-4">
-						{classData.subject.name} Class
+						{classData.subject} Class
 					</h2>
 
 					{/* Teacher Info */}
 					<div className="mb-6">
 						<h3 className="font-semibold text-lg">Teacher:</h3>
-						<p>
-							{classData.teacher.firstName}{" "}
-							{classData.teacher.lastName}
-						</p>
+						<p>{classData.teacher.name}</p>
 						<p className="text-sm text-gray-500">
 							{classData.teacher.email}
 						</p>
@@ -45,10 +42,7 @@ export default async function ClassPayPage(props: {
 					{/* Student Info */}
 					<div className="mb-6">
 						<h3 className="font-semibold text-lg">Student:</h3>
-						<p>
-							{classData.student.firstName}{" "}
-							{classData.student.lastName}
-						</p>
+						<p>{classData.student.name}</p>
 						<p className="text-sm text-gray-500">
 							{classData.student.email}
 						</p>
