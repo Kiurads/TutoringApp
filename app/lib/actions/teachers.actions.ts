@@ -1,8 +1,10 @@
 "use server";
 
 import prisma from "@/prisma";
+import UserDetails from "../types/user.types";
+import TeacherDetails from "../types/teachers.types";
 
-export async function fetchTeachers() {
+export async function fetchTeachers(): Promise<TeacherDetails[]> {
 	const teachers = await prisma.user.findMany({
 		where: {
 			role: "teacher",
@@ -27,26 +29,33 @@ export async function fetchTeachers() {
 		const ratings = teacher.teacherRatingsAsTeacher.map((r) => r.rating);
 		const ratingAverage =
 			ratings.length > 0
-				? ratings.reduce((sum, rating) => sum + rating, 0) /
+				? ratings.reduce((sum, rating) => sum + rating.toNumber(), 0) /
 				  ratings.length
 				: null;
 
-		// Format pricePerHour as a string (e.g., "50.00")
 		const pricePerHour = teacher.pricePerHour
-			? teacher.pricePerHour.toFixed(2) // Ensure 2 decimal places
-			: "0.00"; // Default value if pricePerHour is null or undefined
+			? teacher.pricePerHour.toFixed(2)
+			: "0.00";
 
 		return {
-			...teacher,
-			ratingAverage,
-			pricePerHour, // Add formatted pricePerHour as a string
+			id: teacher.id,
+			name: `${teacher.firstName} ${teacher.lastName}`,
+			email: teacher.email,
+			bio: teacher.bio,
+			rating:
+				ratingAverage !== null
+					? ratingAverage.toFixed(2)
+					: "No Reviews", // Format rating
+			pricePerHour: pricePerHour, // Use the formatted pricePerHour
 		};
 	});
 
 	return teachersWithRatingAndPrice;
 }
 
-export async function fetchTeachersBySubjectsId(subjects?: string[]) {
+export async function fetchTeachersBySubjectsId(
+	subjects?: string[]
+): Promise<UserDetails[]> {
 	const teachers = await prisma.user.findMany({
 		where: {
 			teacherSubject: {
@@ -64,8 +73,14 @@ export async function fetchTeachersBySubjectsId(subjects?: string[]) {
 			id: true,
 			firstName: true,
 			lastName: true,
+			email: true,
 		},
 	});
 
-	return teachers;
+	return teachers.map((teacher) => ({
+		id: teacher.id,
+		name: `${teacher.firstName} ${teacher.lastName}`,
+		email: teacher.email,
+		role: "teacher",
+	}));
 }

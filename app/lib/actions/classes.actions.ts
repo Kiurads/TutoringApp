@@ -8,7 +8,7 @@ import { redirect } from "next/navigation";
 import { fetchUserByEmail } from "./users.actions";
 import { decimalToHours } from "@/utils/decimal-to-time";
 import { Decimal } from "@prisma/client/runtime/library";
-import ClassData from "../types/classes.types";
+import { ClassData, ClassDataSimple } from "../types/classes.types";
 import { formatUser } from "../types/user.types";
 
 export interface ClassDataCalendar {
@@ -75,7 +75,9 @@ export async function fetchClassById(id: string): Promise<ClassData | null> {
 	};
 }
 
-export async function fetchClassesByUser(user: User) {
+export async function fetchClassesByUser(
+	user: User
+): Promise<ClassDataSimple[]> {
 	const classes = await prisma.class.findMany({
 		where: {
 			OR: [
@@ -88,10 +90,20 @@ export async function fetchClassesByUser(user: User) {
 		},
 	});
 
-	return classes;
+	return classes.map((c) => ({
+		id: c.id,
+		status: c.status,
+		startTime: c.startTime.toISOString(),
+		durationInHours: c.durationInHours.toString(),
+		paid: c.paid,
+		totalPrice: c.totalPrice.toString(),
+		createdAt: c.createdAt.toISOString(),
+	}));
 }
 
-export async function fetchUpcomingClassesByUser(userEmail: string) {
+export async function fetchUpcomingClassesByUser(
+	userEmail: string
+): Promise<ClassData[]> {
 	const classes = await prisma.class.findMany({
 		where: {
 			startTime: {
@@ -111,6 +123,7 @@ export async function fetchUpcomingClassesByUser(userEmail: string) {
 			],
 		},
 		include: {
+			student: true,
 			teacher: true,
 			subject: true,
 		},
@@ -119,7 +132,19 @@ export async function fetchUpcomingClassesByUser(userEmail: string) {
 		},
 	});
 
-	return classes;
+	return classes.map((c) => ({
+		id: c.id,
+		teacher: formatUser(c.teacher),
+		student: formatUser(c.student),
+		status: c.status,
+		subject: c.subject.name,
+		requesterId: c.requesterId,
+		startTime: c.startTime.toISOString(),
+		durationInHours: c.durationInHours.toString(),
+		paid: c.paid,
+		totalPrice: c.totalPrice.toString(),
+		createdAt: c.createdAt.toISOString(),
+	}));
 }
 
 export async function fetchBookedClassesByUser(userEmail: string) {

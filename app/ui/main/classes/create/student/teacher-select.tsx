@@ -1,7 +1,8 @@
+import UserDetails from "@/app/lib/types/user.types";
 import { FC } from "react";
 
 interface TeacherSelectProps {
-	teachers: { id: string; firstName: string; lastName: string }[];
+	teachers: UserDetails[];
 	selectedSubject: string;
 }
 
@@ -23,7 +24,7 @@ const TeacherSelect: FC<TeacherSelectProps> = ({
 			<option value="">Select a teacher</option>
 			{teachers.map((teacher) => (
 				<option key={teacher.id} value={teacher.id}>
-					{teacher.firstName} {teacher.lastName}
+					{teacher.name}
 				</option>
 			))}
 		</select>

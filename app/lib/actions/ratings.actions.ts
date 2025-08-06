@@ -1,16 +1,7 @@
 import prisma from "@/prisma";
+import { Rating } from "../types/ratings.types";
 
-export interface Rating {
-	id: string;
-	studentId: string;
-	teacherId: string;
-	classId: string;
-	rating: number;
-	review: string | null;
-	createdAt: Date;
-}
-
-export async function fetchRatingById(id: string) {
+export async function fetchRatingById(id: string): Promise<number> {
 	try {
 		const ratings = await prisma.teacherRating.findMany({
 			where: {
@@ -38,7 +29,9 @@ export async function fetchRatingById(id: string) {
 	}
 }
 
-export async function fetchReviewsById(id: string) {
+export async function fetchReviewsById(
+	id: string
+): Promise<Rating[] | undefined> {
 	try {
 		const ratings = await prisma.teacherRating.findMany({
 			where: {
@@ -46,7 +39,15 @@ export async function fetchReviewsById(id: string) {
 			},
 		});
 
-		return ratings;
+		return ratings.map((r) => ({
+			id: r.id,
+			studentId: r.studentId,
+			teacherId: r.teacherId,
+			classId: r.classId,
+			rating: r.rating.toNumber(),
+			review: r.review,
+			createdAt: r.createdAt,
+		}));
 	} catch (error) {
 		console.log(error);
 	}
