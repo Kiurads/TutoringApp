@@ -65,15 +65,13 @@ export default async function PaymentSuccessPage({
 						<ClassStatusBadge status={classData.status} />
 					</p>
 					<p className="text-lg">
-						<strong>Student:</strong> {classData.student.firstName}{" "}
-						{classData.student.lastName}
+						<strong>Student:</strong> {classData.student.name}
 					</p>
 					<p className="text-lg">
-						<strong>Teacher:</strong> {classData.teacher.firstName}{" "}
-						{classData.teacher.lastName}
+						<strong>Teacher:</strong> {classData.teacher.name}
 					</p>
 					<p className="text-lg">
-						<strong>Subject:</strong> {classData.subject.name}
+						<strong>Subject:</strong> {classData.subject}
 					</p>
 				</div>
 			</div>

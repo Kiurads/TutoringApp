@@ -15,12 +15,8 @@ export default async function CancelBookingPage(props: {
 			{classData && (
 				<p className="text-center mt-2">
 					Are you sure you want to accept{" "}
-					<strong>{classData.subject.name}</strong> class with{" "}
-					<strong>
-						{classData.teacher.firstName}{" "}
-						{classData.teacher.lastName}
-					</strong>
-					?
+					<strong>{classData.subject}</strong> class with{" "}
+					<strong>{classData.teacher.name}</strong>?
 				</p>
 			)}
 			<div className="col-span-6 mt-4 sm:flex sm:items-center sm:gap-4">

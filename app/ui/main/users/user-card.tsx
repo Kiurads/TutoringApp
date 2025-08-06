@@ -1,18 +1,13 @@
+import UserDetails from "@/app/lib/types/user.types";
 import getAvatar from "@/utils/get-avatar";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function UserCard(props: {
-	id: string;
-	email: string;
-	firstName: string;
-	lastName: string;
-	role: string;
-}) {
-	const { id, email, firstName, lastName, role } = props;
+export default function UserCard(props: { user: UserDetails }) {
+	const { user } = props;
 	return (
 		<Link
-			href={`/main/users/${id}`}
+			href={`/main/users/${user.id}`}
 			className="relative block overflow-hidden rounded-lg border border-base-300 bg-base-200 p-4 sm:p-6 lg:p-8 h-full hover:bg-base-100 transition-all"
 		>
 			<span className="absolute inset-x-0 bottom-0 h-2 bg-gradient-to-r from-primary via-accent to-secondary"></span>
@@ -20,15 +15,15 @@ export default function UserCard(props: {
 			<div className="sm:flex sm:justify-between sm:gap-4">
 				<div>
 					<h3 className="text-lg font-bold text-base-content sm:text-xl">
-						{firstName} {lastName}
+						{user.name}
 					</h3>
 
 					<p className="mt-1 text-xs font-medium text-base-content">
-						{email}
+						{user.email}
 					</p>
 
 					<p className="mt-1 text-sm font-medium text-base-content badge badge-outline capitalize">
-						{role}
+						{user.role}
 					</p>
 				</div>
 
@@ -37,7 +32,7 @@ export default function UserCard(props: {
 						alt=""
 						width={1000}
 						height={1000}
-						src={getAvatar(email)}
+						src={getAvatar(user.email)}
 						className="size-16 rounded-lg object-cover shadow-sm"
 					/>
 				</div>

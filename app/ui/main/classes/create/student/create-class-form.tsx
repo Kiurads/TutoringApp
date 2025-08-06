@@ -1,7 +1,6 @@
 "use client";
 
 // External
-import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useActionState } from "react";
 
@@ -17,12 +16,11 @@ import StartTimeInput from "./start-time-input";
 import DurationSelect from "./duration-select";
 import TeacherSelect from "./teacher-select";
 import GoBackButton from "@/app/ui/go-back-button";
+import UserDetails from "@/app/lib/types/user.types";
 
 export default function RequestClassForm() {
 	const [subjects, setSubjects] = useState<Subject[]>([]);
-	const [teachers, setTeachers] = useState<
-		{ id: string; firstName: string; lastName: string }[]
-	>([]);
+	const [teachers, setTeachers] = useState<UserDetails[]>([]);
 	const [selectedSubject, setSelectedSubject] = useState("");
 	const [errorMessage, formAction, isPending] = useActionState(
 		createClassAsStudent,

@@ -1,22 +1,14 @@
+import TeacherDetails from "@/app/lib/types/teachers.types";
 import getAvatar from "@/utils/get-avatar";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function TeacherCard(props: {
-	id: string;
-	email: string;
-	firstName: string;
-	lastName: string;
-	bio: string | null;
-	ratingAverage: number | null;
-	pricePerHour: string;
-}) {
-	const { id, email, firstName, lastName, bio, ratingAverage, pricePerHour } =
-		props;
+export default function TeacherCard(props: { teacher: TeacherDetails }) {
+	const { teacher } = props;
 
 	return (
 		<Link
-			href={`/main/users/${id}`}
+			href={`/main/users/${teacher.id}`}
 			className="relative block overflow-hidden rounded-lg border border-base-300 bg-base-200 p-4 sm:p-6 lg:p-8 h-full hover:bg-base-100 transition-all"
 		>
 			<span className="absolute inset-x-0 bottom-0 h-2 bg-gradient-to-r from-primary via-accent to-secondary"></span>
@@ -24,11 +16,11 @@ export default function TeacherCard(props: {
 			<div className="sm:flex sm:justify-between sm:gap-4">
 				<div>
 					<h3 className="text-lg font-bold text-base-content sm:text-xl">
-						{firstName} {lastName}
+						{teacher.name}
 					</h3>
 
 					<p className="mt-1 text-xs font-medium text-base-content">
-						{email}
+						{teacher.email}
 					</p>
 				</div>
 
@@ -37,14 +29,16 @@ export default function TeacherCard(props: {
 						alt=""
 						width={1000}
 						height={1000}
-						src={getAvatar(email)}
+						src={getAvatar(teacher.email)}
 						className="size-16 rounded-lg object-cover shadow-sm"
 					/>
 				</div>
 			</div>
 
 			<div className="mt-4">
-				<p className="text-sm text-pretty text-base-content">{bio}</p>
+				<p className="text-sm text-pretty text-base-content">
+					{teacher.bio}
+				</p>
 			</div>
 
 			<dl className="mt-6 flex gap-4 sm:gap-6">
@@ -53,9 +47,7 @@ export default function TeacherCard(props: {
 						Rating
 					</dt>
 					<dd className="text-xs text-base-content">
-						{ratingAverage !== null
-							? `${ratingAverage.toFixed(1)}/5` // Safely call .toFixed() if ratingAverage is not null
-							: "No ratings yet"}
+						{teacher.rating}
 					</dd>
 				</div>
 				<div className="flex flex-col-reverse">
@@ -63,7 +55,7 @@ export default function TeacherCard(props: {
 						Price/Hour
 					</dt>
 					<dd className="text-xs text-base-content">
-						{pricePerHour + "€"}
+						{teacher.pricePerHour + "€"}
 					</dd>
 				</div>
 			</dl>

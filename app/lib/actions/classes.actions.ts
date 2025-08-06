@@ -8,33 +8,8 @@ import { redirect } from "next/navigation";
 import { fetchUserByEmail } from "./users.actions";
 import { decimalToHours } from "@/utils/decimal-to-time";
 import { Decimal } from "@prisma/client/runtime/library";
-export interface ClassData {
-	id: string;
-	totalPrice: string;
-	durationInHours: string;
-	teacher: {
-		id: string;
-		firstName: string;
-		lastName: string;
-		email: string;
-		role: string;
-	};
-	student: {
-		id: string;
-		firstName: string;
-		lastName: string;
-		email: string;
-		role: string;
-	};
-	startTime: Date;
-	status: string;
-	subject: {
-		name: string;
-	};
-	requester: {
-		id: string;
-	};
-}
+import { ClassData, ClassDataSimple } from "../types/classes.types";
+import { formatUser } from "../types/user.types";
 
 export interface ClassDataCalendar {
 	subject: string;
@@ -46,7 +21,7 @@ export interface ClassDataCalendar {
 	status: string;
 }
 
-export async function fetchClassById(id: string): Promise<ClassData> {
+export async function fetchClassById(id: string): Promise<ClassData | null> {
 	const classData = await prisma.class.findFirst({
 		where: {
 			id: id,
@@ -83,19 +58,26 @@ export async function fetchClassById(id: string): Promise<ClassData> {
 		},
 	});
 
-	if (!classData) {
-		return null;
-	}
+	if (!classData) return null;
 
-	// Convert totalPrice and durationInHours to strings
 	return {
-		...classData,
-		totalPrice: classData.totalPrice.toString(),
+		id: classData.id,
+		teacher: formatUser(classData.teacher),
+		student: formatUser(classData.student),
+		status: classData.status,
+		subject: classData.subject.name,
+		requesterId: classData.requester.id,
+		startTime: classData.startTime.toISOString(),
 		durationInHours: classData.durationInHours.toString(),
+		paid: classData.paid,
+		totalPrice: classData.totalPrice.toString(),
+		createdAt: classData.createdAt.toISOString(),
 	};
 }
 
-export async function fetchClassesByUser(user: User) {
+export async function fetchClassesByUser(
+	user: User
+): Promise<ClassDataSimple[]> {
 	const classes = await prisma.class.findMany({
 		where: {
 			OR: [
@@ -108,10 +90,20 @@ export async function fetchClassesByUser(user: User) {
 		},
 	});
 
-	return classes;
+	return classes.map((c) => ({
+		id: c.id,
+		status: c.status,
+		startTime: c.startTime.toISOString(),
+		durationInHours: c.durationInHours.toString(),
+		paid: c.paid,
+		totalPrice: c.totalPrice.toString(),
+		createdAt: c.createdAt.toISOString(),
+	}));
 }
 
-export async function fetchUpcomingClassesByUser(userEmail: string) {
+export async function fetchUpcomingClassesByUser(
+	userEmail: string
+): Promise<ClassData[]> {
 	const classes = await prisma.class.findMany({
 		where: {
 			startTime: {
@@ -131,6 +123,7 @@ export async function fetchUpcomingClassesByUser(userEmail: string) {
 			],
 		},
 		include: {
+			student: true,
 			teacher: true,
 			subject: true,
 		},
@@ -139,7 +132,19 @@ export async function fetchUpcomingClassesByUser(userEmail: string) {
 		},
 	});
 
-	return classes;
+	return classes.map((c) => ({
+		id: c.id,
+		teacher: formatUser(c.teacher),
+		student: formatUser(c.student),
+		status: c.status,
+		subject: c.subject.name,
+		requesterId: c.requesterId,
+		startTime: c.startTime.toISOString(),
+		durationInHours: c.durationInHours.toString(),
+		paid: c.paid,
+		totalPrice: c.totalPrice.toString(),
+		createdAt: c.createdAt.toISOString(),
+	}));
 }
 
 export async function fetchBookedClassesByUser(userEmail: string) {
@@ -231,7 +236,7 @@ export async function fetchClassRequestedBySelf(classId: string) {
 	const user = await fetchUserByEmail(session.user.email);
 	const classRequested = await fetchClassById(classId);
 
-	return classRequested?.requester.id == user?.id;
+	return classRequested?.requesterId == user?.id;
 }
 
 export async function fetchClassSubjectsBySelf() {

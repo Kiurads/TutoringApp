@@ -4,10 +4,9 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import prisma from "@/prisma";
-import { EmailTemplate } from "@/email/email-template";
 
 export async function createClassAsStudent(
-	prevState: string | undefined,
+	_prevState: string | undefined,
 	formData: FormData
 ) {
 	const session = await auth();
@@ -62,7 +61,7 @@ export async function createClassAsStudent(
 
 	// Calculate total price
 	const durationInHours = parseFloat(duration);
-	const totalPrice = teacher.pricePerHour * durationInHours;
+	const totalPrice = Number(teacher.pricePerHour) * durationInHours;
 
 	// Create the class in the database
 	await prisma.class.create({

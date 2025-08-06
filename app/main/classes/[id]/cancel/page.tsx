@@ -1,6 +1,7 @@
 "use client";
 
 import { fetchClassById } from "@/app/lib/actions/classes.actions";
+import ClassData from "@/app/lib/types/classes.types";
 import GoBackButton from "@/app/ui/go-back-button";
 import CancelButton from "@/app/ui/main/classes/cancel/cancel-button";
 import { useParams } from "next/navigation";
@@ -9,22 +10,7 @@ import { useEffect, useState } from "react";
 export default function CancelBookingPage() {
 	const { id } = useParams();
 
-	const [classData, setClassData] = useState<{
-		subject: {
-			name: string;
-		};
-		teacher: {
-			firstName: string;
-			lastName: string;
-		};
-		student: {
-			firstName: string;
-			lastName: string;
-		};
-		requester: {
-			id: string;
-		};
-	} | null>(null);
+	const [classData, setClassData] = useState<ClassData | null>(null);
 
 	useEffect(() => {
 		async function fetchClassDetails() {
@@ -48,12 +34,8 @@ export default function CancelBookingPage() {
 			{classData && (
 				<p className="text-center mt-2">
 					Are you sure you want to cancel{" "}
-					<strong>{classData.subject.name}</strong> class with{" "}
-					<strong>
-						{classData.teacher.firstName}{" "}
-						{classData.teacher.lastName}
-					</strong>
-					?
+					<strong>{classData.subject}</strong> class with{" "}
+					<strong>{classData.teacher.name}</strong>?
 				</p>
 			)}
 			<div className="col-span-6 mt-4 sm:flex sm:items-center sm:gap-4">
