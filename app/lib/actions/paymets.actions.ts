@@ -1,7 +1,6 @@
 "use server";
 
 import prisma from "@/prisma";
-import { revalidatePath } from "next/cache";
 
 export async function fetchPaymentsByUserId(email: string) {
 	// Get student ID from email

@@ -3,8 +3,6 @@ import DashboardHeader from "@/app/ui/main/dashboard/header";
 import UpcomingClasses from "@/app/ui/main/dashboard/upcoming-classes/upcoming-classes";
 import StudentPayments from "@/app/ui/main/dashboard/student-payments";
 import { fetchPaymentsByUserId } from "@/app/lib/actions/paymets.actions";
-import { fetchClassSubjectsBySelf } from "@/app/lib/actions/classes.actions";
-// import ClassSubjectChart from "@/app/ui/main/dashboard/class-subject-chart";
 
 export default async function DashboardStudent() {
 	const session = await auth();
