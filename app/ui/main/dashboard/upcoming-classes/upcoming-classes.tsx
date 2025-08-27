@@ -58,15 +58,13 @@ export default async function UpcomingClasses(props: { userEmail: string }) {
 								className="hover:bg-base-200 transition-all"
 							>
 								<td className="whitespace-nowrap px-4 py-2 font-medium text-base-content capitalize">
-									{classData.subject.name}
+									{classData.subject}
 								</td>
 								<td className="whitespace-nowrap px-4 py-2 text-base-content capitalize">
-									{classData.teacher.firstName +
-										" " +
-										classData.teacher.lastName}
+									{classData.teacher.name}
 								</td>
 								<td className="whitespace-nowrap px-4 py-2 text-base-content">
-									{classData.startTime.toUTCString()}
+									{classData.startTime}
 								</td>
 								<td className="whitespace-nowrap px-4 py-2 text-base-content">
 									{decimalToHours(classData.durationInHours)}

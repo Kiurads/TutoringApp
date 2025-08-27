@@ -5,7 +5,7 @@ import { useActionState } from "react";
 
 import { registerStudent } from "@/app/lib/auth/register-student";
 
-export default function RegisterForm() {
+export default function RegisterStudentForm() {
 	const [errorMessage, formAction, isPending] = useActionState(
 		registerStudent,
 		undefined
