@@ -1,4 +1,4 @@
-import RegisterStudentForm from "@/app/ui/register/register-student-form";
+import RegisterStudentForm from "@/app/ui/register/student/register-student-form";
 
 export default function Register() {
 	return (
