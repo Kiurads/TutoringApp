@@ -4,11 +4,18 @@ import prisma from "@/prisma";
 import { SubjectData } from "./../types/subjects.types";
 
 export async function fetchSubjects(): Promise<SubjectData[]> {
-	const subjects = await prisma.subject.findMany();
+	const subjects = await prisma.subject.findMany({
+		include: {
+			_count: {
+				select: { teacherSubject: true },
+			},
+		},
+	});
 
 	return subjects.map((subject) => ({
 		id: subject.id,
 		name: subject.name,
+		teacherCount: subject._count.teacherSubject,
 	}));
 }
 
