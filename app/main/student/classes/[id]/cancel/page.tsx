@@ -1,7 +1,7 @@
 "use client";
 
 import { fetchClassById } from "@/app/lib/actions/classes.actions";
-import ClassData from "@/app/lib/types/classes.types";
+import { ClassData } from "@/app/lib/types/classes.types";
 import GoBackButton from "@/app/ui/go-back-button";
 import CancelButton from "@/app/ui/main/classes/cancel/cancel-button";
 import { useParams } from "next/navigation";
