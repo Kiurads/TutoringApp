@@ -8,7 +8,7 @@ export default function TeacherCard(props: { teacher: TeacherDetails }) {
 
 	return (
 		<Link
-			href={`/main/users/${teacher.id}`}
+			href={`/main/student/teachers/${teacher.id}`}
 			className="relative block overflow-hidden rounded-lg border border-base-300 bg-base-200 p-4 sm:p-6 lg:p-8 h-full hover:bg-base-100 transition-all"
 		>
 			<span className="absolute inset-x-0 bottom-0 h-2 bg-gradient-to-r from-primary via-accent to-secondary"></span>

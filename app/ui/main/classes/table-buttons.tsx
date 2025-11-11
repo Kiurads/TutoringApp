@@ -13,7 +13,7 @@ export default function ClassesTableButtons(props: {
 			<div className="flex flex-row gap-2 w-full">
 				<div className="flex-1">
 					<Link
-						href={`/main/classes/${bookedClass.id}/cancel`}
+						href={`/main/student/classes/${bookedClass.id}/cancel`}
 						className={
 							bookedClass.paid
 								? "btn btn-error btn-sm tooltip w-full"
@@ -32,7 +32,7 @@ export default function ClassesTableButtons(props: {
 				<div className="flex flex-row gap-2 w-full">
 					<div className="flex-1">
 						<Link
-							href={`/main/classes/${bookedClass.id}/accept`}
+							href={`/main/student/classes/${bookedClass.id}/accept`}
 							className="btn btn-success btn-sm tooltip w-full"
 							data-tip="Accept Request"
 						>
@@ -42,7 +42,7 @@ export default function ClassesTableButtons(props: {
 
 					<div className="flex-1">
 						<Link
-							href={`/main/classes/${bookedClass.id}/refuse`}
+							href={`/main/student/classes/${bookedClass.id}/refuse`}
 							className="btn btn-error btn-sm tooltip w-full"
 							data-tip="Refuse Request"
 						>
@@ -61,7 +61,7 @@ export default function ClassesTableButtons(props: {
 					{!bookedClass.paid && (
 						<div className="flex-1">
 							<Link
-								href={`/main/classes/${bookedClass.id}/pay`}
+								href={`/main/student/classes/${bookedClass.id}/pay`}
 								className="btn btn-success btn-sm tooltip w-full"
 								data-tip="Pay for Class"
 							>
