@@ -76,7 +76,7 @@ export default async function PaymentSuccessPage({
 				</div>
 			</div>
 
-			<Link href="/main/classes" className="btn btn-primary mt-6">
+			<Link href="/main/student/classes" className="btn btn-primary mt-6">
 				Go to Classes
 			</Link>
 		</div>

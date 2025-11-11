@@ -40,7 +40,7 @@ export default function CancelBookingPage() {
 			)}
 			<div className="col-span-6 mt-4 sm:flex sm:items-center sm:gap-4">
 				<CancelButton id={id} />
-				<GoBackButton url="/main/classes" />
+				<GoBackButton url="/main/student/classes" />
 			</div>
 		</div>
 	);

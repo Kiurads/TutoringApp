@@ -21,7 +21,7 @@ export default async function CancelBookingPage(props: {
 			)}
 			<div className="col-span-6 mt-4 sm:flex sm:items-center sm:gap-4">
 				<AcceptButton id={classId} />
-				<GoBackButton url="/main/classes" />
+				<GoBackButton url="/main/student/classes" />
 			</div>
 		</div>
 	);

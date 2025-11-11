@@ -90,7 +90,9 @@ export default function BookedClasses(props: { bookedClasses: BookedClass[] }) {
 								key={classData.id}
 								className="hover:bg-base-200 transition-all cursor-pointer"
 								onClick={() =>
-									router.push(`/main/classes/${classData.id}`)
+									router.push(
+										`/main/student/classes/${classData.id}`
+									)
 								}
 							>
 								<td className="whitespace-nowrap px-4 py-2 font-medium text-base-content capitalize">

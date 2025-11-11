@@ -80,7 +80,7 @@ export default function ClassInfoCard(props: { classDetails: ClassData }) {
 				{!classDetails.paid && classDetails.status === "scheduled" && (
 					<div className="mt-6 flex justify-end">
 						<Link
-							href={`/main/classes/${classDetails.id}/pay`}
+							href={`/main/student/classes/${classDetails.id}/pay`}
 							className="btn btn-success"
 						>
 							Pay Now{" "}
