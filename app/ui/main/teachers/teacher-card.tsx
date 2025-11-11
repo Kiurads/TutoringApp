@@ -1,4 +1,4 @@
-import TeacherDetails from "@/app/lib/types/teachers.types";
+import { TeacherDetails } from "@/app/lib/types/teachers.types";
 import getAvatar from "@/utils/get-avatar";
 import Image from "next/image";
 import Link from "next/link";

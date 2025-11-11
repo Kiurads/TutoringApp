@@ -3,7 +3,7 @@ import UserCard from "../../users/user-card";
 import ClassStatusBadge from "../class-status-badge";
 import { decimalStringToHours } from "@/utils/decimal-to-time";
 import Link from "next/link";
-import ClassData from "@/app/lib/types/classes.types";
+import { ClassData } from "@/app/lib/types/classes.types";
 
 export default function ClassInfoCard(props: { classDetails: ClassData }) {
 	const { classDetails } = props;

@@ -21,6 +21,55 @@ export interface ClassDataCalendar {
 	status: string;
 }
 
+export async function fetchClasses(): Promise<ClassData[]> {
+	const classData = await prisma.class.findMany({
+		include: {
+			teacher: {
+				select: {
+					id: true,
+					firstName: true,
+					lastName: true,
+					email: true,
+					role: true,
+				},
+			},
+			student: {
+				select: {
+					id: true,
+					firstName: true,
+					lastName: true,
+					email: true,
+					role: true,
+				},
+			},
+			subject: {
+				select: {
+					name: true,
+				},
+			},
+			requester: {
+				select: {
+					id: true,
+				},
+			},
+		},
+	});
+
+	return classData.map((classData) => ({
+		id: classData.id,
+		teacher: formatUser(classData.teacher),
+		student: formatUser(classData.student),
+		status: classData.status,
+		subject: classData.subject.name,
+		requesterId: classData.requester.id,
+		startTime: classData.startTime.toISOString(),
+		durationInHours: classData.durationInHours.toString(),
+		paid: classData.paid,
+		totalPrice: classData.totalPrice.toString(),
+		createdAt: classData.createdAt.toISOString(),
+	}));
+}
+
 export async function fetchClassById(id: string): Promise<ClassData | null> {
 	const classData = await prisma.class.findFirst({
 		where: {
