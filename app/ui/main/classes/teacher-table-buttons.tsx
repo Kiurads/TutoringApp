@@ -1,7 +1,7 @@
 "use client";
 
+import { BookedClass } from "@/app/lib/types/classes.types";
 import Link from "next/link";
-import { BookedClass } from "./booked-classes";
 
 export default function ClassesTableButtons(props: {
 	bookedClass: BookedClass;
@@ -13,7 +13,7 @@ export default function ClassesTableButtons(props: {
 			<div className="flex flex-row gap-2 w-full">
 				<div className="flex-1">
 					<Link
-						href={`/main/student/classes/${bookedClass.id}/cancel`}
+						href={`/main/teacher/classes/${bookedClass.id}/cancel`}
 						className={
 							bookedClass.paid
 								? "btn btn-error btn-sm tooltip w-full"
@@ -32,7 +32,7 @@ export default function ClassesTableButtons(props: {
 				<div className="flex flex-row gap-2 w-full">
 					<div className="flex-1">
 						<Link
-							href={`/main/student/classes/${bookedClass.id}/accept`}
+							href={`/main/teacher/classes/${bookedClass.id}/accept`}
 							className="btn btn-success btn-sm tooltip w-full"
 							data-tip="Accept Request"
 						>
@@ -42,7 +42,7 @@ export default function ClassesTableButtons(props: {
 
 					<div className="flex-1">
 						<Link
-							href={`/main/student/classes/${bookedClass.id}/refuse`}
+							href={`/main/teacher/classes/${bookedClass.id}/refuse`}
 							className="btn btn-error btn-sm tooltip w-full"
 							data-tip="Refuse Request"
 						>
@@ -52,24 +52,5 @@ export default function ClassesTableButtons(props: {
 				</div>
 			);
 		}
-		if (
-			bookedClass.status === "scheduled" ||
-			bookedClass.status === "completed"
-		)
-			return (
-				<div className="flex flex-row gap-2 w-full">
-					{!bookedClass.paid && (
-						<div className="flex-1">
-							<Link
-								href={`/main/student/classes/${bookedClass.id}/pay`}
-								className="btn btn-success btn-sm tooltip w-full"
-								data-tip="Pay for Class"
-							>
-								<i className="fa-solid fa-money-bill-wave"></i>
-							</Link>
-						</div>
-					)}
-				</div>
-			);
 	}
 }

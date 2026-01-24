@@ -23,3 +23,22 @@ export interface ClassDataSimple {
 	totalPrice: string;
 	createdAt: string;
 }
+
+export interface BookedClass {
+	id: string;
+	durationInHours: string;
+	startTime: Date;
+	totalPrice: string;
+	status: string;
+	requestedBySelf: boolean;
+	paid: boolean;
+	student: {
+		name: string;
+	};
+	teacher: {
+		name: string;
+	};
+	subject: {
+		name: string;
+	};
+}

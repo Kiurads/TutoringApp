@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import prisma from "@/prisma";
 
-export async function createClassAsStudent(
+export async function createClassAsTeacher(
 	_prevState: string | undefined,
 	formData: FormData,
 ) {
@@ -16,13 +16,13 @@ export async function createClassAsStudent(
 
 	// Extract form data
 	const subjectId = formData.get("subject") as string;
-	const teacherId = formData.get("teacher") as string;
+	const studentId = formData.get("student") as string;
 	const startTime = formData.get("startTime") as string;
 	const duration = formData.get("duration") as string;
 
 	// Ensure required fields are present
 	if (!subjectId) return "Please select a subject.";
-	if (!teacherId) return "Please select a teacher.";
+	if (!studentId) return "Please select a student.";
 	if (!startTime) return "Please select a start time.";
 	if (!duration) return "Please select a duration.";
 
@@ -36,27 +36,18 @@ export async function createClassAsStudent(
 		return "Start time must be from tomorrow onward.";
 	}
 
-	// Get student ID from session
-	const student = await prisma.user.findUnique({
+	// Get teacher ID from session
+	const teacher = await prisma.user.findUnique({
 		where: { email: session.user.email },
-		select: { id: true },
+		select: { id: true, pricePerHour: true },
 	});
 
-	if (!student) {
-		return "Student not found.";
+	if (!teacher) {
+		return "Teacher not found.";
 	}
 
-	// Fetch teacher's hourly rate
-	const teacher = await prisma.user.findUnique({
-		where: { id: teacherId },
-		select: {
-			pricePerHour: true,
-			email: true,
-		},
-	});
-
-	if (!teacher || !teacher.pricePerHour) {
-		return "Teacher not found.";
+	if (!teacher.pricePerHour) {
+		return "You must set your hourly rate before creating classes.";
 	}
 
 	// Calculate total price
@@ -66,17 +57,17 @@ export async function createClassAsStudent(
 	// Create the class in the database
 	await prisma.class.create({
 		data: {
-			studentId: student.id,
-			teacherId,
+			studentId,
+			teacherId: teacher.id,
 			subjectId,
 			startTime: classStartTime,
 			durationInHours,
 			totalPrice,
 			status: "requested",
-			requesterId: student.id,
+			requesterId: teacher.id,
 		},
 	});
 
 	// Redirect to the classes page after successful creation
-	redirect("/main/student/classes");
+	redirect("/main/teacher/classes");
 }

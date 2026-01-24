@@ -6,24 +6,24 @@ import { useActionState } from "react";
 
 // Server actions
 import { Subject } from "@prisma/client";
-import { createClassAsStudent } from "@/app/lib/classes/create-class-as-student";
-import { fetchTeachersBySubjectsId } from "@/app/lib/actions/teachers.actions";
+import { createClassAsTeacher } from "@/app/lib/classes/create-class-as-teacher";
 import { fetchSubjectsWithTeachers } from "@/app/lib/actions/subjects.actions";
 
 // UI elements
 import SubjectSelect from "./subject-select";
 import StartTimeInput from "./start-time-input";
 import DurationSelect from "./duration-select";
-import TeacherSelect from "./teacher-select";
+import StudentSelect from "./student-select";
 import GoBackButton from "@/app/ui/go-back-button";
+import { fetchStudents } from "@/app/lib/actions/students.actions";
 import UserDetails from "@/app/lib/types/user.types";
 
-export default function RequestClassForm() {
+export default function CreateClassForm() {
 	const [subjects, setSubjects] = useState<Subject[]>([]);
-	const [teachers, setTeachers] = useState<UserDetails[]>([]);
+	const [students, setStudents] = useState<UserDetails[]>([]);
 	const [selectedSubject, setSelectedSubject] = useState("");
 	const [errorMessage, formAction, isPending] = useActionState(
-		createClassAsStudent,
+		createClassAsTeacher,
 		undefined,
 	);
 
@@ -32,18 +32,14 @@ export default function RequestClassForm() {
 			const subjects = await fetchSubjectsWithTeachers();
 			setSubjects(subjects);
 		}
+		async function updateStudents() {
+			const students = await fetchStudents();
+			console.log("Students received in component:", students);
+			setStudents(students);
+		}
+		updateStudents();
 		updateSubjects();
 	}, []);
-
-	useEffect(() => {
-		if (!selectedSubject) return;
-
-		async function updateTeachers() {
-			const teachers = await fetchTeachersBySubjectsId([selectedSubject]);
-			setTeachers(teachers);
-		}
-		updateTeachers();
-	}, [selectedSubject]);
 
 	const durations = Array.from({ length: 20 }, (_, i) => (i + 1) * 0.25); // 0.25 to 2 hours in 15-minute increments
 
@@ -54,7 +50,7 @@ export default function RequestClassForm() {
 	return (
 		<div className="max-w-xl mx-auto p-6 bg-base-100 shadow-lg rounded-xl border border-base-300">
 			<h2 className="text-xl font-semibold text-center mb-4">
-				Request a New Class
+				Create a New Class
 			</h2>
 
 			<form action={formAction} className="grid gap-4">
@@ -77,10 +73,7 @@ export default function RequestClassForm() {
 
 				<DurationSelect durations={durations} />
 
-				<TeacherSelect
-					teachers={teachers}
-					selectedSubject={selectedSubject}
-				/>
+				<StudentSelect students={students} />
 
 				{/* Buttons */}
 				<div className="flex items-center gap-4 mt-4">
@@ -101,7 +94,7 @@ export default function RequestClassForm() {
 						)}
 					</button>
 
-					<GoBackButton url="/main/student/classes" />
+					<GoBackButton url="/main/teacher/classes" />
 				</div>
 			</form>
 		</div>

@@ -2,28 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import AddClassButton from "./add-class-button";
-import ClassesTableButtons from "./table-buttons";
+import ClassesTableButtons from "./student-table-buttons";
 import ClassStatusBadge from "./class-status-badge";
 import ClassPaidIcon from "./paid-icon";
-
-export interface BookedClass {
-	id: string;
-	durationInHours: string;
-	startTime: Date;
-	totalPrice: string;
-	status: string;
-	requestedBySelf: boolean;
-	paid: boolean;
-	student: {
-		name: string;
-	};
-	teacher: {
-		name: string;
-	};
-	subject: {
-		name: string;
-	};
-}
+import { BookedClass } from "@/app/lib/types/classes.types";
 
 export default function BookedClasses(props: { bookedClasses: BookedClass[] }) {
 	const { bookedClasses } = props;
@@ -60,26 +42,29 @@ export default function BookedClasses(props: { bookedClasses: BookedClass[] }) {
 				<table className="min-w-full divide-y-2 divide-base-300 bg-base text-sm table-auto">
 					<thead className="ltr:text-left rtl:text-right">
 						<tr>
-							<th className="whitespace-nowrap px-4 py-2 font-medium text-base-content text-left">
+							<th className="px-4 py-2 font-medium text-base-content text-left">
 								Subject
 							</th>
-							<th className="whitespace-nowrap px-4 py-2 font-medium text-base-content text-left">
+							<th className="px-4 py-2 font-medium text-base-content text-left">
 								Teacher
 							</th>
-							<th className="whitespace-nowrap px-4 py-2 font-medium text-base-content text-left">
+							<th className="px-4 py-2 font-medium text-base-content text-left">
 								Start Time
 							</th>
-							<th className="whitespace-nowrap px-4 py-2 font-medium text-base-content text-left">
+							<th className="px-4 py-2 font-medium text-base-content text-left">
 								Duration
 							</th>
-							<th className="whitespace-nowrap px-4 py-2 font-medium text-base-content text-left">
+							<th className="px-4 py-2 font-medium text-base-content text-left">
 								Price
 							</th>
-							<th className="whitespace-nowrap px-4 py-2 font-medium text-base-content text-left">
+							<th className="px-4 py-2 font-medium text-base-content text-left">
 								Status
 							</th>
-							<th className="whitespace-nowrap px-4 py-2 font-medium text-base-content text-left">
+							<th className="px-4 py-2 font-medium text-base-content text-left">
 								Paid
+							</th>
+							<th className="px-2 py-2 font-medium text-base-content text-left">
+								Actions
 							</th>
 						</tr>
 					</thead>
@@ -91,36 +76,36 @@ export default function BookedClasses(props: { bookedClasses: BookedClass[] }) {
 								className="hover:bg-base-200 transition-all cursor-pointer"
 								onClick={() =>
 									router.push(
-										`/main/student/classes/${classData.id}`
+										`/main/student/classes/${classData.id}`,
 									)
 								}
 							>
-								<td className="whitespace-nowrap px-4 py-2 font-medium text-base-content capitalize">
+								<td className="px-4 py-2 font-medium text-base-content capitalize">
 									{classData.subject.name}
 								</td>
-								<td className="whitespace-nowrap px-4 py-2 text-base-content capitalize">
+								<td className="px-4 py-2 text-base-content capitalize">
 									{classData.teacher.name}
 								</td>
-								<td className="whitespace-nowrap px-4 py-2 text-base-content">
+								<td className="px-4 py-2 text-base-content">
 									{classData.startTime.toUTCString()}
 								</td>
-								<td className="whitespace-nowrap px-4 py-2 text-base-content">
+								<td className="px-4 py-2 text-base-content">
 									{classData.durationInHours}
 								</td>
-								<td className="whitespace-nowrap px-4 py-2 text-base-content">
+								<td className="px-4 py-2 text-base-content">
 									{classData.totalPrice + "€"}
 								</td>
-								<td className="whitespace-nowrap px-4 py-2 text-base-content capitalize">
+								<td className="px-4 py-2 text-base-content capitalize">
 									<ClassStatusBadge
 										status={classData.status}
 									/>
 								</td>
-								<td className="whitespace-nowrap px-4 py-2 text-base-content capitalize">
+								<td className="px-4 py-2 text-base-content capitalize">
 									<ClassPaidIcon status={classData.paid} />
 								</td>
 								{/* Exclude buttons from navigation */}
 								<td
-									className="whitespace-nowrap px-4 py-2 text-base-content"
+									className="px-4 py-2 text-base-content"
 									onClick={(e) => e.stopPropagation()} // Prevent row click from triggering
 								>
 									<ClassesTableButtons

@@ -38,6 +38,42 @@ export async function fetchPaymentsByUserId(email: string) {
 	}));
 }
 
+export async function fetchPaymentsByTeacherId(email: string) {
+	// Get teacher ID from email
+	const teacher = await prisma.user.findUnique({
+		where: { email },
+		select: { id: true },
+	});
+
+	if (!teacher) return [];
+
+	// Fetch payments
+	const payments = await prisma.payment.findMany({
+		where: {
+			teacherId: teacher.id,
+		},
+		select: {
+			id: true,
+			amount: true,
+			student: {
+				select: {
+					firstName: true,
+					lastName: true,
+				},
+			},
+			createdAt: true,
+		},
+	});
+
+	// Return formatted payments
+	return payments.map((p) => ({
+		id: p.id,
+		amount: p.amount,
+		studentName: `${p.student.firstName} ${p.student.lastName}`,
+		date: p.createdAt,
+	}));
+}
+
 export async function createPaymentForClass(
 	classId: string,
 	paymentIntentId: string

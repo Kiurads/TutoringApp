@@ -8,7 +8,11 @@ import { redirect } from "next/navigation";
 import { fetchUserByEmail } from "./users.actions";
 import { decimalToHours } from "@/utils/decimal-to-time";
 import { Decimal } from "@prisma/client/runtime/library";
-import { ClassData, ClassDataSimple } from "../types/classes.types";
+import {
+	BookedClass,
+	ClassData,
+	ClassDataSimple,
+} from "../types/classes.types";
 import { formatUser } from "../types/user.types";
 
 export interface ClassDataCalendar {
@@ -125,7 +129,7 @@ export async function fetchClassById(id: string): Promise<ClassData | null> {
 }
 
 export async function fetchClassesByUser(
-	user: User
+	user: User,
 ): Promise<ClassDataSimple[]> {
 	const classes = await prisma.class.findMany({
 		where: {
@@ -151,7 +155,7 @@ export async function fetchClassesByUser(
 }
 
 export async function fetchUpcomingClassesByUser(
-	userEmail: string
+	userEmail: string,
 ): Promise<ClassData[]> {
 	const classes = await prisma.class.findMany({
 		where: {
@@ -196,11 +200,13 @@ export async function fetchUpcomingClassesByUser(
 	}));
 }
 
-export async function fetchBookedClassesByUser(userEmail: string) {
+export async function fetchBookedClassesByUser(
+	userEmail: string,
+): Promise<BookedClass[]> {
 	const session = await auth();
 
 	if (!session || !session.user || !session.user.email) {
-		return false;
+		return [];
 	}
 
 	const user = await fetchUserByEmail(session.user.email);
@@ -372,7 +378,7 @@ export async function fetchClassBySelfCalendar(): Promise<
 		teacherName: `${c.teacher.firstName} ${c.teacher.lastName}`,
 		studentName: `${c.student.firstName} ${c.student.lastName}`,
 		day: new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(
-			c.startTime
+			c.startTime,
 		),
 		startTime: c.startTime.toISOString().split("T")[1].slice(0, 5),
 		duration: c.durationInHours,
@@ -381,17 +387,40 @@ export async function fetchClassBySelfCalendar(): Promise<
 }
 
 export async function cancelClassById(classId: string) {
+	const session = await auth();
+
+	if (!session || !session.user || !session.user.email) {
+		return null;
+	}
+
+	const user = await fetchUserByEmail(session.user.email);
+
 	await prisma.class.delete({
 		where: {
 			id: classId,
 		},
 	});
 
-	revalidatePath("/main/classes");
-	redirect("/main/classes");
+	if (user?.role === "teacher") {
+		// Revalidate teacher classes page
+		revalidatePath("/main/teacher/classes");
+		redirect("/main/teacher/classes");
+	}
+
+	// Revalidate student classes page
+	revalidatePath("/main/student/classes");
+	redirect("/main/student/classes");
 }
 
 export async function acceptClassById(classId: string) {
+	const session = await auth();
+
+	if (!session || !session.user || !session.user.email) {
+		return null;
+	}
+
+	const user = await fetchUserByEmail(session.user.email);
+
 	await prisma.class.update({
 		where: {
 			id: classId,
@@ -401,11 +430,25 @@ export async function acceptClassById(classId: string) {
 		},
 	});
 
-	revalidatePath("/main/classes");
-	redirect("/main/classes");
+	if (user?.role === "teacher") {
+		// Revalidate teacher classes page
+		revalidatePath("/main/teacher/classes");
+		redirect("/main/teacher/classes");
+	}
+
+	revalidatePath("/main/student/classes");
+	redirect("/main/student/classes");
 }
 
 export async function refuseClassById(classId: string) {
+	const session = await auth();
+
+	if (!session || !session.user || !session.user.email) {
+		return null;
+	}
+
+	const user = await fetchUserByEmail(session.user.email);
+
 	await prisma.class.update({
 		where: {
 			id: classId,
@@ -415,6 +458,12 @@ export async function refuseClassById(classId: string) {
 		},
 	});
 
-	revalidatePath("/main/classes");
-	redirect("/main/classes");
+	if (user?.role === "teacher") {
+		// Revalidate teacher classes page
+		revalidatePath("/main/teacher/classes");
+		redirect("/main/teacher/classes");
+	}
+
+	revalidatePath("/main/student/classes");
+	redirect("/main/student/classes");
 }
