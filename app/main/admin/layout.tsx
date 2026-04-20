@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const navItems = [
 	{
@@ -47,6 +48,7 @@ export default function AdminLayout({
 	children: React.ReactNode;
 }) {
 	const pathname = usePathname();
+	const { data: session } = useSession();
 
 	return (
 		<div className="drawer lg:drawer-open">
@@ -108,9 +110,9 @@ export default function AdminLayout({
 					</div>
 
 					{/* Footer section */}
-					<div className="mt-8 border-t pt-4 text-sm text-gray-500">
-						<p className="font-semibold mb-1">Logged in as:</p>
-						<p>admin@example.com</p>
+					<div className="mt-8 border-t pt-4 text-sm text-base-content/50">
+						<p className="font-semibold mb-1 text-base-content/70">Logged in as:</p>
+						<p className="truncate">{session?.user?.email ?? "—"}</p>
 					</div>
 				</aside>
 			</div>

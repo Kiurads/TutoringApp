@@ -10,7 +10,7 @@ export default function SubjectSelect({
 }) {
 	const [selected, setSelected] = useState<string[]>([]);
 
-	const toggleSubject = (id: string, name: string) => {
+	const toggleSubject = (id: string) => {
 		setSelected((prev) =>
 			prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
 		);
@@ -34,7 +34,7 @@ export default function SubjectSelect({
 								.join(", ")}
 						</span>
 					) : (
-						<span className="text-gray-400">Select subjects</span>
+						<span className="text-base-content/40">Select subjects</span>
 					)}
 					<svg
 						className="w-4 h-4 ml-2 opacity-60"
@@ -64,7 +64,7 @@ export default function SubjectSelect({
 									value={subject.id}
 									checked={selected.includes(subject.id)}
 									onChange={() =>
-										toggleSubject(subject.id, subject.name)
+										toggleSubject(subject.id)
 									}
 									className="checkbox checkbox-sm"
 								/>

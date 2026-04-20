@@ -21,7 +21,7 @@ export default function Footer() {
 						<li>
 							<Link
 								href="/instructor-portal"
-								className="hover:text-white"
+								className="hover:text-base-content"
 							>
 								Instructor Portal
 							</Link>
@@ -29,7 +29,7 @@ export default function Footer() {
 						<li>
 							<Link
 								href="/student-portal"
-								className="hover:text-white"
+								className="hover:text-base-content"
 							>
 								Student Portal
 							</Link>
@@ -44,25 +44,25 @@ export default function Footer() {
 						<li>
 							<Link
 								href="/help-center"
-								className="hover:text-white"
+								className="hover:text-base-content"
 							>
 								Help Center
 							</Link>
 						</li>
 						<li>
-							<Link href="/faq" className="hover:text-white">
+							<Link href="/faq" className="hover:text-base-content">
 								FAQ
 							</Link>
 						</li>
 						<li>
-							<Link href="/contact" className="hover:text-white">
+							<Link href="/contact" className="hover:text-base-content">
 								Contact Us
 							</Link>
 						</li>
 						<li>
 							<Link
 								href="/refund-policy"
-								className="hover:text-white"
+								className="hover:text-base-content"
 							>
 								Refund Policy
 							</Link>
@@ -74,13 +74,13 @@ export default function Footer() {
 				<div>
 					<h3 className="text-lg font-bold mb-4">Follow Us</h3>
 					<div className="flex space-x-4">
-						<Link href="/facebook" className="hover:text-white">
+						<Link href="/facebook" className="hover:text-base-content">
 							<i className="fab fa-facebook"></i> Facebook
 						</Link>
-						<Link href="/twitter" className="hover:text-white">
+						<Link href="/twitter" className="hover:text-base-content">
 							<i className="fab fa-twitter"></i> Twitter
 						</Link>
-						<Link href="/linkedin" className="hover:text-white">
+						<Link href="/linkedin" className="hover:text-base-content">
 							<i className="fab fa-linkedin"></i> LinkedIn
 						</Link>
 					</div>

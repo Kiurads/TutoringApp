@@ -2,7 +2,7 @@ import UserDetails from "./user.types";
 
 export interface ClassData {
 	id: string;
-	teacher: UserDetails;
+	teacher: UserDetails | null;
 	student: UserDetails;
 	status: string;
 	subject: string;
@@ -10,8 +10,10 @@ export interface ClassData {
 	startTime: string;
 	durationInHours: string;
 	paid: boolean;
+	hasPreAuth: boolean;
 	totalPrice: string;
 	createdAt: string;
+	counterOfferTime: string | null;
 }
 
 export interface ClassDataSimple {
@@ -37,7 +39,7 @@ export interface BookedClass {
 	};
 	teacher: {
 		name: string;
-	};
+	} | null;
 	subject: {
 		name: string;
 	};

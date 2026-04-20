@@ -46,3 +46,14 @@ export async function fetchSubjectsWithTeachers() {
 		},
 	});
 }
+
+export async function fetchSubjectsByTeacherId(
+	teacherId: string
+): Promise<{ id: string; name: string }[]> {
+	const teacherSubjects = await prisma.teacherSubject.findMany({
+		where: { teacherId },
+		select: { subject: { select: { id: true, name: true } } },
+	});
+
+	return teacherSubjects.map((ts) => ts.subject);
+}

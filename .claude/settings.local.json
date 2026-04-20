@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "Bash(stripe trigger:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(npm test:*)",
+      "Bash(npx tsc:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm tsc:*)",
+      "Bash(pnpm vitest:*)",
+      "Bash(pnpm prisma:*)",
+      "Bash(PRISMA_HIDE_UPDATE_MESSAGE=1 pnpm prisma migrate dev --name add-unique-review-per-class)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(npx ts-node *)",
+      "Bash(npx tsx *)",
+      "WebFetch(domain:www.dicebear.com)",
+      "WebFetch(domain:api.dicebear.com)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://api.dicebear.com/9.x/toon-head/svg?seed=test&skinColor[]=f1c3a5&hair[]=undercut&hairColor[]=2c1b18&hairProbability=100&rearHairProbability=0&eyes[]=happy&eyebrows[]=raised&mouth[]=smile&clothes[]=tShirt&clothesColor[]=0b3286&beardProbability=0&backgroundColor[]=b6e3f4&radius=50\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://api.dicebear.com/9.x/toon-head/svg?seed=test&skinColor[]=ff0000&hair[]=undercut&hairColor[]=abcdef&hairProbability=100&rearHairProbability=0&eyes[]=happy&eyebrows[]=raised&mouth[]=smile&clothes[]=tShirt&clothesColor[]=123456&beardProbability=0&radius=50\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://api.dicebear.com/9.x/toon-head/svg?seed=test&skinColor[]=INVALID&hair[]=INVALID&hairProbability=100&rearHairProbability=0&eyes[]=happy&eyebrows[]=raised&mouth[]=smile&clothes[]=tShirt&clothesColor[]=0b3286&beardProbability=0&radius=50\")"
+    ]
+  }
+}

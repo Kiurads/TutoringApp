@@ -1,75 +1,35 @@
 "use client";
 
 import { BookedClass } from "@/app/lib/types/classes.types";
-import Link from "next/link";
+import ClassActionModals from "@/app/ui/main/classes/details/class-action-modals";
 
-export default function ClassesTableButtons(props: {
+export default function ClassesTableButtons({
+	bookedClass,
+}: {
 	bookedClass: BookedClass;
 }) {
-	const { bookedClass } = props;
+	const { status, paid, requestedBySelf } = bookedClass;
 
-	if (bookedClass.requestedBySelf && bookedClass.status === "requested") {
-		return (
-			<div className="flex flex-row gap-2 w-full">
-				<div className="flex-1">
-					<Link
-						href={`/main/student/classes/${bookedClass.id}/cancel`}
-						className={
-							bookedClass.paid
-								? "btn btn-error btn-sm tooltip w-full"
-								: "btn btn-error btn-sm tooltip w-full"
-						}
-						data-tip="Cancel Class"
-					>
-						<i className="fa-solid fa-trash"></i>
-					</Link>
-				</div>
-			</div>
-		);
-	} else {
-		if (bookedClass.status === "requested") {
-			return (
-				<div className="flex flex-row gap-2 w-full">
-					<div className="flex-1">
-						<Link
-							href={`/main/student/classes/${bookedClass.id}/accept`}
-							className="btn btn-success btn-sm tooltip w-full"
-							data-tip="Accept Request"
-						>
-							<i className="fa-solid fa-check"></i>
-						</Link>
-					</div>
+	const canAccept = status === "requested" && !requestedBySelf;
+	const canRefuse = status === "requested" && !requestedBySelf;
+	const canCancel =
+		(status === "requested" && requestedBySelf) || status === "scheduled";
+	const canPay = !paid && (status === "scheduled" || status === "completed");
 
-					<div className="flex-1">
-						<Link
-							href={`/main/student/classes/${bookedClass.id}/refuse`}
-							className="btn btn-error btn-sm tooltip w-full"
-							data-tip="Refuse Request"
-						>
-							<i className="fa-solid fa-x"></i>
-						</Link>
-					</div>
-				</div>
-			);
-		}
-		if (
-			bookedClass.status === "scheduled" ||
-			bookedClass.status === "completed"
-		)
-			return (
-				<div className="flex flex-row gap-2 w-full">
-					{!bookedClass.paid && (
-						<div className="flex-1">
-							<Link
-								href={`/main/student/classes/${bookedClass.id}/pay`}
-								className="btn btn-success btn-sm tooltip w-full"
-								data-tip="Pay for Class"
-							>
-								<i className="fa-solid fa-money-bill-wave"></i>
-							</Link>
-						</div>
-					)}
-				</div>
-			);
-	}
+	if (!canAccept && !canRefuse && !canCancel && !canPay) return null;
+
+	return (
+		<ClassActionModals
+			id={bookedClass.id}
+			subject={bookedClass.subject.name}
+			otherPartyName={bookedClass.teacher?.name ?? "the teacher"}
+			role="student"
+			canAccept={canAccept}
+			canRefuse={canRefuse}
+			canCancel={canCancel}
+			canPay={canPay}
+			isPaid={paid}
+			totalPrice={bookedClass.totalPrice}
+		/>
+	);
 }

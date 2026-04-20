@@ -5,6 +5,14 @@ export default interface UserDetails {
 	role: string;
 }
 
+export interface StudentDetails extends UserDetails {
+	firstName: string;
+	lastName: string;
+	phoneNumber: string | null;
+	avatarOptions?: string | null;
+	activeFrame?: string | null;
+}
+
 export function formatUser(user: {
 	id: string;
 	firstName: string;

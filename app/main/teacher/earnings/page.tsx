@@ -1,52 +1,53 @@
 import { fetchPaymentsByTeacherId } from "@/app/lib/actions/paymets.actions";
 import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import MonthlyEarningsChart from "@/app/ui/main/earnings/monthly-earnings-chart";
+import StudentBreakdownChart from "@/app/ui/main/earnings/student-breakdown-chart";
 
 export default async function TeacherEarningsPage() {
 	const session = await auth();
 
-	if (!session || !session.user || !session.user.email) {
-		return <div>Loading...</div>;
-	}
+	if (!session?.user?.email) redirect("/login");
 
-	const userEmail = session.user.email;
+	const userEmail = session.user.email!;
 	const payments = await fetchPaymentsByTeacherId(userEmail);
 
-	// Calculate statistics
-	const totalEarnings = payments.reduce(
-		(sum, payment) => sum + payment.amount.toNumber(),
-		0,
-	);
-	const thisMonthEarnings = payments
-		.filter((payment) => {
-			const paymentDate = new Date(payment.date);
-			const now = new Date();
-			return (
-				paymentDate.getMonth() === now.getMonth() &&
-				paymentDate.getFullYear() === now.getFullYear()
-			);
+	const paymentsForCharts = payments.map((p) => ({
+		amount: p.amount.toNumber(),
+		studentName: p.studentName,
+		date: p.date,
+	}));
+
+	const totalEarnings = paymentsForCharts.reduce((sum, p) => sum + p.amount, 0);
+
+	const now = new Date();
+	const thisMonthEarnings = paymentsForCharts
+		.filter((p) => {
+			const d = new Date(p.date);
+			return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
 		})
-		.reduce((sum, payment) => sum + payment.amount.toNumber(), 0);
+		.reduce((sum, p) => sum + p.amount, 0);
+
+	const uniqueStudents = new Set(payments.map((p) => p.studentName)).size;
 
 	return (
-		<div className="w-full px-4 sm:px-8 lg:px-12 py-4">
-			<div className="mb-6">
-				<h1 className="text-3xl font-bold">Earnings</h1>
-				<p className="text-base-content/70">
+		<div className="flex flex-col gap-6">
+			<div>
+				<h1 className="text-2xl font-bold">Earnings</h1>
+				<p className="text-base-content/60 text-sm mt-1">
 					Track your teaching income and payment history
 				</p>
 			</div>
 
-			{/* Statistics Cards */}
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+			{/* Stat cards */}
+			<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 				<div className="stats shadow bg-base-200">
 					<div className="stat">
 						<div className="stat-figure text-primary">
 							<i className="fa-solid fa-euro-sign text-3xl"></i>
 						</div>
-						<div className="stat-title">Total Earnings</div>
-						<div className="stat-value text-primary">
-							{totalEarnings.toFixed(2)}€
-						</div>
+						<div className="stat-title">Total Earned</div>
+						<div className="stat-value text-primary">{totalEarnings.toFixed(2)}€</div>
 						<div className="stat-desc">All time</div>
 					</div>
 				</div>
@@ -57,13 +58,9 @@ export default async function TeacherEarningsPage() {
 							<i className="fa-solid fa-calendar-month text-3xl"></i>
 						</div>
 						<div className="stat-title">This Month</div>
-						<div className="stat-value text-secondary">
-							{thisMonthEarnings.toFixed(2)}€
-						</div>
+						<div className="stat-value text-secondary">{thisMonthEarnings.toFixed(2)}€</div>
 						<div className="stat-desc">
-							{new Date().toLocaleDateString("en-US", {
-								month: "long",
-							})}
+							{now.toLocaleDateString("en-US", { month: "long" })}
 						</div>
 					</div>
 				</div>
@@ -71,84 +68,80 @@ export default async function TeacherEarningsPage() {
 				<div className="stats shadow bg-base-200">
 					<div className="stat">
 						<div className="stat-figure text-accent">
-							<i className="fa-solid fa-receipt text-3xl"></i>
+							<i className="fa-solid fa-user-graduate text-3xl"></i>
 						</div>
-						<div className="stat-title">Total Payments</div>
-						<div className="stat-value text-accent">
-							{payments.length}
-						</div>
-						<div className="stat-desc">Completed transactions</div>
+						<div className="stat-title">Students</div>
+						<div className="stat-value text-accent">{uniqueStudents}</div>
+						<div className="stat-desc">{payments.length} total payments</div>
 					</div>
 				</div>
 			</div>
 
-			{/* Payment History Table */}
-			<div className="overflow-x-auto rounded-lg border border-base-content bg-base-100 shadow-lg">
-				<h2 className="text-center text-xl font-bold py-4 border-b border-base-300">
-					Payment History
-				</h2>
+			{/* Charts */}
+			{payments.length > 0 && (
+				<div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+					<div className="lg:col-span-2">
+						<MonthlyEarningsChart payments={paymentsForCharts} />
+					</div>
+					<div>
+						<StudentBreakdownChart payments={paymentsForCharts} />
+					</div>
+				</div>
+			)}
+
+			{/* Payment history table */}
+			<div className="rounded-lg border border-base-300 bg-base-100">
+				<div className="px-4 py-3 border-b border-base-300">
+					<h2 className="text-lg font-semibold">Payment History</h2>
+				</div>
 
 				{payments.length === 0 ? (
-					<div className="text-center py-12">
-						<div className="text-6xl mb-4">
-							<i className="fa-solid fa-hand-holding-dollar text-base-content/20"></i>
+					<div className="text-center py-16">
+						<div className="text-6xl mb-4 text-base-content/20">
+							<i className="fa-solid fa-hand-holding-dollar"></i>
 						</div>
-						<p className="text-xl text-base-content/70">
-							No earnings yet
-						</p>
-						<p className="text-base-content/50">
-							Your payment history will appear here
+						<p className="text-lg text-base-content/60">No earnings yet</p>
+						<p className="text-sm text-base-content/40 mt-1">
+							Your payment history will appear here once students pay for classes.
 						</p>
 					</div>
 				) : (
-					<table className="min-w-full divide-y-2 divide-base-300 bg-base text-sm table-auto">
-						<thead className="ltr:text-left rtl:text-right bg-base-200">
-							<tr>
-								<th className="whitespace-nowrap px-4 py-3 font-medium text-base-content text-left">
-									Student
-								</th>
-								<th className="whitespace-nowrap px-4 py-3 font-medium text-base-content text-left">
-									Amount
-								</th>
-								<th className="whitespace-nowrap px-4 py-3 font-medium text-base-content text-left">
-									Date
-								</th>
-								<th className="whitespace-nowrap px-4 py-3 font-medium text-base-content text-left">
-									Transaction ID
-								</th>
-							</tr>
-						</thead>
-
-						<tbody className="divide-y divide-base-300">
-							{payments.map((payment) => (
-								<tr
-									key={payment.id}
-									className="hover:bg-base-200 transition-all"
-								>
-									<td className="whitespace-nowrap px-4 py-3 font-medium text-base-content capitalize">
-										{payment.studentName}
-									</td>
-									<td className="whitespace-nowrap px-4 py-3 text-success font-semibold">
-										+{payment.amount.toNumber().toFixed(2)}€
-									</td>
-									<td className="whitespace-nowrap px-4 py-3 text-base-content">
-										{new Date(
-											payment.date,
-										).toLocaleDateString("en-US", {
-											year: "numeric",
-											month: "short",
-											day: "numeric",
-											hour: "2-digit",
-											minute: "2-digit",
-										})}
-									</td>
-									<td className="whitespace-nowrap px-4 py-3 text-base-content/70 font-mono text-xs">
-										{payment.id.slice(0, 8)}...
-									</td>
+					<div className="overflow-x-auto">
+						<table className="w-full divide-y divide-base-300 text-sm">
+							<thead>
+								<tr className="bg-base-200">
+									<th className="px-4 py-3 font-medium text-base-content text-left">Student</th>
+									<th className="px-4 py-3 font-medium text-base-content text-left">Amount</th>
+									<th className="px-4 py-3 font-medium text-base-content text-left">Date</th>
+									<th className="px-4 py-3 font-medium text-base-content text-left">Transaction ID</th>
 								</tr>
-							))}
-						</tbody>
-					</table>
+							</thead>
+							<tbody className="divide-y divide-base-300">
+								{payments.map((payment) => (
+									<tr key={payment.id} className="hover:bg-base-200 transition-colors">
+										<td className="px-4 py-3 font-medium text-base-content capitalize">
+											{payment.studentName}
+										</td>
+										<td className="px-4 py-3 text-success font-semibold">
+											+{payment.amount.toNumber().toFixed(2)}€
+										</td>
+										<td className="px-4 py-3 text-base-content text-xs whitespace-nowrap">
+											{new Date(payment.date).toLocaleDateString("en-US", {
+												year: "numeric",
+												month: "short",
+												day: "numeric",
+												hour: "2-digit",
+												minute: "2-digit",
+											})}
+										</td>
+										<td className="px-4 py-3 text-base-content/50 font-mono text-xs">
+											{payment.id.slice(0, 8)}…
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
 				)}
 			</div>
 		</div>

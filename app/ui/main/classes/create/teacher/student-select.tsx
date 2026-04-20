@@ -6,15 +6,13 @@ interface StudentSelectProps {
 }
 
 const StudentSelect: FC<StudentSelectProps> = ({ students }) => (
-	<div className="form-control">
-		<label htmlFor="Student" className="label">
-			<span className="label-text">Student</span>
-		</label>
+	<div className="flex flex-col gap-1.5">
+		<label htmlFor="Student" className="text-sm font-medium">Student</label>
 		<select
 			id="Student"
 			name="student"
 			required
-			className="select select-bordered"
+			className="select select-bordered w-full"
 		>
 			<option value="">Select a student</option>
 			{students.map((student) => (

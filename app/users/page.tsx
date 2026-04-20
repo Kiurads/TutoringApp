@@ -1,8 +1,8 @@
-import { fetchTeachersBySubjects } from "../lib/actions/teachers.actions";
+import { fetchTeachersBySubjectsId } from "../lib/actions/teachers.actions";
 import { fetchUsers } from "../lib/actions/users.actions";
 
 export default async function UsersPage() {
-	await fetchTeachersBySubjects(["biology"]);
+	await fetchTeachersBySubjectsId(["biology"]);
 	const users = await fetchUsers();
 
 	if (!users) {

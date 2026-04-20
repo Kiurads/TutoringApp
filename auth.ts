@@ -55,6 +55,14 @@ export const { signIn, signOut, auth } = NextAuth({
 					}
 				}
 
+				// Set teachers online on login
+				if (user.role === "teacher") {
+					await prisma.user.update({
+						where: { id: user.id },
+						data: { isOnline: true },
+					});
+				}
+
 				return {
 					id: user.id,
 					email: user.email,

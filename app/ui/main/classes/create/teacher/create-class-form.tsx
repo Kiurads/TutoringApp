@@ -18,7 +18,13 @@ import GoBackButton from "@/app/ui/go-back-button";
 import { fetchStudents } from "@/app/lib/actions/students.actions";
 import UserDetails from "@/app/lib/types/user.types";
 
-export default function CreateClassForm() {
+export default function CreateClassForm({
+	initialStartTime,
+	initialDuration,
+}: {
+	initialStartTime?: string;
+	initialDuration?: number;
+} = {}) {
 	const [subjects, setSubjects] = useState<Subject[]>([]);
 	const [students, setStudents] = useState<UserDetails[]>([]);
 	const [selectedSubject, setSelectedSubject] = useState("");
@@ -48,12 +54,12 @@ export default function CreateClassForm() {
 		.slice(0, 16);
 
 	return (
-		<div className="max-w-xl mx-auto p-6 bg-base-100 shadow-lg rounded-xl border border-base-300">
+		<div className="w-full max-w-xl p-6 bg-base-100 shadow-lg rounded-xl border border-base-300">
 			<h2 className="text-xl font-semibold text-center mb-4">
 				Create a New Class
 			</h2>
 
-			<form action={formAction} className="grid gap-4">
+			<form action={formAction} className="flex flex-col gap-5">
 				{/* Error Alert */}
 				{errorMessage && (
 					<div role="alert" className="alert alert-error text-sm">
@@ -69,14 +75,14 @@ export default function CreateClassForm() {
 					onSelectSubject={setSelectedSubject}
 				/>
 
-				<StartTimeInput minDate={minStartDate} />
+				<StartTimeInput minDate={minStartDate} defaultValue={initialStartTime} />
 
-				<DurationSelect durations={durations} />
+				<DurationSelect durations={durations} defaultValue={initialDuration} />
 
 				<StudentSelect students={students} />
 
 				{/* Buttons */}
-				<div className="flex items-center gap-4 mt-4">
+				<div className="flex items-center gap-4 mt-2">
 					<button
 						className="btn btn-primary flex-grow"
 						aria-disabled={isPending}

@@ -7,21 +7,26 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { fetchUserByEmail } from "./users.actions";
 import { decimalToHours } from "@/utils/decimal-to-time";
-import { Decimal } from "@prisma/client/runtime/library";
 import {
 	BookedClass,
 	ClassData,
 	ClassDataSimple,
 } from "../types/classes.types";
 import { formatUser } from "../types/user.types";
+import { createNotification } from "@/app/lib/notifications";
+import { awardGems, awardSparks, checkSessionBadges } from "@/app/lib/gamification";
+import Stripe from "stripe";
 
 export interface ClassDataCalendar {
+	id: string;
 	subject: string;
 	teacherName: string;
 	studentName: string;
-	day: string;
+	/** ISO date string, e.g. "2026-04-07" */
+	date: string;
+	/** "HH:MM" in local time */
 	startTime: string;
-	duration: Decimal;
+	duration: number;
 	status: string;
 }
 
@@ -61,7 +66,7 @@ export async function fetchClasses(): Promise<ClassData[]> {
 
 	return classData.map((classData) => ({
 		id: classData.id,
-		teacher: formatUser(classData.teacher),
+		teacher: classData.teacher ? formatUser(classData.teacher) : null,
 		student: formatUser(classData.student),
 		status: classData.status,
 		subject: classData.subject.name,
@@ -71,6 +76,8 @@ export async function fetchClasses(): Promise<ClassData[]> {
 		paid: classData.paid,
 		totalPrice: classData.totalPrice.toString(),
 		createdAt: classData.createdAt.toISOString(),
+		hasPreAuth: !!classData.preAuthIntentId,
+		counterOfferTime: classData.counterOfferTime?.toISOString() ?? null,
 	}));
 }
 
@@ -115,7 +122,7 @@ export async function fetchClassById(id: string): Promise<ClassData | null> {
 
 	return {
 		id: classData.id,
-		teacher: formatUser(classData.teacher),
+		teacher: classData.teacher ? formatUser(classData.teacher) : null,
 		student: formatUser(classData.student),
 		status: classData.status,
 		subject: classData.subject.name,
@@ -125,6 +132,8 @@ export async function fetchClassById(id: string): Promise<ClassData | null> {
 		paid: classData.paid,
 		totalPrice: classData.totalPrice.toString(),
 		createdAt: classData.createdAt.toISOString(),
+		hasPreAuth: !!classData.preAuthIntentId,
+		counterOfferTime: classData.counterOfferTime?.toISOString() ?? null,
 	};
 }
 
@@ -187,7 +196,7 @@ export async function fetchUpcomingClassesByUser(
 
 	return classes.map((c) => ({
 		id: c.id,
-		teacher: formatUser(c.teacher),
+		teacher: c.teacher ? formatUser(c.teacher) : null,
 		student: formatUser(c.student),
 		status: c.status,
 		subject: c.subject.name,
@@ -195,8 +204,10 @@ export async function fetchUpcomingClassesByUser(
 		startTime: c.startTime.toISOString(),
 		durationInHours: c.durationInHours.toString(),
 		paid: c.paid,
+		hasPreAuth: !!c.preAuthIntentId,
 		totalPrice: c.totalPrice.toString(),
 		createdAt: c.createdAt.toISOString(),
+		counterOfferTime: c.counterOfferTime?.toISOString() ?? null,
 	}));
 }
 
@@ -263,7 +274,7 @@ export async function fetchBookedClassesByUser(
 
 	return classes.map((c) => ({
 		id: c.id,
-		durationInHours: decimalToHours(c.durationInHours),
+		durationInHours: decimalToHours(c.durationInHours.toNumber()),
 		startTime: c.startTime,
 		totalPrice: c.totalPrice.toString(),
 		status: c.status,
@@ -272,9 +283,9 @@ export async function fetchBookedClassesByUser(
 		student: {
 			name: c.student.firstName + " " + c.student.lastName,
 		},
-		teacher: {
-			name: c.teacher.firstName + " " + c.teacher.lastName,
-		},
+		teacher: c.teacher
+			? { name: c.teacher.firstName + " " + c.teacher.lastName }
+			: null,
 		subject: {
 			name: c.subject.name,
 		},
@@ -350,6 +361,7 @@ export async function fetchClassBySelfCalendar(): Promise<
 			],
 		},
 		select: {
+			id: true,
 			subject: {
 				select: {
 					name: true,
@@ -371,22 +383,30 @@ export async function fetchClassBySelfCalendar(): Promise<
 				},
 			},
 		},
+		orderBy: { startTime: "asc" },
 	});
 
-	return classes.map((c) => ({
-		subject: c.subject.name,
-		teacherName: `${c.teacher.firstName} ${c.teacher.lastName}`,
-		studentName: `${c.student.firstName} ${c.student.lastName}`,
-		day: new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(
-			c.startTime,
-		),
-		startTime: c.startTime.toISOString().split("T")[1].slice(0, 5),
-		duration: c.durationInHours,
-		status: c.status,
-	}));
+	return classes.map((c) => {
+		// Format date and time in local ISO-like strings without timezone shift
+		const d = c.startTime;
+		const pad = (n: number) => String(n).padStart(2, "0");
+		const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+		const startTime = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+		return {
+			id: c.id,
+			subject: c.subject.name,
+			teacherName: c.teacher ? `${c.teacher.firstName} ${c.teacher.lastName}` : "TBD",
+			studentName: `${c.student.firstName} ${c.student.lastName}`,
+			date,
+			startTime,
+			duration: c.durationInHours.toNumber(),
+			status: c.status,
+		};
+	});
 }
 
-export async function cancelClassById(classId: string) {
+export async function cancelClassById(classId: string): Promise<string | null> {
 	const session = await auth();
 
 	if (!session || !session.user || !session.user.email) {
@@ -395,21 +415,83 @@ export async function cancelClassById(classId: string) {
 
 	const user = await fetchUserByEmail(session.user.email);
 
-	await prisma.class.delete({
-		where: {
-			id: classId,
+	// Fetch class + payment details before deletion
+	const cls = await prisma.class.findUnique({
+		where: { id: classId },
+		include: {
+			subject: true,
+			student: true,
+			teacher: true,
+			payments: { select: { intentId: true }, take: 1 },
 		},
 	});
 
-	if (user?.role === "teacher") {
-		// Revalidate teacher classes page
-		revalidatePath("/main/teacher/classes");
-		redirect("/main/teacher/classes");
+	if (!cls) return "Class not found.";
+
+	const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+
+	// Pre-auth not yet captured — just cancel the hold
+	if (!cls.paid && cls.preAuthIntentId) {
+		try {
+			await stripe.paymentIntents.cancel(cls.preAuthIntentId);
+		} catch {
+			// Hold may have already expired — proceed with cancellation anyway
+		}
 	}
 
-	// Revalidate student classes page
+	// Already paid — time-based refund policy
+	if (cls.paid && cls.payments.length > 0) {
+		const hoursUntil = (cls.startTime.getTime() - Date.now()) / 3_600_000;
+		try {
+			if (hoursUntil > 24) {
+				// Full refund
+				await stripe.refunds.create({ payment_intent: cls.payments[0].intentId });
+			} else if (hoursUntil > 12) {
+				// 50% refund
+				const halfCents = Math.round(Number(cls.totalPrice) * 100 * 0.5);
+				await stripe.refunds.create({
+					payment_intent: cls.payments[0].intentId,
+					amount: halfCents,
+				});
+			}
+			// ≤ 12 h before class — no refund
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : "Unknown error";
+			return `Refund failed: ${msg}. The class was not cancelled.`;
+		}
+	}
+
+	await prisma.class.delete({ where: { id: classId } });
+
+	const subject = cls.subject.name;
+	if (user?.role === "teacher" && cls.teacherId) {
+		await createNotification(
+			cls.studentId,
+			"class_cancelled",
+			"Class Cancelled",
+			cls.paid
+				? `Your ${subject} class was cancelled by the teacher. A full refund has been issued.`
+				: `Your ${subject} class was cancelled by the teacher.`,
+			`/main/student/classes`,
+		);
+	} else if (user?.role === "student" && cls.teacherId) {
+		const studentName = `${cls.student.firstName} ${cls.student.lastName}`;
+		await createNotification(
+			cls.teacherId,
+			"class_cancelled",
+			"Class Cancelled",
+			`${studentName} cancelled their ${subject} class.`,
+			`/main/teacher/classes`,
+		);
+	}
+
+	if (user?.role === "teacher") {
+		revalidatePath("/main/teacher/classes");
+		redirect("/main/teacher/classes?toast=cancelled");
+	}
+
 	revalidatePath("/main/student/classes");
-	redirect("/main/student/classes");
+	redirect("/main/student/classes?toast=cancelled");
 }
 
 export async function acceptClassById(classId: string) {
@@ -421,23 +503,83 @@ export async function acceptClassById(classId: string) {
 
 	const user = await fetchUserByEmail(session.user.email);
 
-	await prisma.class.update({
-		where: {
-			id: classId,
-		},
-		data: {
-			status: "scheduled",
-		},
+	const cls = await prisma.class.findUnique({
+		where: { id: classId },
+		include: { subject: true, teacher: true, student: true },
 	});
 
+	// Capture pre-auth intent if present
+	if (cls?.preAuthIntentId && cls.teacherId) {
+		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+		try {
+			await stripe.paymentIntents.capture(cls.preAuthIntentId);
+			await prisma.payment.create({
+				data: {
+					amount: cls.totalPrice,
+					intentId: cls.preAuthIntentId,
+					classId: cls.id,
+					studentId: cls.studentId,
+					teacherId: cls.teacherId,
+				},
+			});
+			await prisma.class.update({
+				where: { id: classId },
+				data: { status: "scheduled", paid: true },
+			});
+			await awardGems(cls.studentId, 50);
+		} catch {
+			// Capture failed — accept the class but leave it unpaid
+			await prisma.class.update({
+				where: { id: classId },
+				data: { status: "scheduled" },
+			});
+		}
+	} else {
+		await prisma.class.update({
+			where: { id: classId },
+			data: { status: "scheduled" },
+		});
+	}
+
+	if (cls) {
+		const wasRequestedByTeacher = cls.requesterId === cls.teacherId;
+		if (wasRequestedByTeacher && cls.teacherId) {
+			// Teacher requested → notify teacher that student accepted
+			const studentName = `${cls.student.firstName} ${cls.student.lastName}`;
+			await createNotification(
+				cls.teacherId,
+				"class_accepted",
+				"Class Accepted",
+				`${studentName} accepted your ${cls.subject.name} class request.`,
+				`/main/teacher/classes/${classId}`,
+			);
+		} else {
+			// Student requested → notify student that teacher accepted
+			const teacherName = cls.teacher
+				? `${cls.teacher.firstName} ${cls.teacher.lastName}`
+				: "Your teacher";
+			await createNotification(
+				cls.studentId,
+				"class_accepted",
+				"Class Accepted",
+				`${teacherName} accepted your ${cls.subject.name} class.`,
+				`/main/student/classes/${classId}`,
+			);
+		}
+
+		// Award sparks to the teacher who accepted
+		if (cls.teacherId) {
+			await awardSparks(cls.teacherId, 50);
+		}
+	}
+
 	if (user?.role === "teacher") {
-		// Revalidate teacher classes page
 		revalidatePath("/main/teacher/classes");
-		redirect("/main/teacher/classes");
+		redirect("/main/teacher/classes?toast=accepted");
 	}
 
 	revalidatePath("/main/student/classes");
-	redirect("/main/student/classes");
+	redirect("/main/student/classes?toast=accepted");
 }
 
 export async function refuseClassById(classId: string) {
@@ -449,21 +591,281 @@ export async function refuseClassById(classId: string) {
 
 	const user = await fetchUserByEmail(session.user.email);
 
-	await prisma.class.update({
-		where: {
-			id: classId,
-		},
-		data: {
-			status: "refused",
-		},
+	const cls = await prisma.class.findUnique({
+		where: { id: classId },
+		include: { subject: true, teacher: true, student: true },
 	});
 
+	// Cancel pre-auth hold so the card is released immediately
+	if (cls?.preAuthIntentId) {
+		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+		try {
+			await stripe.paymentIntents.cancel(cls.preAuthIntentId);
+		} catch {
+			// Hold may have already expired — proceed
+		}
+	}
+
+	await prisma.class.update({
+		where: { id: classId },
+		data: { status: "refused" },
+	});
+
+	if (cls) {
+		const wasRequestedByTeacher = cls.requesterId === cls.teacherId;
+		if (wasRequestedByTeacher && cls.teacherId) {
+			// Teacher requested → notify teacher that student refused
+			const studentName = `${cls.student.firstName} ${cls.student.lastName}`;
+			await createNotification(
+				cls.teacherId,
+				"class_refused",
+				"Class Request Declined",
+				`${studentName} declined your ${cls.subject.name} class request.`,
+				`/main/teacher/classes`,
+			);
+		} else {
+			// Student requested → notify student that teacher refused
+			const teacherName = cls.teacher
+				? `${cls.teacher.firstName} ${cls.teacher.lastName}`
+				: "The teacher";
+			await createNotification(
+				cls.studentId,
+				"class_refused",
+				"Class Request Refused",
+				`${teacherName} declined your ${cls.subject.name} class request.`,
+				`/main/student/classes`,
+			);
+		}
+	}
+
 	if (user?.role === "teacher") {
-		// Revalidate teacher classes page
 		revalidatePath("/main/teacher/classes");
-		redirect("/main/teacher/classes");
+		redirect("/main/teacher/classes?toast=refused");
 	}
 
 	revalidatePath("/main/student/classes");
-	redirect("/main/student/classes");
+	redirect("/main/student/classes?toast=refused");
+}
+
+export interface OpenRequest {
+	id: string;
+	subject: string;
+	studentName: string;
+	startTime: Date;
+	durationInHours: string;
+}
+
+export async function fetchOpenRequestsForTeacher(
+	teacherEmail: string,
+): Promise<OpenRequest[]> {
+	const teacher = await prisma.user.findUnique({
+		where: { email: teacherEmail },
+		select: {
+			id: true,
+			teacherSubject: { select: { subjectId: true } },
+		},
+	});
+
+	if (!teacher) return [];
+
+	const subjectIds = teacher.teacherSubject.map((ts) => ts.subjectId);
+
+	const openRequests = await prisma.class.findMany({
+		where: {
+			teacherId: null,
+			status: "requested",
+			subjectId: { in: subjectIds },
+		},
+		select: {
+			id: true,
+			startTime: true,
+			durationInHours: true,
+			student: { select: { firstName: true, lastName: true } },
+			subject: { select: { name: true } },
+		},
+		orderBy: { startTime: "asc" },
+	});
+
+	return openRequests.map((r) => ({
+		id: r.id,
+		subject: r.subject.name,
+		studentName: `${r.student.firstName} ${r.student.lastName}`,
+		startTime: r.startTime,
+		durationInHours: decimalToHours(r.durationInHours.toNumber()),
+	}));
+}
+
+export async function claimClass(classId: string) {
+	const session = await auth();
+	if (!session?.user?.email) return;
+
+	const teacher = await prisma.user.findUnique({
+		where: { email: session.user.email },
+		select: { id: true, pricePerHour: true },
+	});
+
+	if (!teacher || !teacher.pricePerHour) return;
+
+	let claimedStudentId: string | null = null;
+	let claimedSubject: string | null = null;
+
+	try {
+		await prisma.$transaction(async (tx) => {
+			const cls = await tx.class.findFirst({
+				where: { id: classId, teacherId: null, status: "requested" },
+				include: { subject: true },
+			});
+
+			if (!cls) throw new Error("Request no longer available.");
+
+			const totalPrice =
+				Number(teacher.pricePerHour) * cls.durationInHours.toNumber();
+
+			await tx.class.update({
+				where: { id: classId },
+				data: { teacherId: teacher.id, status: "scheduled", totalPrice },
+			});
+
+			claimedStudentId = cls.studentId;
+			claimedSubject = cls.subject.name;
+		});
+	} catch {
+		// Race condition: another teacher already claimed it
+	}
+
+	if (claimedStudentId && claimedSubject) {
+		const teacherRecord = await prisma.user.findUnique({
+			where: { id: teacher.id },
+			select: { firstName: true, lastName: true },
+		});
+		const teacherName = teacherRecord
+			? `${teacherRecord.firstName} ${teacherRecord.lastName}`
+			: "A teacher";
+		await createNotification(
+			claimedStudentId,
+			"class_claimed",
+			"Teacher Found!",
+			`${teacherName} has claimed your ${claimedSubject} class request.`,
+			`/main/student/classes/${classId}`,
+		);
+	}
+
+	revalidatePath("/main/teacher/classes");
+	redirect("/main/teacher/classes?toast=claimed");
+}
+
+// ── Counter-offer ─────────────────────────────────────────────────────────────
+
+export async function proposeCounterOffer(
+	classId: string,
+	newTime: string, // ISO string from datetime-local input
+): Promise<{ error?: string }> {
+	const session = await auth();
+	if (!session?.user?.email) return { error: "Not authenticated." };
+
+	const user = await fetchUserByEmail(session.user.email);
+	if (!user) return { error: "User not found." };
+
+	const cls = await prisma.class.findUnique({
+		where: { id: classId },
+		include: { subject: true, student: true, teacher: true },
+	});
+	if (!cls) return { error: "Class not found." };
+	if (cls.status !== "requested") return { error: "Class is no longer pending." };
+
+	const proposedTime = new Date(newTime);
+	if (isNaN(proposedTime.getTime())) return { error: "Invalid date." };
+
+	await prisma.class.update({
+		where: { id: classId },
+		data: { counterOfferTime: proposedTime },
+	});
+
+	const teacherName = cls.teacher
+		? `${cls.teacher.firstName} ${cls.teacher.lastName}`
+		: "Your teacher";
+
+	const formattedTime = proposedTime.toLocaleDateString("en-US", {
+		weekday: "short",
+		month: "short",
+		day: "numeric",
+		hour: "2-digit",
+		minute: "2-digit",
+	});
+
+	await createNotification(
+		cls.studentId,
+		"counter_offer_proposed",
+		"New Time Suggested",
+		`${teacherName} has suggested a new time for your ${cls.subject.name} class: ${formattedTime}.`,
+		`/main/student/classes/${classId}`,
+	);
+
+	revalidatePath(`/main/teacher/classes/${classId}`);
+	return {};
+}
+
+export async function acceptCounterOffer(
+	classId: string,
+): Promise<void> {
+	const cls = await prisma.class.findUnique({
+		where: { id: classId },
+		include: { subject: true, teacher: true },
+	});
+
+	if (!cls?.counterOfferTime) return;
+
+	await prisma.class.update({
+		where: { id: classId },
+		data: { startTime: cls.counterOfferTime, counterOfferTime: null },
+	});
+
+	if (cls.teacherId) {
+		const formattedTime = cls.counterOfferTime.toLocaleDateString("en-US", {
+			weekday: "short",
+			month: "short",
+			day: "numeric",
+			hour: "2-digit",
+			minute: "2-digit",
+		});
+		await createNotification(
+			cls.teacherId,
+			"counter_offer_accepted",
+			"Counter-offer Accepted",
+			`The student accepted your new time for the ${cls.subject.name} class: ${formattedTime}.`,
+			`/main/teacher/classes/${classId}`,
+		);
+	}
+
+	revalidatePath(`/main/student/classes/${classId}`);
+	redirect(`/main/student/classes/${classId}?toast=time_accepted`);
+}
+
+export async function declineCounterOffer(
+	classId: string,
+): Promise<void> {
+	const cls = await prisma.class.findUnique({
+		where: { id: classId },
+		include: { subject: true, teacher: true },
+	});
+
+	if (!cls) return;
+
+	await prisma.class.update({
+		where: { id: classId },
+		data: { counterOfferTime: null },
+	});
+
+	if (cls.teacherId) {
+		await createNotification(
+			cls.teacherId,
+			"counter_offer_declined",
+			"Counter-offer Declined",
+			`The student declined your suggested time for the ${cls.subject.name} class.`,
+			`/main/teacher/classes/${classId}`,
+		);
+	}
+
+	revalidatePath(`/main/student/classes/${classId}`);
+	redirect(`/main/student/classes/${classId}?toast=time_declined`);
 }

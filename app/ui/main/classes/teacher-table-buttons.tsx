@@ -1,56 +1,31 @@
 "use client";
 
 import { BookedClass } from "@/app/lib/types/classes.types";
-import Link from "next/link";
+import ClassActionModals from "@/app/ui/main/classes/details/class-action-modals";
 
-export default function ClassesTableButtons(props: {
+export default function ClassesTableButtons({
+	bookedClass,
+}: {
 	bookedClass: BookedClass;
 }) {
-	const { bookedClass } = props;
+	const { status, requestedBySelf } = bookedClass;
 
-	if (bookedClass.requestedBySelf && bookedClass.status === "requested") {
-		return (
-			<div className="flex flex-row gap-2 w-full">
-				<div className="flex-1">
-					<Link
-						href={`/main/teacher/classes/${bookedClass.id}/cancel`}
-						className={
-							bookedClass.paid
-								? "btn btn-error btn-sm tooltip w-full"
-								: "btn btn-error btn-sm tooltip w-full"
-						}
-						data-tip="Cancel Class"
-					>
-						<i className="fa-solid fa-trash"></i>
-					</Link>
-				</div>
-			</div>
-		);
-	} else {
-		if (bookedClass.status === "requested") {
-			return (
-				<div className="flex flex-row gap-2 w-full">
-					<div className="flex-1">
-						<Link
-							href={`/main/teacher/classes/${bookedClass.id}/accept`}
-							className="btn btn-success btn-sm tooltip w-full"
-							data-tip="Accept Request"
-						>
-							<i className="fa-solid fa-check"></i>
-						</Link>
-					</div>
+	const canAccept = status === "requested" && !requestedBySelf;
+	const canRefuse = status === "requested" && !requestedBySelf;
+	const canCancel =
+		(status === "requested" && requestedBySelf) || status === "scheduled";
 
-					<div className="flex-1">
-						<Link
-							href={`/main/teacher/classes/${bookedClass.id}/refuse`}
-							className="btn btn-error btn-sm tooltip w-full"
-							data-tip="Refuse Request"
-						>
-							<i className="fa-solid fa-x"></i>
-						</Link>
-					</div>
-				</div>
-			);
-		}
-	}
+	if (!canAccept && !canRefuse && !canCancel) return null;
+
+	return (
+		<ClassActionModals
+			id={bookedClass.id}
+			subject={bookedClass.subject.name}
+			otherPartyName={bookedClass.student.name}
+			role="teacher"
+			canAccept={canAccept}
+			canRefuse={canRefuse}
+			canCancel={canCancel}
+		/>
+	);
 }

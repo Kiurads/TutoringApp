@@ -1,8 +1,33 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 export default function ThemeChanger() {
+	const [isDark, setIsDark] = useState(false);
+
+	// Restore saved theme on mount
+	useEffect(() => {
+		const saved = localStorage.getItem("theme");
+		if (saved === "dark") setIsDark(true);
+	}, []);
+
+	function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+		const dark = e.target.checked;
+		setIsDark(dark);
+		const theme = dark ? "dark" : "light";
+		document.documentElement.setAttribute("data-theme", theme);
+		localStorage.setItem("theme", theme);
+	}
+
 	return (
 		<label className="swap swap-rotate text-base-content px-2">
-			{/* this hidden checkbox controls the state */}
-			<input type="checkbox" className="theme-controller" value="dark" />
+			<input
+				type="checkbox"
+				className="theme-controller"
+				value="dark"
+				checked={isDark}
+				onChange={handleChange}
+			/>
 
 			{/* sun icon */}
 			<svg

@@ -29,7 +29,7 @@ export default function DeleteTeacherPage() {
 	}
 
 	return (
-		<div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg mt-10">
+		<div className="max-w-md mx-auto bg-base-100 p-6 rounded-lg shadow-lg mt-10">
 			<h2 className="text-lg font-bold text-center">Confirm Deletion</h2>
 			{teacherDetails && (
 				<p className="text-center mt-2">
