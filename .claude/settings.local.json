@@ -23,7 +23,10 @@
       "Bash(npx vitest *)",
       "PowerShell(npx vitest run 2>&1 | Select-Object -Last 60)",
       "PowerShell(Get-Command *)",
-      "Bash(pnpm -v)"
+      "Bash(pnpm -v)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git config *)"
     ]
   }
 }
