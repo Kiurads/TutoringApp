@@ -37,6 +37,7 @@ const mockTeacherRow = (overrides: Record<string, unknown> = {}) => ({
   isOnline: true,
   pricePerHour: dec(25),
   teacherRatingsAsTeacher: [{ rating: dec(4) }, { rating: dec(5) }],
+  teacherAvailability: [],
   ...overrides,
 });
 
@@ -117,13 +118,30 @@ describe("fetchTeachersExtended", () => {
 describe("fetchTeachersBySubjectsId", () => {
   it("returns teachers filtered by subject ids", async () => {
     vi.mocked(prisma.user.findMany).mockResolvedValue([
-      { id: "t1", firstName: "Bob", lastName: "Jones", email: "bob@test.com" } as never,
+      {
+        id: "t1",
+        firstName: "Bob",
+        lastName: "Jones",
+        email: "bob@test.com",
+        bio: null,
+        isOnline: false,
+        pricePerHour: null,
+        teacherRatingsAsTeacher: [],
+      } as never,
     ]);
 
     const result = await fetchTeachersBySubjectsId(["sub1"]);
 
     expect(result).toEqual([
-      { id: "t1", name: "Bob Jones", email: "bob@test.com", role: "teacher" },
+      {
+        id: "t1",
+        name: "Bob Jones",
+        email: "bob@test.com",
+        bio: null,
+        isOnline: false,
+        rating: "No Reviews",
+        pricePerHour: "0.00",
+      },
     ]);
   });
 });

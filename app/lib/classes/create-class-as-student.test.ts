@@ -22,6 +22,9 @@ vi.mock("@/prisma", () => ({
     subject: {
       findUnique: vi.fn(),
     },
+    teacherAvailability: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -155,6 +158,7 @@ describe("createClassAsStudent — with specific teacher", () => {
       .mockResolvedValueOnce({ firstName: "Ana", lastName: "Lima" } as never);             // student record for notification
     vi.mocked((prisma as never as { subject: { findUnique: ReturnType<typeof vi.fn> } }).subject.findUnique)
       .mockResolvedValue({ name: "Math" } as never);
+    vi.mocked(prisma.teacherAvailability.findMany).mockResolvedValue([]);
     vi.mocked(prisma.class.create).mockResolvedValue({ id: "new-class-1" } as never);
 
     const { redirect } = await import("next/navigation");

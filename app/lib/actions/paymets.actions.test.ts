@@ -34,6 +34,11 @@ vi.mock("@/prisma", () => ({
     user: {
       findUnique: vi.fn(),
     },
+    studentGameProfile: {
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+      update: vi.fn(),
+    },
   },
 }));
 
@@ -67,10 +72,17 @@ const makeClassRow = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
+// Comfortably more than 24h out, computed relative to the real clock so the
+// refund-tier logic in cancelClassById (which compares against Date.now())
+// always lands in the "full refund" branch for these fixtures.
+const futureClassStart = () => new Date(Date.now() + 48 * 3_600_000);
+
 /** A class row as returned by prisma.class.findUnique (used by cancelClassById, includes payments) */
 const makeCancelClassRow = (overrides: Record<string, unknown> = {}) => ({
   id: "class1",
   status: "scheduled",
+  startTime: futureClassStart(),
+  totalPrice: dec(45),
   paid: false,
   teacherId: "teacher1",
   studentId: "student1",

@@ -34,6 +34,19 @@ vi.mock("@/prisma", () => ({
       findMany: vi.fn(),
       findUnique: vi.fn(),
     },
+    payment: {
+      create: vi.fn(),
+    },
+    studentGameProfile: {
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+      update: vi.fn(),
+    },
+    teacherGameProfile: {
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+      update: vi.fn(),
+    },
     $transaction: vi.fn(),
   },
 }));
@@ -239,6 +252,17 @@ describe("acceptClassById", () => {
     vi.mocked(fetchUserByEmail).mockResolvedValue({
       id: "teacher1",
       role: "teacher",
+    } as never);
+    vi.mocked(prisma.class.findUnique).mockResolvedValue({
+      id: "class1",
+      teacherId: "teacher1",
+      studentId: "student1",
+      requesterId: "student1",
+      preAuthIntentId: null,
+      totalPrice: dec(37.5),
+      teacher: { firstName: "Alice", lastName: "Smith" },
+      student: { firstName: "Bob", lastName: "Jones" },
+      subject: { name: "Math" },
     } as never);
     vi.mocked(prisma.class.update).mockResolvedValue({} as never);
 
