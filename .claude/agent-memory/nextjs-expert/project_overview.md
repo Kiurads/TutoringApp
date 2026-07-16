@@ -1,96 +1,47 @@
 ---
 name: eStudyou Project Overview
-description: Core purpose, tech stack, and architecture of the tutoring platform app
+description: Core purpose and current architecture of the tutoring platform app, and this agent's narrowed scope within the specialist squad
 type: project
 ---
 
-eStudyou is a tutoring marketplace platform (Next.js 15 app) that connects students with teachers for private tutoring sessions.
+eStudyou is a tutoring marketplace platform (Next.js 15 app) connecting students with teachers for private tutoring sessions.
 
-**Why:** This is the primary project being worked on. Understanding its structure and purpose is foundational to all future work.
+**Why:** This is the primary project. Understanding its structure is foundational, but as of the specialist squad's formation, most subsystem depth now lives in dedicated agents rather than here.
 
-**How to apply:** Use this as the baseline mental model when answering questions or implementing features. All features should fit within the student/teacher/admin role model.
+**How to apply:** Use this as a high-level map only. For anything beyond App Router mechanics/layout/build config, delegate rather than answering from memory — the detailed, currently-accurate domain knowledge lives with the specialists listed below.
+
+## The specialist squad (formed 2026-07-16)
+
+- `prisma-db-architect` — schema, migrations, Decimal/enum modeling.
+- `auth-rbac-engineer` — NextAuth v5, middleware, role routing, registration.
+- `stripe-payments-engineer` — PaymentIntents, pre-auth/capture/refund, webhook.
+- `class-lifecycle-engineer` — the `Class` state machine, claiming, counter-offers, availability, notifications.
+- `gamification-economy-engineer` — gems/sparks, tiers/ranks, badges, gem store.
+- `daisyui-ui-engineer` — Tailwind/daisyUI components, forms/tables/modals.
+- `vitest-qa-engineer` — test suite + dead-code/broken-link/mock-data audits.
+- `orchestrator` — coordinates multi-domain work across the above.
+
+This agent (`nextjs-expert`) keeps only what's left over: App Router structure, `app/layout.tsx`, `next.config.ts`, build/deploy, general Node/TS questions.
 
 ## Tech Stack
-- **Framework:** Next.js 15.1.3 with App Router and Turbopack
+- **Framework:** Next.js 15.1.3, App Router, Turbopack (dev)
 - **Language:** TypeScript 5
-- **Database:** MySQL via Prisma ORM 6.3.1
-- **Auth:** NextAuth v5 (beta) with Credentials provider + PrismaAdapter, JWT sessions
-- **Payments:** Stripe (stripe-js, react-stripe-js, webhook handler)
-- **Email:** Resend
-- **UI:** Tailwind CSS + DaisyUI 5 (beta) + react-icons + chart.js / react-chartjs-2
-- **Password hashing:** bcryptjs
+- **Database:** MySQL via Prisma ORM — see `prisma-db-architect` for schema depth
+- **Auth:** NextAuth v5 (beta), Credentials provider, PrismaAdapter, JWT sessions — see `auth-rbac-engineer`
+- **Payments:** Stripe — two coexisting flows (immediate-capture and pre-auth) — see `stripe-payments-engineer`
+- **Email:** Resend is a dependency but is not currently wired to send anything anywhere in the app
+- **UI:** Tailwind + daisyUI 5 (beta), Font Awesome via CDN script (the icon system actually used, not `react-icons`), Chart.js/`react-chartjs-2` — see `daisyui-ui-engineer`
+- **Testing:** Vitest — see `vitest-qa-engineer`
 
-## User Roles (Prisma enum)
-- `student` — books classes, pays via Stripe, rates teachers
-- `teacher` — accepts/refuses class requests, tracks earnings
-- `admin` — manages platform (teachers, students, subjects, payments, classes)
+## User Roles
+- `student` — books/pays for classes, rates teachers, has a full app under `/main/student/**` (dashboard, classes, teachers, calendar, profile, onboarding, gem store)
+- `teacher` — has a full app under `/main/teacher/**` (dashboard, classes, availability, calendar, earnings, students, profile) — this did **not exist** on `master` and was built out entirely on a feature branch
+- `admin` — manages teachers/students/subjects/classes/payments under `/main/admin/**`, largely wired to real data (not mock, as an older snapshot of this memory used to claim)
 
-## Data Models (Prisma / MySQL)
-- **User** — shared model for all roles; teacher-specific fields: pricePerHour, teacherSubject, teacherRating
-- **Subject** — subjects teachers can teach
-- **TeacherSubject** — join table linking teachers to their subjects
-- **Class** — one-off tutoring session; status: requested → scheduled → completed / refused; paid boolean
-- **RegularClass** — recurring weekly class (dayOfWeek based)
-- **TeacherRating** — students rate teachers after a class
-- **Payment** — created via Stripe webhook on payment_intent.succeeded; links class, student, teacher, amount, intentId
+## Known platform-wide gap (relevant across nearly every domain)
+Nothing in the app ever sets `Class.status = "completed"` — no worker, cron, or admin action does it. This silently breaks the review/rating flow, several gamification badges, and the teacher-student "fit score" feature. If asked about any of these appearing broken, this is very likely why — see `class-lifecycle-engineer` and `gamification-economy-engineer` for the full blast radius before attempting a fix yourself.
 
-## Auth Flow
-- Credentials-only login (email + bcrypt password)
-- Role injected into JWT token and session
-- Middleware enforces role-based routing: students → /main/student/*, teachers → /main/teacher/*, admins → /main/admin/*
-- Unauthenticated users hitting /main/* are redirected to /login
-- Authenticated users hitting / or wrong-role paths are redirected to their role dashboard
-
-## API Routes
-- `POST /api/auth/register/student` — student self-registration
-- `POST /api/webhooks/stripe` — Stripe webhook: on payment_intent.succeeded, creates Payment record and marks Class as paid
-- `POST /api/revalidate` — cache revalidation endpoint
-
-## Key Route Structure
-```
-/ — public landing page (Hero + Opinions)
-/login — login page
-/register — choose role
-/register/student — student registration
-/register/teacher — teacher registration
-/signout — sign out
-
-/main/student/dashboard — upcoming classes + payment history
-/main/student/classes — all classes list
-/main/student/classes/request — request a new class
-/main/student/classes/[id] — class detail
-/main/student/classes/[id]/accept|cancel|refuse|pay|pay/success
-/main/student/teachers — browse teachers
-/main/student/teachers/[id] — teacher profile + ratings
-
-/main/teacher/dashboard — upcoming classes + earnings summary
-/main/teacher/classes — all classes list
-/main/teacher/classes/request — create class for a student
-/main/teacher/classes/[id] — class detail
-/main/teacher/classes/[id]/accept|cancel|refuse|pay|pay/success
-/main/teacher/students — student list
-/main/teacher/earnings — full earnings history with stats
-
-/main/admin/dashboard — stats overview (currently hardcoded placeholder)
-/main/admin/teachers — teacher management
-/main/admin/teachers/create — create teacher
-/main/admin/teachers/[id]/delete — delete teacher
-/main/admin/students — student management
-/main/admin/classes — class management
-/main/admin/subjects — subject list
-/main/admin/subjects/create — create subject
-/main/admin/payments — payment management
-/main/admin/settings — admin settings
-```
-
-## Server Actions (app/lib/actions/)
-- `classes.actions.ts` — fetch, accept, refuse, cancel classes
-- `paymets.actions.ts` (note typo in filename) — fetch payments by student/teacher, createPaymentForClass
-- `stripe.ts` — fetchClientSecret (Stripe Checkout session)
-- `teachers.actions.ts`, `students.actions.ts`, `users.actions.ts`, `subjects.actions.ts`, `ratings.actions.ts`
-
-## Notes
-- Admin dashboard stats are currently hardcoded (placeholder data)
-- `app/lib/actions/stripe.ts` still has a `{{PRICE_ID}}` placeholder — payment flow may use PaymentIntent approach via the webhook instead
-- `paymets.actions.ts` has a typo in the filename (missing 'y')
-- Both student and teacher have mirrored class pages (`/main/student/classes/[id]/*` and `/main/teacher/classes/[id]/*`)
+## Notes specific to this agent's narrowed scope
+- `next.config.ts` whitelists `api.dicebear.com`, `img.daisyui.com`, `images.unsplash.com` as remote image domains, with `dangerouslyAllowSVG` for DiceBear's SVG avatars.
+- `app/layout.tsx` loads Font Awesome via a CDN `<Script>` and sets `data-theme` on `<html>` — check current hardcoding before assuming the dark-mode toggle (`theme-changer.tsx`) works end-to-end.
+- Do not re-derive or re-document Prisma schema, Stripe flow, or auth details here — those now belong to their specialist agents and this file should stay a thin pointer, not a competing source of truth.
