@@ -14,7 +14,7 @@ import {
 } from "../types/classes.types";
 import { formatUser } from "../types/user.types";
 import { createNotification } from "@/app/lib/notifications";
-import { awardGems, awardSparks, checkSessionBadges } from "@/app/lib/gamification";
+import { awardGems, awardSparks } from "@/app/lib/gamification";
 import Stripe from "stripe";
 
 export interface ClassDataCalendar {
@@ -78,6 +78,7 @@ export async function fetchClasses(): Promise<ClassData[]> {
 		createdAt: classData.createdAt.toISOString(),
 		hasPreAuth: !!classData.preAuthIntentId,
 		counterOfferTime: classData.counterOfferTime?.toISOString() ?? null,
+		jitsiRoom: classData.jitsiRoom,
 	}));
 }
 
@@ -134,6 +135,7 @@ export async function fetchClassById(id: string): Promise<ClassData | null> {
 		createdAt: classData.createdAt.toISOString(),
 		hasPreAuth: !!classData.preAuthIntentId,
 		counterOfferTime: classData.counterOfferTime?.toISOString() ?? null,
+		jitsiRoom: classData.jitsiRoom,
 	};
 }
 
@@ -208,6 +210,7 @@ export async function fetchUpcomingClassesByUser(
 		totalPrice: c.totalPrice.toString(),
 		createdAt: c.createdAt.toISOString(),
 		counterOfferTime: c.counterOfferTime?.toISOString() ?? null,
+		jitsiRoom: c.jitsiRoom,
 	}));
 }
 
@@ -406,15 +409,17 @@ export async function fetchClassBySelfCalendar(): Promise<
 	});
 }
 
-export async function cancelClassById(classId: string): Promise<string | null> {
-	const session = await auth();
-
-	if (!session || !session.user || !session.user.email) {
-		return null;
-	}
-
-	const user = await fetchUserByEmail(session.user.email);
-
+/**
+ * Core cancellation logic (authorization, refund tiers, delete, notify) with
+ * no redirect — reusable by both the direct per-class action below and
+ * regular-classes.actions.ts's series cancellation, which cancels several
+ * occurrences in a loop and can't have any of them throw a Next.js redirect
+ * partway through.
+ */
+export async function cancelClassCore(
+	classId: string,
+	user: { id: string; role: string } | null | undefined,
+): Promise<string | null> {
 	// Fetch class + payment details before deletion
 	const cls = await prisma.class.findUnique({
 		where: { id: classId },
@@ -427,6 +432,14 @@ export async function cancelClassById(classId: string): Promise<string | null> {
 	});
 
 	if (!cls) return "Class not found.";
+
+	const isParticipant =
+		user?.role === "admin" ||
+		user?.id === cls.studentId ||
+		user?.id === cls.teacherId;
+	if (!isParticipant) {
+		return "You are not authorized to cancel this class.";
+	}
 
 	const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
@@ -485,6 +498,21 @@ export async function cancelClassById(classId: string): Promise<string | null> {
 		);
 	}
 
+	return null;
+}
+
+export async function cancelClassById(classId: string): Promise<string | null> {
+	const session = await auth();
+
+	if (!session || !session.user || !session.user.email) {
+		return null;
+	}
+
+	const user = await fetchUserByEmail(session.user.email);
+
+	const result = await cancelClassCore(classId, user);
+	if (result) return result;
+
 	if (user?.role === "teacher") {
 		revalidatePath("/main/teacher/classes");
 		redirect("/main/teacher/classes?toast=cancelled");
@@ -507,6 +535,16 @@ export async function acceptClassById(classId: string) {
 		where: { id: classId },
 		include: { subject: true, teacher: true, student: true },
 	});
+
+	if (cls) {
+		const isParticipant =
+			user?.role === "admin" ||
+			user?.id === cls.studentId ||
+			user?.id === cls.teacherId;
+		if (!isParticipant || user?.id === cls.requesterId) {
+			return null;
+		}
+	}
 
 	// Capture pre-auth intent if present
 	if (cls?.preAuthIntentId && cls.teacherId) {
@@ -595,6 +633,16 @@ export async function refuseClassById(classId: string) {
 		where: { id: classId },
 		include: { subject: true, teacher: true, student: true },
 	});
+
+	if (cls) {
+		const isParticipant =
+			user?.role === "admin" ||
+			user?.id === cls.studentId ||
+			user?.id === cls.teacherId;
+		if (!isParticipant || user?.id === cls.requesterId) {
+			return null;
+		}
+	}
 
 	// Cancel pre-auth hold so the card is released immediately
 	if (cls?.preAuthIntentId) {
@@ -773,6 +821,14 @@ export async function proposeCounterOffer(
 	if (!cls) return { error: "Class not found." };
 	if (cls.status !== "requested") return { error: "Class is no longer pending." };
 
+	const isParticipant =
+		user.role === "admin" ||
+		user.id === cls.studentId ||
+		user.id === cls.teacherId;
+	if (!isParticipant || user.id === cls.requesterId) {
+		return { error: "You are not authorized to propose a new time for this class." };
+	}
+
 	const proposedTime = new Date(newTime);
 	if (isNaN(proposedTime.getTime())) return { error: "Invalid date." };
 
@@ -808,12 +864,17 @@ export async function proposeCounterOffer(
 export async function acceptCounterOffer(
 	classId: string,
 ): Promise<void> {
+	const session = await auth();
+	if (!session?.user?.email) return;
+	const user = await fetchUserByEmail(session.user.email);
+
 	const cls = await prisma.class.findUnique({
 		where: { id: classId },
 		include: { subject: true, teacher: true },
 	});
 
 	if (!cls?.counterOfferTime) return;
+	if (user?.role !== "admin" && user?.id !== cls.requesterId) return;
 
 	await prisma.class.update({
 		where: { id: classId },
@@ -844,12 +905,17 @@ export async function acceptCounterOffer(
 export async function declineCounterOffer(
 	classId: string,
 ): Promise<void> {
+	const session = await auth();
+	if (!session?.user?.email) return;
+	const user = await fetchUserByEmail(session.user.email);
+
 	const cls = await prisma.class.findUnique({
 		where: { id: classId },
 		include: { subject: true, teacher: true },
 	});
 
 	if (!cls) return;
+	if (user?.role !== "admin" && user?.id !== cls.requesterId) return;
 
 	await prisma.class.update({
 		where: { id: classId },

@@ -17,9 +17,10 @@ const sections: { heading: string; items: NavItem[] }[] = [
 	{
 		heading: "Learning",
 		items: [
-			{ href: "/main/student/classes",  icon: "fa-school",          label: "Classes"  },
-			{ href: "/main/student/calendar", icon: "fa-calendar-days",   label: "Calendar" },
-			{ href: "/main/student/teachers", icon: "fa-chalkboard-user", label: "Teachers" },
+			{ href: "/main/student/classes",         icon: "fa-school",          label: "Classes"  },
+			{ href: "/main/student/regular-classes", icon: "fa-rotate",          label: "Recurring Classes" },
+			{ href: "/main/student/calendar",        icon: "fa-calendar-days",   label: "Calendar" },
+			{ href: "/main/student/teachers",        icon: "fa-chalkboard-user", label: "Teachers" },
 		],
 	},
 	{

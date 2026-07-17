@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import prisma from "@/prisma";
 import { createNotification } from "@/app/lib/notifications";
 import { isWithinAvailability } from "@/app/lib/availability/check-availability";
+import { generateJitsiRoom } from "./generate-jitsi-room";
 
 export interface PreAuthClassData {
 	subjectId: string;
@@ -71,6 +72,7 @@ export async function createClassWithPreAuth(
 			status: "requested",
 			requesterId: student.id,
 			preAuthIntentId,
+			jitsiRoom: generateJitsiRoom(),
 		},
 	});
 

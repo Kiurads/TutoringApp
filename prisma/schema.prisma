@@ -8,6 +8,7 @@ generator client {
 }
 
 enum RegularClassStatus {
+  requested
   active
   inactive
 }
@@ -40,6 +41,14 @@ enum NotificationType {
   counter_offer_proposed
   counter_offer_accepted
   counter_offer_declined
+  refund_requested
+  refund_decided
+  refund_escalated
+  refund_resolved
+  regular_class_requested
+  regular_class_accepted
+  regular_class_refused
+  regular_class_cancelled
 }
 
 enum BadgeCategory {
@@ -48,6 +57,15 @@ enum BadgeCategory {
   milestone
   expertise
   pedagogy
+}
+
+enum RefundRequestStatus {
+  pending
+  accepted
+  refused
+  expired
+  admin_review
+  resolved
 }
 
 model User {
@@ -92,6 +110,8 @@ model User {
   teacherRatingsAsTeacher TeacherRating[]      @relation("TeacherRatingTeacher")
   paymentsAsStudent       Payment[]            @relation("PaymentStudent")
   paymentsAsTeacher       Payment[]            @relation("PaymentTeacher")
+  refundRequestsAsStudent RefundRequest[]      @relation("RefundRequestStudent")
+  refundRequestsAsTeacher RefundRequest[]      @relation("RefundRequestTeacher")
   notifications           Notification[]
   studentGameProfile      StudentGameProfile?
   teacherGameProfile      TeacherGameProfile?
@@ -132,6 +152,8 @@ model Class {
   requesterId       String
   counterOfferTime  DateTime?
   priority          Boolean  @default(false)
+  jitsiRoom         String?  @unique
+  regularClassId    String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -141,28 +163,55 @@ model Class {
   subject       Subject         @relation(fields: [subjectId], references: [id])
   teacherRating TeacherRating[]
   payments      Payment[]
+  refundRequest RefundRequest?
+  regularClass  RegularClass?   @relation(fields: [regularClassId], references: [id], onDelete: SetNull)
 
+  @@unique([regularClassId, startTime])
   @@index([studentId])
   @@index([teacherId])
   @@index([status])
+  @@index([regularClassId])
+}
+
+model RefundRequest {
+  id         String               @id @default(cuid())
+  classId    String               @unique
+  studentId  String
+  teacherId  String
+  reason     String               @db.Text
+  status     RefundRequestStatus  @default(pending)
+  adminNote  String?              @db.Text
+  expiresAt  DateTime
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student User  @relation("RefundRequestStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  teacher User  @relation("RefundRequestTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([studentId])
+  @@index([teacherId])
 }
 
 model RegularClass {
-  id              String             @id @default(cuid())
-  studentId       String
-  teacherId       String
-  subjectId       String
-  dayOfWeek       Int
-  startTime       DateTime
-  durationInHours Decimal
-  totalPrice      Decimal
-  status          RegularClassStatus @default(active)
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  id                      String             @id @default(cuid())
+  studentId               String
+  teacherId               String
+  subjectId               String
+  dayOfWeek               Int
+  startTime               DateTime
+  durationInHours         Decimal
+  totalPrice              Decimal
+  status                  RegularClassStatus @default(requested)
+  lastMaterializedThrough DateTime?
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
 
-  student User    @relation("RegularClassStudent", fields: [studentId], references: [id], onDelete: Cascade)
-  teacher User    @relation("RegularClassTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
-  subject Subject @relation(fields: [subjectId], references: [id])
+  student     User    @relation("RegularClassStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  teacher     User    @relation("RegularClassTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  subject     Subject @relation(fields: [subjectId], references: [id])
+  occurrences Class[]
 
   @@index([studentId])
   @@index([teacherId])

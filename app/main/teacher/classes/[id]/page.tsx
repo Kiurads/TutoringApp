@@ -3,6 +3,7 @@ import { fetchClassById } from "@/app/lib/actions/classes.actions";
 import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
 import ClassInfoCard from "@/app/ui/main/classes/details/class-info-card";
 import ClassActionModals from "@/app/ui/main/classes/details/class-action-modals";
+import JoinClassCard from "@/app/ui/main/classes/details/join-class-card";
 import Link from "next/link";
 
 export default async function TeacherClassDetailsPage(props: {
@@ -30,6 +31,22 @@ export default async function TeacherClassDetailsPage(props: {
 		? await fetchUserByEmail(session.user.email)
 		: null;
 
+	const isParticipant =
+		currentUser?.role === "admin" ||
+		currentUser?.id === classData.student.id ||
+		currentUser?.id === classData.teacher?.id;
+
+	if (!isParticipant) {
+		return (
+			<div className="flex flex-col gap-6">
+				<Link href="/main/teacher/classes" className="btn btn-ghost btn-sm w-fit gap-2">
+					<i className="fa-solid fa-arrow-left"></i> Back to Classes
+				</Link>
+				<div className="text-center text-error py-16">Class not found.</div>
+			</div>
+		);
+	}
+
 	const requestedBySelf = currentUser?.id === classData.requesterId;
 	const { status } = classData;
 
@@ -50,6 +67,14 @@ export default async function TeacherClassDetailsPage(props: {
 			</Link>
 
 			<ClassInfoCard classDetails={classData} />
+
+			<JoinClassCard
+				jitsiRoom={classData.jitsiRoom}
+				startTime={classData.startTime}
+				durationInHours={classData.durationInHours}
+				status={status}
+				displayName={currentUser?.firstName ?? "Teacher"}
+			/>
 
 			{hasActions && (
 				<div className="card bg-base-200 shadow-lg">

@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import prisma from "@/prisma";
 import { createNotification } from "@/app/lib/notifications";
 import { isWithinAvailability } from "@/app/lib/availability/check-availability";
+import { generateJitsiRoom } from "./generate-jitsi-room";
 
 export async function createClassAsStudent(
 	_prevState: string | undefined,
@@ -81,6 +82,7 @@ export async function createClassAsStudent(
 				totalPrice,
 				status: "requested",
 				requesterId: student.id,
+				jitsiRoom: generateJitsiRoom(),
 			},
 		});
 
@@ -125,6 +127,7 @@ export async function createClassAsStudent(
 				status: "requested",
 				requesterId: student.id,
 				priority: priorityBooking,
+				jitsiRoom: generateJitsiRoom(),
 			},
 		});
 

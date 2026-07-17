@@ -13,6 +13,7 @@ export default defineConfig({
         "app/lib/actions/**",
         "app/lib/classes/**",
         "app/lib/subjects/**",
+        "app/lib/regular-classes/**",
       ],
     },
   },

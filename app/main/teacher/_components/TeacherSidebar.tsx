@@ -19,9 +19,10 @@ const sections: { heading: string; items: NavItem[] }[] = [
 	{
 		heading: "Teaching",
 		items: [
-			{ href: "/main/teacher/classes",      icon: "fa-school",         label: "Classes"      },
-			{ href: "/main/teacher/calendar",     icon: "fa-calendar-days",  label: "Calendar"     },
-			{ href: "/main/teacher/availability", icon: "fa-clock",          label: "Availability" },
+			{ href: "/main/teacher/classes",         icon: "fa-school",         label: "Classes"      },
+			{ href: "/main/teacher/regular-classes", icon: "fa-rotate",         label: "Recurring Classes" },
+			{ href: "/main/teacher/calendar",        icon: "fa-calendar-days",  label: "Calendar"     },
+			{ href: "/main/teacher/availability",    icon: "fa-clock",          label: "Availability" },
 		],
 	},
 	{

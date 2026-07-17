@@ -4,6 +4,7 @@ import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
 import { fetchReviewByClassId } from "@/app/lib/actions/ratings.actions";
 import ClassInfoCard from "@/app/ui/main/classes/details/class-info-card";
 import ClassActionModals from "@/app/ui/main/classes/details/class-action-modals";
+import JoinClassCard from "@/app/ui/main/classes/details/join-class-card";
 import LeaveReviewForm from "@/app/ui/main/classes/review/leave-review-form";
 import Link from "next/link";
 
@@ -31,6 +32,22 @@ export default async function StudentClassDetailsPage(props: {
 	const currentUser = session?.user?.email
 		? await fetchUserByEmail(session.user.email)
 		: null;
+
+	const isParticipant =
+		currentUser?.role === "admin" ||
+		currentUser?.id === classData.student.id ||
+		currentUser?.id === classData.teacher?.id;
+
+	if (!isParticipant) {
+		return (
+			<div className="flex flex-col gap-6">
+				<Link href="/main/student/classes" className="btn btn-ghost btn-sm w-fit gap-2">
+					<i className="fa-solid fa-arrow-left"></i> Back to Classes
+				</Link>
+				<div className="text-center text-error py-16">Class not found.</div>
+			</div>
+		);
+	}
 
 	const requestedBySelf = currentUser?.id === classData.requesterId;
 	const { status, paid, hasPreAuth } = classData;
@@ -60,6 +77,14 @@ export default async function StudentClassDetailsPage(props: {
 			</Link>
 
 			<ClassInfoCard classDetails={classData} />
+
+			<JoinClassCard
+				jitsiRoom={classData.jitsiRoom}
+				startTime={classData.startTime}
+				durationInHours={classData.durationInHours}
+				status={status}
+				displayName={currentUser?.firstName ?? "Student"}
+			/>
 
 			{hasPreAuth && !paid && (
 				<div role="alert" className="alert alert-success animate-fade-in">

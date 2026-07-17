@@ -183,6 +183,29 @@ describe("cancelClassById", () => {
     expect(prisma.class.delete).not.toHaveBeenCalled();
   });
 
+  it("returns an error when caller is not a participant on the class", async () => {
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(fetchUserByEmail).mockResolvedValue({
+      id: "intruder1",
+      role: "student",
+    } as never);
+    vi.mocked(prisma.class.findUnique).mockResolvedValue({
+      id: "class1",
+      paid: false,
+      payments: [],
+      teacherId: "teacher1",
+      studentId: "student1",
+      student: { id: "student1", firstName: "Bob", lastName: "Jones" },
+      teacher: { id: "teacher1", firstName: "Alice", lastName: "Smith" },
+      subject: { name: "Math" },
+    } as never);
+
+    const result = await cancelClassById("class1");
+
+    expect(result).toBe("You are not authorized to cancel this class.");
+    expect(prisma.class.delete).not.toHaveBeenCalled();
+  });
+
   it("deletes the class and redirects to student path for student user", async () => {
     vi.mocked(auth).mockResolvedValue(mockSession as never);
     vi.mocked(fetchUserByEmail).mockResolvedValue({
@@ -240,6 +263,52 @@ describe("cancelClassById", () => {
 describe("acceptClassById", () => {
   it("returns null when there is no session", async () => {
     vi.mocked(auth).mockResolvedValue(null as never);
+
+    const result = await acceptClassById("class1");
+
+    expect(result).toBeNull();
+    expect(prisma.class.update).not.toHaveBeenCalled();
+  });
+
+  it("returns null when caller is not a participant on the class", async () => {
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(fetchUserByEmail).mockResolvedValue({
+      id: "intruder1",
+      role: "student",
+    } as never);
+    vi.mocked(prisma.class.findUnique).mockResolvedValue({
+      id: "class1",
+      teacherId: "teacher1",
+      studentId: "student1",
+      requesterId: "student1",
+      preAuthIntentId: null,
+      teacher: { firstName: "Alice", lastName: "Smith" },
+      student: { firstName: "Bob", lastName: "Jones" },
+      subject: { name: "Math" },
+    } as never);
+
+    const result = await acceptClassById("class1");
+
+    expect(result).toBeNull();
+    expect(prisma.class.update).not.toHaveBeenCalled();
+  });
+
+  it("returns null when caller is the requester (cannot accept their own request)", async () => {
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(fetchUserByEmail).mockResolvedValue({
+      id: "student1",
+      role: "student",
+    } as never);
+    vi.mocked(prisma.class.findUnique).mockResolvedValue({
+      id: "class1",
+      teacherId: "teacher1",
+      studentId: "student1",
+      requesterId: "student1",
+      preAuthIntentId: null,
+      teacher: { firstName: "Alice", lastName: "Smith" },
+      student: { firstName: "Bob", lastName: "Jones" },
+      subject: { name: "Math" },
+    } as never);
 
     const result = await acceptClassById("class1");
 

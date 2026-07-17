@@ -14,6 +14,7 @@ export interface ClassData {
 	totalPrice: string;
 	createdAt: string;
 	counterOfferTime: string | null;
+	jitsiRoom: string | null;
 }
 
 export interface ClassDataSimple {

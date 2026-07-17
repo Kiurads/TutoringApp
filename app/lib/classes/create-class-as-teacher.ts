@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import prisma from "@/prisma";
 import { createNotification } from "@/app/lib/notifications";
+import { generateJitsiRoom } from "./generate-jitsi-room";
 
 export async function createClassAsTeacher(
 	_prevState: string | undefined,
@@ -58,6 +59,7 @@ export async function createClassAsTeacher(
 			totalPrice,
 			status: "requested",
 			requesterId: teacher.id,
+			jitsiRoom: generateJitsiRoom(),
 		},
 	});
 
