@@ -1,87 +1,68 @@
 import { fetchUpcomingClassesByUser } from "@/app/lib/actions/classes.actions";
-import { decimalToHours } from "@/utils/decimal-to-time";
+import { decimalStringToHours } from "@/utils/decimal-to-time";
 import ClassStatusBadge from "../../classes/class-status-badge";
 
 export default async function UpcomingClasses(props: { userEmail: string }) {
 	const upcomingClasses = await fetchUpcomingClassesByUser(props.userEmail);
 
-	if (!upcomingClasses || upcomingClasses.length === 0) {
-		return (
-			<div className="overflow-x-auto rounded-lg border border-base-content bg-base-100">
-				<h2 className="text-center text-lg font-bold py-4">
-					<i className="fa-solid fa-chalkboard-user text-l"></i>{" "}
-					Upcoming Classes
-				</h2>
-				<h2 className="text-center text-lg py-4">
-					You have no upcoming classes{" "}
-					<i className="fa-solid fa-face-laugh-wink"></i>
-				</h2>
+	return (
+		<div className="rounded-lg border border-base-300 bg-base-100">
+			<div className="flex items-center justify-between px-4 py-3 border-b border-base-300">
+				<h2 className="text-lg font-semibold">Upcoming Classes</h2>
+				{upcomingClasses && upcomingClasses.length > 0 && (
+					<span className="badge badge-primary">{upcomingClasses.length}</span>
+				)}
 			</div>
-		);
-	} else {
-		return (
-			<div className="overflow-x-auto rounded-lg border border-base-content bg-base-100">
-				<h2 className="text-center text-lg font-bold py-4">
-					Upcoming Classes{" "}
-					<div className="badge badge-outline">
-						{upcomingClasses.length}
-					</div>
-				</h2>
-				<table className="min-w-full divide-y-2 divide-base-300 bg-base text-sm table-auto">
-					<thead className="ltr:text-left rtl:text-right">
-						<tr>
-							<th className="whitespace-nowrap px-4 py-2 font-medium text-base-content text-left">
-								Subject
-							</th>
-							<th className="whitespace-nowrap px-4 py-2 font-medium text-base-content text-left">
-								Teacher
-							</th>
-							<th className="whitespace-nowrap px-4 py-2 font-medium text-base-content text-left">
-								Start Time
-							</th>
-							<th className="whitespace-nowrap px-4 py-2 font-medium text-base-content text-left">
-								Duration
-							</th>
-							<th className="whitespace-nowrap px-4 py-2 font-medium text-base-content text-left">
-								Price
-							</th>
-							<th className="whitespace-nowrap px-4 py-2 font-medium text-base-content text-left">
-								Status
-							</th>
-						</tr>
-					</thead>
 
-					<tbody className="divide-y divide-base-300">
-						{upcomingClasses.map((classData) => (
-							<tr
-								key={classData.id}
-								className="hover:bg-base-200 transition-all"
-							>
-								<td className="whitespace-nowrap px-4 py-2 font-medium text-base-content capitalize">
-									{classData.subject}
-								</td>
-								<td className="whitespace-nowrap px-4 py-2 text-base-content capitalize">
-									{classData.teacher.name}
-								</td>
-								<td className="whitespace-nowrap px-4 py-2 text-base-content">
-									{classData.startTime}
-								</td>
-								<td className="whitespace-nowrap px-4 py-2 text-base-content">
-									{decimalToHours(classData.durationInHours)}
-								</td>
-								<td className="whitespace-nowrap px-4 py-2 text-base-content">
-									{classData.totalPrice.toString() + "€"}
-								</td>
-								<td className="whitespace-nowrap px-4 py-2 text-base-content capitalize">
-									<ClassStatusBadge
-										status={classData.status}
-									/>
-								</td>
+			{!upcomingClasses || upcomingClasses.length === 0 ? (
+				<p className="text-center py-10 text-base-content/50">
+					No upcoming classes scheduled.
+				</p>
+			) : (
+				<div className="overflow-x-auto">
+					<table className="w-full divide-y divide-base-300 text-sm">
+						<thead>
+							<tr className="bg-base-200">
+								<th className="px-3 py-2 font-medium text-base-content text-left">Subject</th>
+								<th className="px-3 py-2 font-medium text-base-content text-left hidden sm:table-cell">Teacher</th>
+								<th className="px-3 py-2 font-medium text-base-content text-left">Date</th>
+								<th className="px-3 py-2 font-medium text-base-content text-left hidden md:table-cell">Duration</th>
+								<th className="px-3 py-2 font-medium text-base-content text-left hidden md:table-cell">Price</th>
+								<th className="px-3 py-2 font-medium text-base-content text-left">Status</th>
 							</tr>
-						))}
-					</tbody>
-				</table>
-			</div>
-		);
-	}
+						</thead>
+						<tbody className="divide-y divide-base-300">
+							{upcomingClasses.map((classData) => (
+								<tr key={classData.id} className="hover:bg-base-200 transition-colors">
+									<td className="px-3 py-2 font-medium text-base-content capitalize">
+										{classData.subject}
+									</td>
+									<td className="px-3 py-2 text-base-content capitalize hidden sm:table-cell">
+										{classData.teacher?.name ?? (
+											<span className="badge badge-warning badge-sm">TBD</span>
+										)}
+									</td>
+									<td className="px-3 py-2 text-base-content text-xs whitespace-nowrap">
+										{new Date(classData.startTime).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+										<span className="block text-base-content/50">
+											{new Date(classData.startTime).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+										</span>
+									</td>
+									<td className="px-3 py-2 text-base-content hidden md:table-cell">
+										{decimalStringToHours(classData.durationInHours)}
+									</td>
+									<td className="px-3 py-2 text-base-content hidden md:table-cell">
+										{classData.totalPrice.toString()}€
+									</td>
+									<td className="px-3 py-2">
+										<ClassStatusBadge status={classData.status} />
+									</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</div>
+			)}
+		</div>
+	);
 }

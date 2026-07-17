@@ -1,14 +1,20 @@
 import { ClassData } from "@/app/lib/types/classes.types";
+import ClassStatusBadge from "./class-status-badge";
 
-export default function ClassesTable(props: { classes: ClassData[] }) {
-	const { classes } = props;
+export default function ClassesTable({ classes }: { classes: ClassData[] }) {
+	if (classes.length === 0) {
+		return (
+			<div className="flex flex-col items-center justify-center py-16 gap-2 text-base-content/30">
+				<i className="fa-solid fa-school text-4xl"></i>
+				<p className="text-sm">No classes yet.</p>
+			</div>
+		);
+	}
 
 	return (
-		<div>
-			<h1 className="text-2xl font-bold mb-6">Classes</h1>
-
-			<div className="overflow-x-auto bg-base-200 rounded-lg shadow">
-				<table className="table table-zebra w-full">
+		<div className="card bg-base-200 shadow overflow-hidden">
+			<div className="overflow-x-auto">
+				<table className="table table-sm">
 					<thead>
 						<tr>
 							<th>Student</th>
@@ -21,25 +27,29 @@ export default function ClassesTable(props: { classes: ClassData[] }) {
 					</thead>
 					<tbody>
 						{classes.map((c) => (
-							<tr key={c.id}>
-								<td>{c.student.name}</td>
-								<td>{c.teacher.name}</td>
-								<td>{c.subject}</td>
-								<td>{c.startTime}</td>
+							<tr key={c.id} className="hover">
+								<td className="capitalize">{c.student.name}</td>
+								<td className="capitalize">
+									{c.teacher?.name ?? (
+										<span className="text-base-content/40 text-xs italic">Unassigned</span>
+									)}
+								</td>
+								<td className="capitalize">{c.subject}</td>
+								<td className="text-xs whitespace-nowrap text-base-content/60">
+									{new Date(c.startTime).toLocaleDateString("en-GB", {
+										day: "numeric",
+										month: "short",
+										year: "numeric",
+									})}
+								</td>
 								<td>
-									<span className="badge badge-info">
-										{c.status.toUpperCase()}
-									</span>
+									<ClassStatusBadge status={c.status} />
 								</td>
 								<td>
 									{c.paid ? (
-										<span className="badge badge-success">
-											Yes
-										</span>
+										<span className="badge badge-success badge-sm">Yes</span>
 									) : (
-										<span className="badge badge-warning">
-											No
-										</span>
+										<span className="badge badge-ghost badge-sm">No</span>
 									)}
 								</td>
 							</tr>

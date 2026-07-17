@@ -1,6 +1,8 @@
 "use server";
 
 import prisma from "@/prisma";
+import { createNotification } from "@/app/lib/notifications";
+import { awardGems } from "@/app/lib/gamification";
 
 export async function fetchPaymentsByUserId(email: string) {
 	// Get student ID from email
@@ -32,8 +34,44 @@ export async function fetchPaymentsByUserId(email: string) {
 	// Return formatted payments
 	return payments.map((p) => ({
 		id: p.id,
-		amount: p.amount,
+		amount: p.amount.toNumber(),
 		teacherName: `${p.teacher.firstName} ${p.teacher.lastName}`,
+		date: p.createdAt,
+	}));
+}
+
+export async function fetchPaymentsByTeacherId(email: string) {
+	// Get teacher ID from email
+	const teacher = await prisma.user.findUnique({
+		where: { email },
+		select: { id: true },
+	});
+
+	if (!teacher) return [];
+
+	// Fetch payments
+	const payments = await prisma.payment.findMany({
+		where: {
+			teacherId: teacher.id,
+		},
+		select: {
+			id: true,
+			amount: true,
+			student: {
+				select: {
+					firstName: true,
+					lastName: true,
+				},
+			},
+			createdAt: true,
+		},
+	});
+
+	// Return formatted payments
+	return payments.map((p) => ({
+		id: p.id,
+		amount: p.amount,
+		studentName: `${p.student.firstName} ${p.student.lastName}`,
 		date: p.createdAt,
 	}));
 }
@@ -53,7 +91,7 @@ export async function createPaymentForClass(
 		},
 	});
 
-	if (!classData) {
+	if (!classData || !classData.teacherId) {
 		return null;
 	}
 
@@ -68,13 +106,21 @@ export async function createPaymentForClass(
 	});
 
 	await prisma.class.update({
-		where: {
-			id: classId,
-		},
-		data: {
-			paid: true,
-		},
+		where: { id: classId },
+		data: { paid: true },
 	});
+
+	// Notify teacher of payment
+	await createNotification(
+		classData.teacherId,
+		"class_paid",
+		"Payment Received",
+		`${classData.student.firstName} ${classData.student.lastName} paid ${Number(classData.totalPrice).toFixed(2)}€ for their ${classData.subject.name} class.`,
+		`/main/teacher/earnings`,
+	);
+
+	// Award gems to student for completing payment
+	await awardGems(classData.studentId, 50);
 
 	return {
 		startTime: classData.startTime,
@@ -84,8 +130,9 @@ export async function createPaymentForClass(
 				classData.student.firstName + " " + classData.student.lastName,
 		},
 		teacher: {
-			name:
-				classData.teacher.firstName + " " + classData.teacher.lastName,
+			name: classData.teacher
+				? classData.teacher.firstName + " " + classData.teacher.lastName
+				: "Unknown",
 		},
 		subject: {
 			name: classData.subject.name,

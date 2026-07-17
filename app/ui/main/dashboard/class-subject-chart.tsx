@@ -23,7 +23,10 @@ export default function ClassSubjectChart(props: { classes: Class[] }) {
 
 	console.log(classes);
 
-	const [chartData, setChartData] = useState<any>(null);
+	const [chartData, setChartData] = useState<{
+		labels: string[];
+		datasets: { data: number[]; backgroundColor: string[] }[];
+	} | null>(null);
 
 	useEffect(() => {
 		const subjectCount: { [key: string]: number } = {};
@@ -56,12 +59,12 @@ export default function ClassSubjectChart(props: { classes: Class[] }) {
 	}, [classes]);
 
 	return (
-		<div className="bg-white p-4 rounded-lg shadow-md">
+		<div className="bg-base-100 p-4 rounded-lg shadow-md">
 			<h2 className="text-lg font-semibold mb-2">Classes per Subject</h2>
 			{chartData ? (
 				<Pie data={chartData} />
 			) : (
-				<div className="text-center text-gray-500">
+				<div className="text-center text-base-content/50">
 					No scheduled classes available
 				</div>
 			)}

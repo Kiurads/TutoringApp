@@ -3,14 +3,13 @@ import ClassStatusBadge from "@/app/ui/main/classes/class-status-badge";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-// Define the component props
 interface PaymentSuccessPageProps {
-	params: { id: string };
-	searchParams: {
+	params: Promise<{ id: string }>;
+	searchParams: Promise<{
 		payment_intent: string;
 		payment_intent_client_secret: string;
 		redirect_status: string;
-	};
+	}>;
 }
 
 export default async function PaymentSuccessPage({
@@ -32,53 +31,66 @@ export default async function PaymentSuccessPage({
 	}
 
 	return (
-		<div className="flex flex-col items-center justify-center min-h-screen p-6 bg-base-100">
-			<div className="alert alert-success shadow-lg w-full max-w-lg mb-6">
-				<div>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						className="h-6 w-6 stroke-current"
-						fill="none"
-						viewBox="0 0 24 24"
+		<div className="flex items-center justify-center py-12 animate-fade-in">
+			<div className="card bg-base-200 shadow-lg w-full max-w-lg">
+				<div className="card-body items-center text-center gap-4">
+					<div className="text-6xl text-success">
+						<i className="fa-solid fa-circle-check"></i>
+					</div>
+					<h2 className="card-title text-xl">Payment Successful!</h2>
+					<p className="text-base-content/70">
+						Your class has been confirmed and is ready to go.
+					</p>
+
+					<div className="w-full border-t border-base-300 pt-4 flex flex-col gap-3 text-left">
+						<div className="flex justify-between">
+							<span className="text-base-content/60 text-sm">
+								Subject
+							</span>
+							<span className="font-medium">
+								{classData.subject}
+							</span>
+						</div>
+						<div className="flex justify-between">
+							<span className="text-base-content/60 text-sm">
+								Teacher
+							</span>
+							<span className="font-medium">
+								{classData.teacher?.name ?? "TBD"}
+							</span>
+						</div>
+						<div className="flex justify-between">
+							<span className="text-base-content/60 text-sm">
+								Student
+							</span>
+							<span className="font-medium">
+								{classData.student.name}
+							</span>
+						</div>
+						<div className="flex justify-between">
+							<span className="text-base-content/60 text-sm">
+								Date &amp; time
+							</span>
+							<span className="font-medium">
+								{new Date(classData.startTime).toLocaleString()}
+							</span>
+						</div>
+						<div className="flex justify-between items-center">
+							<span className="text-base-content/60 text-sm">
+								Status
+							</span>
+							<ClassStatusBadge status={classData.status} />
+						</div>
+					</div>
+
+					<Link
+						href="/main/student/classes"
+						className="btn btn-primary w-full mt-2"
 					>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth="2"
-							d="M5 13l4 4L19 7"
-						/>
-					</svg>
-					<span>
-						Payment successful! Your class has been confirmed!
-					</span>
+						Go to My Classes
+					</Link>
 				</div>
 			</div>
-
-			<div className="card w-full max-w-lg bg-base-100 shadow-xl">
-				<div className="card-body">
-					<p className="text-lg">
-						<strong>Class time:</strong>{" "}
-						{new Date(classData.startTime).toLocaleString()}
-					</p>
-					<p className="text-lg flex items-center gap-2">
-						<strong>Status:</strong>{" "}
-						<ClassStatusBadge status={classData.status} />
-					</p>
-					<p className="text-lg">
-						<strong>Student:</strong> {classData.student.name}
-					</p>
-					<p className="text-lg">
-						<strong>Teacher:</strong> {classData.teacher.name}
-					</p>
-					<p className="text-lg">
-						<strong>Subject:</strong> {classData.subject}
-					</p>
-				</div>
-			</div>
-
-			<Link href="/main/student/classes" className="btn btn-primary mt-6">
-				Go to Classes
-			</Link>
 		</div>
 	);
 }

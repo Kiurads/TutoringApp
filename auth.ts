@@ -5,7 +5,12 @@ import bcrypt from "bcryptjs";
 import prisma from "./prisma";
 import { authConfig } from "./auth.config";
 
-export const { signIn, signOut, auth } = NextAuth({
+export const {
+	handlers: { GET, POST },
+	signIn,
+	signOut,
+	auth,
+} = NextAuth({
 	...authConfig,
 	adapter: PrismaAdapter(prisma),
 	session: { strategy: "jwt" },
@@ -53,6 +58,14 @@ export const { signIn, signOut, auth } = NextAuth({
 					if (!isMatch) {
 						throw new Error("Incorrect password.");
 					}
+				}
+
+				// Set teachers online on login
+				if (user.role === "teacher") {
+					await prisma.user.update({
+						where: { id: user.id },
+						data: { isOnline: true },
+					});
 				}
 
 				return {

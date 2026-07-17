@@ -5,9 +5,13 @@ export interface TeacherDetails {
 	bio: string | null;
 	rating: string;
 	pricePerHour: string;
+	isOnline: boolean;
 }
 
 export interface TeacherExtended extends TeacherDetails {
-	subjects: string[];
+	subjects: string[];       // subject names (display)
+	subjectIds: string[];     // subject IDs (fit score)
+	availabilityDays: number[]; // unique dayOfWeek values (fit score)
 	status: "Active" | "Pending" | "Inactive";
+	fitScore?: number | null;
 }

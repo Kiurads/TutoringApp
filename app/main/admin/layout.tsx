@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const navItems = [
 	{
@@ -47,6 +48,7 @@ export default function AdminLayout({
 	children: React.ReactNode;
 }) {
 	const pathname = usePathname();
+	const { data: session } = useSession();
 
 	return (
 		<div className="drawer lg:drawer-open">
@@ -71,13 +73,13 @@ export default function AdminLayout({
 			</div>
 
 			{/* Sidebar */}
-			<div className="drawer-side">
+			<div className="drawer-side lg:!top-16 lg:!h-[calc(100dvh-4rem)]">
 				<label
 					htmlFor="admin-drawer"
 					aria-label="close sidebar"
 					className="drawer-overlay"
 				></label>
-				<aside className="menu bg-base-200 text-base-content min-h-full w-80 p-6 flex flex-col justify-between">
+				<aside className="menu bg-base-200 text-base-content h-full w-80 p-6 flex flex-col justify-between overflow-y-auto">
 					<div>
 						{/* Header / Logo */}
 						<div className="flex items-center gap-3 mb-6">
@@ -108,9 +110,9 @@ export default function AdminLayout({
 					</div>
 
 					{/* Footer section */}
-					<div className="mt-8 border-t pt-4 text-sm text-gray-500">
-						<p className="font-semibold mb-1">Logged in as:</p>
-						<p>admin@example.com</p>
+					<div className="mt-8 border-t pt-4 text-sm text-base-content/50">
+						<p className="font-semibold mb-1 text-base-content/70">Logged in as:</p>
+						<p className="truncate">{session?.user?.email ?? "—"}</p>
 					</div>
 				</aside>
 			</div>

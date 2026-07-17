@@ -1,0 +1,15 @@
+steps:
+  install:
+    image: node:20-alpine
+    commands:
+      - corepack enable
+      - corepack prepare pnpm@9 --activate
+      - pnpm install --frozen-lockfile
+
+  test:
+    image: node:20-alpine
+    commands:
+      - corepack enable
+      - corepack prepare pnpm@9 --activate
+      - pnpm prisma generate
+      - pnpm test

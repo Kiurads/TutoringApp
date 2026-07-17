@@ -14,7 +14,7 @@ export async function createSubject(
 		return "You must be logged in to create a class.";
 	}
 
-	if (!session.user.role || session.user.role !== "admin") {
+	if (!session.user.role || (session.user.role as string) !== "admin") {
 		return "You do not have permission to create a subject.";
 	}
 

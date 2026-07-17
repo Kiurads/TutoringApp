@@ -101,7 +101,7 @@ export default function TeachersTable(props: {
 							<tr>
 								<td
 									colSpan={5}
-									className="text-center py-6 text-gray-500"
+									className="text-center py-6 text-base-content/50"
 								>
 									No teachers found.
 								</td>

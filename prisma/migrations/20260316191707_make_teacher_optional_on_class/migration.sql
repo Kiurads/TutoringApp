@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `Class` MODIFY `teacherId` VARCHAR(191) NULL,
+    MODIFY `totalPrice` DECIMAL(65, 30) NOT NULL DEFAULT 0;
