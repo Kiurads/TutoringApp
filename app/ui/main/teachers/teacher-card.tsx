@@ -59,7 +59,7 @@ export default function TeacherCard({
 						alt=""
 						width={48}
 						height={48}
-						src={getAvatar(teacher.email)} unoptimized
+						src={getAvatar(teacher.email, teacher.avatarOptions)} unoptimized
 						className="size-12 rounded-lg object-cover shadow-sm shrink-0"
 					/>
 				</div>

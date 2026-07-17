@@ -3,6 +3,7 @@ export default interface UserDetails {
 	name: string;
 	email: string;
 	role: string;
+	avatarOptions?: string | null;
 }
 
 export interface StudentDetails extends UserDetails {
@@ -19,11 +20,13 @@ export function formatUser(user: {
 	lastName: string;
 	email: string;
 	role: string;
+	avatarOptions?: string | null;
 }): UserDetails {
 	return {
 		id: user.id,
 		name: `${user.firstName} ${user.lastName}`,
 		email: user.email,
 		role: user.role as "student" | "teacher" | "admin",
+		avatarOptions: user.avatarOptions,
 	};
 }

@@ -127,6 +127,7 @@ export async function fetchTeachersExtended(): Promise<TeacherExtended[]> {
 			bio: true,
 			isOnline: true,
 			pricePerHour: true,
+			avatarOptions: true,
 			teacherRatingsAsTeacher: {
 				select: { rating: true },
 			},
@@ -158,6 +159,7 @@ export async function fetchTeachersExtended(): Promise<TeacherExtended[]> {
 			isOnline: teacher.isOnline,
 			rating: ratingAverage !== null ? ratingAverage.toFixed(2) : "No Reviews",
 			pricePerHour: teacher.pricePerHour ? teacher.pricePerHour.toFixed(2) : "0.00",
+			avatarOptions: teacher.avatarOptions,
 			subjects: teacher.teacherSubject.map((ts) => ts.subject.name),
 			subjectIds: teacher.teacherSubject.map((ts) => ts.subject.id),
 			availabilityDays: [...new Set(teacher.teacherAvailability.map((a) => a.dayOfWeek))],

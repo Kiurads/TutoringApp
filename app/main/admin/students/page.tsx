@@ -11,6 +11,7 @@ async function getStudents() {
 			firstName: true,
 			lastName: true,
 			email: true,
+			avatarOptions: true,
 			createdAt: true,
 			_count: { select: { classesAsStudent: true } },
 		},
@@ -50,7 +51,7 @@ export default async function StudentsPage() {
 											<td>
 												<div className="flex items-center gap-3">
 													<Image
-														src={getAvatar(s.email)} unoptimized
+														src={getAvatar(s.email, s.avatarOptions)} unoptimized
 														alt=""
 														width={32}
 														height={32}

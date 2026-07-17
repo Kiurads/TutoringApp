@@ -10,6 +10,7 @@ interface UserHeaderProps {
 	role: string;
 	bio?: string | null;
 	createdAt: Date;
+	avatarOptions?: string | null;
 }
 
 export default function UserDetailsHeader(props: {
@@ -32,7 +33,7 @@ export default function UserDetailsHeader(props: {
 							alt={`${user.firstName} ${user.lastName}`}
 							width={64}
 							height={64}
-							src={getAvatar(user.email)} unoptimized
+							src={getAvatar(user.email, user.avatarOptions)} unoptimized
 							className="size-16 rounded-xl object-cover shadow-sm shrink-0"
 						/>
 						<div>
