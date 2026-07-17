@@ -32,7 +32,7 @@ export default function UserCard(props: { user: UserDetails }) {
 						alt=""
 						width={1000}
 						height={1000}
-						src={getAvatar(user.email)} unoptimized
+						src={getAvatar(user.email, user.avatarOptions)} unoptimized
 						className="size-16 rounded-lg object-cover shadow-sm"
 					/>
 				</div>

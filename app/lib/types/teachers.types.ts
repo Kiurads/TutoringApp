@@ -6,6 +6,7 @@ export interface TeacherDetails {
 	rating: string;
 	pricePerHour: string;
 	isOnline: boolean;
+	avatarOptions?: string | null;
 }
 
 export interface TeacherExtended extends TeacherDetails {

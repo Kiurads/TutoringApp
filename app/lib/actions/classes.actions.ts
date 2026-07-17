@@ -95,6 +95,7 @@ export async function fetchClassById(id: string): Promise<ClassData | null> {
 					lastName: true,
 					email: true,
 					role: true,
+					avatarOptions: true,
 				},
 			},
 			student: {
@@ -104,6 +105,7 @@ export async function fetchClassById(id: string): Promise<ClassData | null> {
 					lastName: true,
 					email: true,
 					role: true,
+					avatarOptions: true,
 				},
 			},
 			subject: {
