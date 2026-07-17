@@ -4,6 +4,7 @@ import Script from "next/script";
 
 import { poppins } from "@/app/ui/fonts";
 import Navbar from "./ui/navbar";
+import Providers from "./providers";
 
 export const metadata: Metadata = {
 	title: "The Learning Nexus",
@@ -21,10 +22,12 @@ export default function RootLayout({
 				{/* Blocking script — must be first child of body, runs before paint */}
 				<script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}}())` }} />
 				<Script src="https://kit.fontawesome.com/c0fa11f9f4.js"></Script>
-				<Navbar />
-				<main className="flex-1 flex flex-col">
-					{children}
-				</main>
+				<Providers>
+					<Navbar />
+					<main className="flex-1 flex flex-col">
+						{children}
+					</main>
+				</Providers>
 			</body>
 		</html>
 	);

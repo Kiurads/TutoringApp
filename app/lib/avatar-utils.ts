@@ -85,7 +85,6 @@ function sanitize(o: AvatarOptions): AvatarOptions {
 export function buildAvatarDataUri(seed: string, options?: AvatarOptions | null): string {
 	const o = options ? sanitize(options) : null;
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const avatar = createAvatar(toonHead, {
 		seed,
 		...(o ? {
@@ -108,6 +107,7 @@ export function buildAvatarDataUri(seed: string, options?: AvatarOptions | null)
 			radius:              0, // always square background
 			flip:                o.flip,
 		} : {}),
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	} as any);
 
 	return `data:image/svg+xml;utf8,${encodeURIComponent(avatar.toString())}`;

@@ -1,7 +1,6 @@
 import prisma from "@/prisma";
 import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
 import { getTierName, getTierProgress } from "@/app/lib/gamification-utils";
-import Link from "next/link";
 
 export default async function AcademicArcWidget({
 	userEmail,

@@ -82,7 +82,8 @@ export default function AvailabilityGrid({
 			visitedRef.current.add(key);
 			setActive((prev) => {
 				const next = new Set(prev);
-				dragValueRef.current ? next.add(key) : next.delete(key);
+				if (dragValueRef.current) next.add(key);
+				else next.delete(key);
 				return next;
 			});
 			setSaved(false);
@@ -116,7 +117,8 @@ export default function AvailabilityGrid({
 		visitedRef.current = new Set([key]);
 		setActive((prev) => {
 			const next = new Set(prev);
-			painting ? next.add(key) : next.delete(key);
+			if (painting) next.add(key);
+			else next.delete(key);
 			return next;
 		});
 		setSaved(false);

@@ -18,7 +18,7 @@ export default async function TeacherAvailabilityPage() {
 			<div>
 				<h1 className="text-2xl font-bold">Availability</h1>
 				<p className="text-base-content/60 mt-1">
-					Set the times you're available to teach each week. Students will see
+					Set the times you&apos;re available to teach each week. Students will see
 					these slots when browsing your profile.
 				</p>
 			</div>
