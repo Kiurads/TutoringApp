@@ -11,6 +11,10 @@
 | Gamification logic | `awardGems`, `awardSparks`, `awardBadge`, `checkSessionBadges` in `app/lib/gamification.ts` |
 | Gamification hooks | Payment → +50 gems; review → +50 gems / +75–100 sparks; class accepted → +50 sparks |
 | Dashboard widgets | `NextUpCard`, `AcademicArcWidget`, `MentorMilestonesWidget` added to both dashboards |
+| Class completion worker | `worker/` project; marks past-due `scheduled` classes `completed`, awards gems/sparks, checks badges (Phase 8, done) |
+| Embedded Jitsi video | `Class.jitsiRoom`; `JoinClassCard`/`JitsiEmbed` on both class detail pages, time-window gated |
+| Recurring classes (9A) | `RegularClass` request→accept→active lifecycle; `worker/src/regular-classes.ts` materializes real `Class` occurrences on a rolling 4-week window with a monotonic watermark; series cancel cancels only future non-terminal occurrences via the existing refund-tier logic |
+| Class-detail authorization | Both `[id]/page.tsx` pages and all class-mutating actions now verify the caller is an actual participant (or admin) |
 
 ---
 
@@ -191,14 +195,8 @@ cd worker && npm start     # prod
 
 ## Phase 9 — Remaining Feature Gaps (from original plan)
 
-### 9A — Regular classes UI
-The `RegularClass` model exists (dayOfWeek, startTime, durationInHours, status). No UI exists.
-| File | Work |
-|---|---|
-| `app/main/teacher/regular-classes/page.tsx` | List + create regular class form |
-| `app/main/student/regular-classes/page.tsx` | View enrolled regular classes |
-| `app/lib/actions/regular-classes.actions.ts` | CRUD actions |
-| Teacher sidebar | Add "Regular Classes" link |
+### 9A — Regular classes UI — done ✅
+See "Completed" table above. Not yet built on top of it: pausing/resuming a series without a full cancel, and editing a series' day/time/price after creation (currently cancel-and-recreate only).
 
 ### 9B — Admin user management
 Currently admin can view students/teachers but cannot edit or delete.
@@ -244,11 +242,14 @@ The `email/` directory exists but nothing sends mail.
 ---
 
 ## Recommended order going forward
-1. **Phase 3** (Profile) — unblocks teacher sparks one-time reward and Phase 6 onboarding
-2. **Phase 4** (Availability + counter-offer) — highest UX value for scheduling
-3. **Phase 5** (Pre-auth payment) — core trust feature; test with Stripe carefully
-4. **Phase 8** (Worker) — needed for gems-on-completion and badge milestones
-5. **Phase 6** (Onboarding + fit score) — relies on profile data
-6. **Phase 7** (Store + showcase) — final gamification layer
-7. **Phase 9** (Feature gaps) — regular classes, admin, filters, pagination, email
-8. **Phase 10** (Polish) — final quality pass before launch
+
+Phases 3–9A are all done (see "Completed" table). Remaining:
+1. **Phase 9B** (Admin CRUD) — students/teachers currently list-only
+2. **Phase 9C/9D** (Search/filter + pagination)
+3. **Phase 9E** (Email) — tie into the completion worker's and recurring-occurrence notifications first, highest-value moments to also email
+4. **Phase 10** (Polish) — final quality pass before launch
+
+Known follow-ups from this pass, not yet scoped into a phase:
+- Presence-based reliability sparks (Jitsi join/leave events) — deferred until the completion worker's definition of "session happened" was validated in practice
+- Recurring series editing (day/time/price) without a full cancel-and-recreate
+- `authenticate.ts` redirects to a non-existent `/dashboard`, which can bounce a fresh login back to `/login` before middleware corrects it — confirmed via live testing, not yet fixed
