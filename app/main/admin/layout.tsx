@@ -73,13 +73,13 @@ export default function AdminLayout({
 			</div>
 
 			{/* Sidebar */}
-			<div className="drawer-side">
+			<div className="drawer-side lg:!top-16 lg:!h-[calc(100dvh-4rem)]">
 				<label
 					htmlFor="admin-drawer"
 					aria-label="close sidebar"
 					className="drawer-overlay"
 				></label>
-				<aside className="menu bg-base-200 text-base-content min-h-full w-80 p-6 flex flex-col justify-between">
+				<aside className="menu bg-base-200 text-base-content h-full w-80 p-6 flex flex-col justify-between overflow-y-auto">
 					<div>
 						{/* Header / Logo */}
 						<div className="flex items-center gap-3 mb-6">

@@ -66,14 +66,14 @@ export default function StudentSidebar({
 				</label>
 			</div>
 
-			<div className="drawer-side overflow-hidden">
+			<div className="drawer-side overflow-hidden lg:!top-16 lg:!h-[calc(100dvh-4rem)]">
 				<label
 					htmlFor="my-drawer-2"
 					aria-label="close sidebar"
 					className="drawer-overlay"
 				></label>
 
-				<aside className="bg-base-200 text-base-content h-screen w-64 flex flex-col overflow-y-auto">
+				<aside className="bg-base-200 text-base-content h-full w-64 flex flex-col overflow-y-auto">
 					{/* Header */}
 					<div className="flex items-center justify-between px-4 pt-4 pb-3 shrink-0">
 						<div className="flex items-center gap-2 text-xl font-bold">
