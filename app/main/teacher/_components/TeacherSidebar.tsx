@@ -28,8 +28,9 @@ const sections: { heading: string; items: NavItem[] }[] = [
 	{
 		heading: "People & Money",
 		items: [
-			{ href: "/main/teacher/students", icon: "fa-user-graduate", label: "Students" },
-			{ href: "/main/teacher/earnings", icon: "fa-dollar-sign",   label: "Earnings" },
+			{ href: "/main/teacher/students",        icon: "fa-user-graduate",  label: "Students"        },
+			{ href: "/main/teacher/earnings",        icon: "fa-dollar-sign",    label: "Earnings"        },
+			{ href: "/main/teacher/refund-requests", icon: "fa-rotate-left",    label: "Refund Requests" },
 		],
 	},
 	{

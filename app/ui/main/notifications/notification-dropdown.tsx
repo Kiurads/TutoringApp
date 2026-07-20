@@ -16,6 +16,10 @@ const TYPE_CONFIG: Record<string, { icon: string; bg: string; fg: string }> = {
 	class_claimed:   { icon: "fa-chalkboard-user",     bg: "bg-success",  fg: "text-success-content"  },
 	class_paid:      { icon: "fa-sack-dollar",         bg: "bg-success",  fg: "text-success-content"  },
 	class_completed: { icon: "fa-flag-checkered",      bg: "bg-info",     fg: "text-info-content"     },
+	refund_requested: { icon: "fa-rotate-left",     bg: "bg-warning",  fg: "text-warning-content"  },
+	refund_decided:   { icon: "fa-rotate-left",     bg: "bg-info",     fg: "text-info-content"     },
+	refund_escalated: { icon: "fa-shield-halved",   bg: "bg-error",    fg: "text-error-content"    },
+	refund_resolved:  { icon: "fa-shield-halved",   bg: "bg-neutral",  fg: "text-neutral-content"  },
 };
 
 const FALLBACK = { icon: "fa-circle-info", bg: "bg-info", fg: "text-info-content" };

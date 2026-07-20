@@ -14,7 +14,7 @@ import {
 } from "../types/classes.types";
 import { formatUser } from "../types/user.types";
 import { createNotification } from "@/app/lib/notifications";
-import { awardGems, awardSparks } from "@/app/lib/gamification";
+import { awardGems, awardSparks, checkSessionBadges } from "@/app/lib/gamification";
 import Stripe from "stripe";
 
 export interface ClassDataCalendar {
@@ -802,6 +802,70 @@ export async function claimClass(classId: string) {
 
 	revalidatePath("/main/teacher/classes");
 	redirect("/main/teacher/classes?toast=claimed");
+}
+
+export async function completeClass(classId: string): Promise<{ error?: string }> {
+	const session = await auth();
+	if (!session?.user?.email) return { error: "Not authenticated." };
+
+	const cls = await prisma.class.findUnique({
+		where: { id: classId },
+		include: { subject: true, student: true, teacher: true },
+	});
+
+	if (!cls) return { error: "Class not found." };
+	if (cls.status !== "scheduled") return { error: "Only scheduled classes can be marked complete." };
+
+	const endTime = cls.startTime.getTime() + cls.durationInHours.toNumber() * 3_600_000;
+	if (Date.now() < endTime) return { error: "Class hasn't ended yet." };
+
+	// Capture pre-auth if it was never collected (edge case: pre-auth but !paid)
+	if (cls.preAuthIntentId && !cls.paid && cls.teacherId) {
+		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+		try {
+			await stripe.paymentIntents.capture(cls.preAuthIntentId);
+			await prisma.payment.create({
+				data: {
+					amount: cls.totalPrice,
+					intentId: cls.preAuthIntentId,
+					classId: cls.id,
+					studentId: cls.studentId,
+					teacherId: cls.teacherId,
+				},
+			});
+			await prisma.class.update({
+				where: { id: classId },
+				data: { status: "completed", paid: true },
+			});
+		} catch {
+			await prisma.class.update({ where: { id: classId }, data: { status: "completed" } });
+		}
+	} else {
+		await prisma.class.update({ where: { id: classId }, data: { status: "completed" } });
+	}
+
+	// Gamification
+	await awardGems(cls.studentId, 50);
+	if (cls.teacherId) {
+		await awardSparks(cls.teacherId, 25);
+		await checkSessionBadges(cls.teacherId, "teacher");
+	}
+	await checkSessionBadges(cls.studentId, "student");
+
+	// Notify student to leave a review
+	await createNotification(
+		cls.studentId,
+		"class_completed",
+		"Class Complete!",
+		`Your ${cls.subject.name} class is done. Leave a review for your teacher!`,
+		`/main/student/classes/${classId}`,
+	);
+
+	revalidatePath("/main/teacher/classes");
+	revalidatePath(`/main/teacher/classes/${classId}`);
+	revalidatePath("/main/student/classes");
+	revalidatePath(`/main/student/classes/${classId}`);
+	return {};
 }
 
 // ── Counter-offer ─────────────────────────────────────────────────────────────

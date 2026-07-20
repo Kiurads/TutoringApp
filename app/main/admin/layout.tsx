@@ -36,6 +36,11 @@ const navItems = [
 		icon: "fa-solid fa-book",
 	},
 	{
+		href: "/main/admin/refund-requests",
+		label: "Refund Requests",
+		icon: "fa-solid fa-rotate-left",
+	},
+	{
 		href: "/main/admin/settings",
 		label: "Settings",
 		icon: "fa-solid fa-gear",

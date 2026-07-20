@@ -4,6 +4,7 @@ import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
 import ClassInfoCard from "@/app/ui/main/classes/details/class-info-card";
 import ClassActionModals from "@/app/ui/main/classes/details/class-action-modals";
 import JoinClassCard from "@/app/ui/main/classes/details/join-class-card";
+import CompleteClassButton from "@/app/ui/main/classes/details/complete-class-button";
 import Link from "next/link";
 
 export default async function TeacherClassDetailsPage(props: {
@@ -57,7 +58,11 @@ export default async function TeacherClassDetailsPage(props: {
 		(status === "requested" && requestedBySelf) ||
 		status === "scheduled";
 
-	const hasActions = canAccept || canRefuse || canCancel;
+	const startMs = new Date(classData.startTime).getTime();
+	const durationMs = parseFloat(classData.durationInHours) * 3_600_000;
+	const canComplete = status === "scheduled" && Date.now() >= startMs + durationMs;
+
+	const hasActions = canAccept || canRefuse || canCancel || canComplete;
 	const otherPartyName = classData.student.name;
 
 	return (
@@ -82,17 +87,20 @@ export default async function TeacherClassDetailsPage(props: {
 						<h3 className="text-xs font-semibold text-base-content/50 uppercase tracking-wide">
 							Actions
 						</h3>
-						<ClassActionModals
-							id={id}
-							subject={classData.subject}
-							otherPartyName={otherPartyName}
-							role="teacher"
-							canAccept={canAccept}
-							canRefuse={canRefuse}
-							canCancel={canCancel}
-							canCounterOffer={canCounterOffer}
-							counterOfferTime={classData.counterOfferTime}
-						/>
+						{canComplete && <CompleteClassButton classId={id} />}
+						{(canAccept || canRefuse || canCancel || canCounterOffer) && (
+							<ClassActionModals
+								id={id}
+								subject={classData.subject}
+								otherPartyName={otherPartyName}
+								role="teacher"
+								canAccept={canAccept}
+								canRefuse={canRefuse}
+								canCancel={canCancel}
+								canCounterOffer={canCounterOffer}
+								counterOfferTime={classData.counterOfferTime}
+							/>
+						)}
 					</div>
 				</div>
 			)}

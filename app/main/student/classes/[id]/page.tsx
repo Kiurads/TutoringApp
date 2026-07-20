@@ -2,10 +2,12 @@ import { auth } from "@/auth";
 import { fetchClassById } from "@/app/lib/actions/classes.actions";
 import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
 import { fetchReviewByClassId } from "@/app/lib/actions/ratings.actions";
+import { fetchRefundRequestByClassId } from "@/app/lib/actions/refund-requests.actions";
 import ClassInfoCard from "@/app/ui/main/classes/details/class-info-card";
 import ClassActionModals from "@/app/ui/main/classes/details/class-action-modals";
 import JoinClassCard from "@/app/ui/main/classes/details/join-class-card";
 import LeaveReviewForm from "@/app/ui/main/classes/review/leave-review-form";
+import NoShowReportSection from "@/app/ui/main/classes/no-show-report-section";
 import Link from "next/link";
 
 export default async function StudentClassDetailsPage(props: {
@@ -68,6 +70,15 @@ export default async function StudentClassDetailsPage(props: {
 			? await fetchReviewByClassId(id)
 			: null;
 
+	// No-show report: only for completed, paid classes where the session end time has passed
+	const sessionEndMs = new Date(classData.startTime).getTime() + parseFloat(classData.durationInHours) * 3_600_000;
+	const sessionEnded = Date.now() > sessionEndMs;
+	const canReport = status === "completed" && paid && sessionEnded;
+
+	const refundRequest = canReport || status === "completed"
+		? await fetchRefundRequestByClassId(id)
+		: null;
+
 	const otherPartyName = classData.teacher?.name ?? "the teacher";
 
 	return (
@@ -126,6 +137,13 @@ export default async function StudentClassDetailsPage(props: {
 					teacherId={classData.teacher.id}
 					teacherName={classData.teacher.name}
 					existingReview={existingReview}
+				/>
+			)}
+
+			{(canReport || refundRequest) && (
+				<NoShowReportSection
+					classId={id}
+					refundRequest={refundRequest}
 				/>
 			)}
 		</div>

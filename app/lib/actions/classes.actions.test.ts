@@ -11,6 +11,7 @@ import {
   acceptClassById,
   refuseClassById,
   claimClass,
+  completeClass,
 } from "./classes.actions";
 
 // Helper to simulate Prisma Decimal
@@ -56,11 +57,20 @@ vi.mock("./users.actions", () => ({ fetchUserByEmail: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/app/lib/notifications", () => ({ createNotification: vi.fn() }));
-// cancelClassById instantiates Stripe — mock as a class so `new Stripe(...)` works
+// cancelClassById / completeClass instantiate Stripe and call gamification helpers;
+// mock both so these tests stay focused on class state transitions.
+const stripeCapture = vi.hoisted(() => vi.fn().mockResolvedValue({ id: "pi_test" }));
 vi.mock("stripe", () => ({
   default: class MockStripe {
-    refunds = { create: vi.fn().mockResolvedValue({ id: "re_test" }) };
+    refunds        = { create: vi.fn().mockResolvedValue({ id: "re_test" }) };
+    paymentIntents = { capture: stripeCapture };
   },
+}));
+vi.mock("@/app/lib/gamification", () => ({
+  awardGems:          vi.fn(),
+  awardSparks:        vi.fn(),
+  awardBadge:         vi.fn(),
+  checkSessionBadges: vi.fn(),
 }));
 
 const mockSession = { user: { email: "user@test.com" } };
@@ -481,5 +491,123 @@ describe("claimClass", () => {
     // Should not throw
     await expect(claimClass("class1")).resolves.not.toThrow();
     expect(prisma.class.update).not.toHaveBeenCalled();
+  });
+});
+
+// Helpers for completeClass tests
+const pastStartTime = new Date(Date.now() - 3 * 3_600_000); // started 3h ago
+
+const makeScheduledClass = (overrides: Record<string, unknown> = {}) =>
+  mockClassRow({
+    status: "scheduled",
+    startTime: pastStartTime,
+    durationInHours: dec(1), // ended 2h ago
+    paid: true,
+    preAuthIntentId: null,
+    ...overrides,
+  });
+
+describe("completeClass", () => {
+  it("returns error when not authenticated", async () => {
+    vi.mocked(auth).mockResolvedValue(null as never);
+
+    const result = await completeClass("class1");
+
+    expect(result).toEqual({ error: "Not authenticated." });
+  });
+
+  it("returns error when class not found", async () => {
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(prisma.class.findUnique).mockResolvedValue(null);
+
+    const result = await completeClass("class1");
+
+    expect(result).toEqual({ error: "Class not found." });
+  });
+
+  it("returns error when status is not scheduled", async () => {
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(prisma.class.findUnique).mockResolvedValue(
+      makeScheduledClass({ status: "requested" }) as never
+    );
+
+    const result = await completeClass("class1");
+
+    expect(result).toEqual({ error: "Only scheduled classes can be marked complete." });
+  });
+
+  it("returns error when class hasn't ended yet", async () => {
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    const futureStart = new Date(Date.now() + 3_600_000); // starts in 1h
+    vi.mocked(prisma.class.findUnique).mockResolvedValue(
+      makeScheduledClass({ startTime: futureStart }) as never
+    );
+
+    const result = await completeClass("class1");
+
+    expect(result).toEqual({ error: "Class hasn't ended yet." });
+  });
+
+  it("marks a paid scheduled class as completed", async () => {
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(prisma.class.findUnique).mockResolvedValue(makeScheduledClass() as never);
+    vi.mocked(prisma.class.update).mockResolvedValue({} as never);
+
+    const result = await completeClass("class1");
+
+    expect(result).toEqual({});
+    expect(prisma.class.update).toHaveBeenCalledWith({
+      where: { id: "class1" },
+      data: { status: "completed" },
+    });
+  });
+
+  it("captures uncaptured pre-auth on completion", async () => {
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(prisma.class.findUnique).mockResolvedValue(
+      makeScheduledClass({ paid: false, preAuthIntentId: "pi_test123" }) as never
+    );
+    vi.mocked(prisma.class.update).mockResolvedValue({} as never);
+    vi.mocked((prisma as never as { payment: { create: ReturnType<typeof vi.fn> } }).payment.create)
+      .mockResolvedValue({} as never);
+
+    const result = await completeClass("class1");
+
+    expect(result).toEqual({});
+    expect(prisma.class.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ status: "completed", paid: true }) })
+    );
+  });
+
+  it("still completes when Stripe capture fails", async () => {
+    stripeCapture.mockRejectedValueOnce(new Error("Stripe error"));
+
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(prisma.class.findUnique).mockResolvedValue(
+      makeScheduledClass({ paid: false, preAuthIntentId: "pi_fail" }) as never
+    );
+    vi.mocked(prisma.class.update).mockResolvedValue({} as never);
+
+    const result = await completeClass("class1");
+
+    expect(result).toEqual({});
+    expect(prisma.class.update).toHaveBeenCalledWith({
+      where: { id: "class1" },
+      data: { status: "completed" },
+    });
+  });
+
+  it("awards gems to student and sparks to teacher on completion", async () => {
+    const { awardGems, awardSparks, checkSessionBadges } = await import("@/app/lib/gamification");
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(prisma.class.findUnique).mockResolvedValue(makeScheduledClass() as never);
+    vi.mocked(prisma.class.update).mockResolvedValue({} as never);
+
+    await completeClass("class1");
+
+    expect(awardGems).toHaveBeenCalledWith("student1", 50);
+    expect(awardSparks).toHaveBeenCalledWith("teacher1", 25);
+    expect(checkSessionBadges).toHaveBeenCalledWith("student1", "student");
+    expect(checkSessionBadges).toHaveBeenCalledWith("teacher1", "teacher");
   });
 });
