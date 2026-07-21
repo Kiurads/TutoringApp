@@ -22,5 +22,8 @@ export async function authenticate(
 		throw error;
 	}
 
-	redirect("/dashboard");
+	// Redirect to "/" and let auth.config.ts's `authorized()` callback route
+	// the now-logged-in user to their role's dashboard. "/dashboard" isn't a
+	// real route in this app — don't duplicate the role→path mapping here.
+	redirect("/");
 }
