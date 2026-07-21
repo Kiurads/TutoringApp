@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { redirect } from "next/navigation";
 import { getClientIp, rateLimit } from "@/app/lib/auth/rate-limit";
+import { createAndSendVerificationEmail } from "@/app/lib/auth/verification";
 
 // Deter signup spam: cap registration attempts per IP within a rolling
 // ten-minute window. See rate-limit.ts for storage caveats. This route is
@@ -171,6 +172,10 @@ export async function registerTeacher(
 			error
 		);
 	}
+
+	// Best-effort — a failure here (e.g. Resend outage) must not prevent
+	// the teacher account that was just created from being usable.
+	await createAndSendVerificationEmail(email);
 
 	redirect("/login");
 }

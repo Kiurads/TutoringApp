@@ -4,6 +4,7 @@ import prisma from "@/prisma";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { getClientIp, rateLimit } from "@/app/lib/auth/rate-limit";
+import { createAndSendVerificationEmail } from "@/app/lib/auth/verification";
 
 // Deter signup spam: cap registration attempts per IP within a rolling
 // ten-minute window. See rate-limit.ts for storage caveats.
@@ -75,6 +76,10 @@ export async function registerStudent(
 
 		return error as string;
 	}
+
+	// Best-effort — a failure here (e.g. Resend outage) must not prevent
+	// the student account that was just created from being usable.
+	await createAndSendVerificationEmail(email);
 
 	redirect("/login");
 }
