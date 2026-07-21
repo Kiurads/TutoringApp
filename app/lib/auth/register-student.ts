@@ -3,11 +3,30 @@
 import prisma from "@/prisma";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
+import { getClientIp, rateLimit } from "@/app/lib/auth/rate-limit";
+import { createAndSendVerificationEmail } from "@/app/lib/auth/verification";
+
+// Deter signup spam: cap registration attempts per IP within a rolling
+// ten-minute window. See rate-limit.ts for storage caveats.
+const REGISTER_MAX_ATTEMPTS_PER_IP = 8;
+const REGISTER_WINDOW_MS = 10 * 60_000;
 
 export async function registerStudent(
 	prevState: string | undefined,
 	formData: FormData
 ) {
+	const ip = await getClientIp();
+	const ipLimit = rateLimit(
+		`register:ip:${ip}`,
+		REGISTER_MAX_ATTEMPTS_PER_IP,
+		REGISTER_WINDOW_MS
+	);
+	if (!ipLimit.allowed) {
+		return `Too many registration attempts. Please try again in ${Math.ceil(
+			ipLimit.retryAfterSeconds / 60
+		)} minute(s).`;
+	}
+
 	const email = formData.get("email") as string;
 	const password = formData.get("password") as string;
 	const phoneNumber = formData.get("phoneNumber") as string;
@@ -57,6 +76,10 @@ export async function registerStudent(
 
 		return error as string;
 	}
+
+	// Best-effort — a failure here (e.g. Resend outage) must not prevent
+	// the student account that was just created from being usable.
+	await createAndSendVerificationEmail(email);
 
 	redirect("/login");
 }

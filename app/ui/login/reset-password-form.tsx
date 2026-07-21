@@ -1,13 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
-import { authenticate } from "@/app/lib/auth/authenticate";
+import { resetPassword } from "@/app/lib/auth/reset-password";
 import Logo from "@/app/ui/logo";
 
-export default function LoginForm() {
+export default function ResetPasswordForm({ token }: { token: string }) {
 	const [errorMessage, formAction, isPending] = useActionState(
-		authenticate,
+		resetPassword,
 		undefined
 	);
 
@@ -16,6 +15,7 @@ export default function LoginForm() {
 			<div className="flex justify-center pb-4">
 				<Logo />
 			</div>
+			<input type="hidden" name="token" value={token} />
 			{errorMessage && (
 				<div role="alert" className="alert alert-error">
 					<svg
@@ -35,49 +35,36 @@ export default function LoginForm() {
 				</div>
 			)}
 			<div className="form-control">
-				<label htmlFor="Email" className="label">
-					<span className="label-text">Email</span>
-				</label>
-
-				<input
-					type="email"
-					id="Email"
-					name="email"
-					required
-					className="input input-bordered validator"
-				/>
-			</div>
-
-			<div className="form-control">
 				<label htmlFor="Password" className="label">
-					<span className="label-text">Password</span>
+					<span className="label-text">New password</span>
 				</label>
 
 				<input
 					type="password"
 					id="Password"
 					name="password"
-					placeholder="Password"
 					required
 					className="input input-bordered validator"
 				/>
 			</div>
 
-			<div className="flex justify-end">
-				<Link
-					href="/forgot-password"
-					className="label-text-alt link link-hover"
-				>
-					Forgot password?
-				</Link>
+			<div className="form-control">
+				<label htmlFor="ConfirmPassword" className="label">
+					<span className="label-text">Confirm new password</span>
+				</label>
+
+				<input
+					type="password"
+					id="ConfirmPassword"
+					name="confirmPassword"
+					required
+					className="input input-bordered validator"
+				/>
 			</div>
 
 			<div className="pt-2 col-span-6 flex items-center gap-4">
-				<button
-					className="grow btn btn-primary"
-					aria-disabled={isPending}
-				>
-					Login
+				<button className="grow btn btn-primary" aria-disabled={isPending}>
+					Reset password
 				</button>
 			</div>
 		</form>

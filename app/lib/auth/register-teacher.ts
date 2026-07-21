@@ -2,7 +2,16 @@
 
 import prisma from "@/prisma";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { redirect } from "next/navigation";
+import { getClientIp, rateLimit } from "@/app/lib/auth/rate-limit";
+import { createAndSendVerificationEmail } from "@/app/lib/auth/verification";
+
+// Deter signup spam: cap registration attempts per IP within a rolling
+// ten-minute window. See rate-limit.ts for storage caveats. This route is
+// admin-only in practice, but still worth guarding defensively.
+const REGISTER_MAX_ATTEMPTS_PER_IP = 8;
+const REGISTER_WINDOW_MS = 10 * 60_000;
 
 // Helper to add a user in Nextcloud
 async function addNextcloudUser({
@@ -68,6 +77,18 @@ export async function registerTeacher(
 	prevState: string | undefined,
 	formData: FormData
 ) {
+	const ip = await getClientIp();
+	const ipLimit = rateLimit(
+		`register:ip:${ip}`,
+		REGISTER_MAX_ATTEMPTS_PER_IP,
+		REGISTER_WINDOW_MS
+	);
+	if (!ipLimit.allowed) {
+		return `Too many registration attempts. Please try again in ${Math.ceil(
+			ipLimit.retryAfterSeconds / 60
+		)} minute(s).`;
+	}
+
 	const email = formData.get("email") as string;
 	const password = formData.get("password") as string;
 	const phoneNumber = formData.get("phoneNumber") as string;
@@ -82,23 +103,17 @@ export async function registerTeacher(
 	if (phoneNumber && /^\d{9}$/.test(phoneNumber) === false)
 		return "Please enter a valid phone number";
 
+	let teacherId: string;
+
 	try {
 		const existingUser = await prisma.user.findUnique({ where: { email } });
 		if (existingUser) return "User already exists";
 
 		const hashedPassword = await bcrypt.hash(password, 10);
 
-		// Sync teacher to Nextcloud
-		await addNextcloudUser({
-			userid: `${firstName}${lastName}`.toLowerCase(), // you can also use teacher.id here
-			password,
-			displayName: `${firstName} ${lastName}`,
-			group: "teacher",
-			email,
-			quota: "5GB",
-		});
-
-		// Create teacher in DB
+		// Create teacher in DB first — this is the source of truth. Nextcloud
+		// sync is a downstream side effect and must not be able to block or
+		// roll back the actual account creation (see best-effort sync below).
 		const teacher = await prisma.user.create({
 			data: {
 				email,
@@ -109,6 +124,7 @@ export async function registerTeacher(
 				role: "teacher",
 			},
 		});
+		teacherId = teacher.id;
 
 		// Assign subjects
 		if (subjects.length > 0) {
@@ -128,6 +144,38 @@ export async function registerTeacher(
 			? error.message
 			: "Something went wrong, please try again.";
 	}
+
+	// Sync teacher to Nextcloud — best effort, after the User row exists.
+	// A Nextcloud outage/misconfiguration must never prevent teacher
+	// registration; it just means the teacher's Nextcloud account is
+	// missing until this can be retried/reconciled manually.
+	//
+	// Never forward the teacher's real site password to a third-party
+	// system — generate an independent, random credential for Nextcloud
+	// instead. It never needs to be typed by the teacher: file storage
+	// access happens through the app's own Nextcloud integration, not by
+	// the teacher logging into Nextcloud directly with this password.
+	try {
+		const nextcloudPassword = crypto.randomBytes(24).toString("base64url");
+
+		await addNextcloudUser({
+			userid: `${firstName}${lastName}`.toLowerCase(), // you can also use teacher.id here
+			password: nextcloudPassword,
+			displayName: `${firstName} ${lastName}`,
+			group: "teacher",
+			email,
+			quota: "5GB",
+		});
+	} catch (error) {
+		console.error(
+			`Nextcloud sync failed for teacher ${teacherId} (${email}) — account was still created. This will need manual reconciliation.`,
+			error
+		);
+	}
+
+	// Best-effort — a failure here (e.g. Resend outage) must not prevent
+	// the teacher account that was just created from being usable.
+	await createAndSendVerificationEmail(email);
 
 	redirect("/login");
 }
