@@ -242,30 +242,32 @@ The `email/` directory exists but nothing sends mail.
 ---
 
 ## Phase 11 — Pre-Launch / Production Readiness
-> Audited directly against the current codebase (env vars via `grep -r process.env`, third-party calls, CI config) before deciding to publish. Grouped by blast radius; branch names are the actual branches this work happens on. Four branches exist and are code-complete (verified by reading the diffs, not just trusting agent summaries) but **none are merged to master yet** — see "Still remaining" below for what has to happen before they can be.
+> Audited directly against the current codebase (env vars via `grep -r process.env`, third-party calls, CI config) before deciding to publish. Grouped by blast radius. **11A and 11B are fully merged to `master`** (PRs #19–#23); 11C (hosting) and 11D (legal) remain genuinely not started — see "Still remaining" below.
 
-### 11A — Third-party service resilience — ✅ done, unmerged
-Branch `feat/auth-hardening-for-launch`, 4 commits on top of the docs/env work below.
+### 11A — Third-party service resilience — ✅ merged
+Merged via PR #22 (`feat/auth-hardening-for-launch`) plus PR #23 (`fix/lazy-stripe-client-init`, found while getting CI green — see 11B).
 | Item | File(s) | Status |
 |---|---|---|
 | Nextcloud sync blocked teacher registration | `app/lib/auth/register-teacher.ts` | Fixed — `User` row is created first; Nextcloud sync is now a separate best-effort try/catch after, logs and never blocks/rolls back registration |
 | Real password forwarded to Nextcloud | same file | Fixed — generates an independent `crypto.randomBytes` credential instead of reusing the teacher's real password |
-| No rate limiting on login/register | `app/lib/auth/rate-limit.ts` (new), wired into `authenticate.ts`/`register-student.ts`/`register-teacher.ts` | Added — in-memory fixed-window limiter, per-email and per-IP. Explicitly documented as a single-instance stopgap: resets on restart, doesn't coordinate across horizontally-scaled instances (would need Redis at that point) |
+| No rate limiting on login/register | `app/lib/auth/rate-limit.ts` | Added — in-memory fixed-window limiter, per-email and per-IP. Documented as a single-instance stopgap: resets on restart, doesn't coordinate across horizontally-scaled instances (would need Redis at that point) |
 | `Resend` installed but never called; no verification/reset flow | `app/lib/email.ts`, `app/lib/auth/verification.ts`, `app/api/auth/verify/route.ts`, `request-password-reset.ts`, `reset-password.ts`, `/forgot-password`, `/reset-password` pages | Done — uses the schema's existing `VerificationToken` model; email send is best-effort (logs instead of throwing if `RESEND_API_KEY` is unset). Login is **not** gated on `emailVerified` yet — intentionally deferred, not a bug |
 | `authenticate.ts` redirects to non-existent `/dashboard` | `app/lib/auth/authenticate.ts` | Fixed — redirects to `/` and lets `auth.config.ts`'s `authorized()` callback route by role |
+| Shared Stripe client crashed `next build` without `STRIPE_SECRET_KEY` at build time | `app/lib/stripe.ts` | Fixed (found by the new build gate's first real run) — was constructed eagerly at module scope; now a lazy `getStripe()`, matching the other two Stripe call sites |
 | Stripe still presumably in test mode | `app/lib/stripe.ts`, Stripe dashboard | Still open — external account action, no code branch |
 | `meet.jit.si` public server | `app/ui/main/classes/details/jitsi-embed.tsx` | Accepted risk, no action planned pre-launch |
 
-### 11B — Ops/infra baseline — mostly done, unmerged
-| Item | Branch | Status |
-|---|---|---|
-| No `.env.example` | `chore/pre-launch-env-docs` | Done — documents `DATABASE_URL`, `AUTH_SECRET`, `AUTH_TRUST_HOST`, Stripe keys, Nextcloud creds, `RESEND_API_KEY`/`RESEND_FROM_EMAIL`, `NEXT_PUBLIC_APP_URL` |
-| CI only runs `pnpm test` | `ci/build-lint-typecheck-gate` | Done — added `lint`, `typecheck` (`tsc --noEmit`), and `build` steps to `.woodpecker.yml` |
-| No health-check surface for `web` or `worker` | `feat/health-check-endpoints` | Done — `/api/health` (checks real DB connectivity) on the web app; the worker got a minimal built-in-`http` `/health` endpoint that reports unhealthy if either poll loop stalls beyond 2x its interval |
-| No error monitoring, just scattered `console.log`/`console.error` | *(not started)* | Still open — wire Sentry (or equivalent) once a hosting target is picked |
+### 11B — Ops/infra baseline — ✅ merged
+Merged via PRs #19, #20, #21.
+| Item | Status |
+|---|---|
+| No `.env.example` | Done — documents `DATABASE_URL`, `AUTH_SECRET`, `AUTH_TRUST_HOST`, Stripe keys, Nextcloud creds, `RESEND_API_KEY`/`RESEND_FROM_EMAIL`, `NEXT_PUBLIC_APP_URL` |
+| CI only ran `pnpm test` | Done — added `lint`, `typecheck` (`tsc --noEmit`), and `build` steps to `.woodpecker.yml`. Also fixed the underlying GitHub→Woodpecker webhook itself, which had been silently failing ("failure to parse token from hook") on every push/PR since before this work started — the repo had to be reactivated in Woodpecker to regenerate a valid webhook token before any of this CI could actually run |
+| No health-check surface for `web` or `worker` | Done — `/api/health` (checks real DB connectivity) on the web app; the worker got a minimal built-in-`http` `/health` endpoint that reports unhealthy if either poll loop stalls beyond 2x its interval |
+| No error monitoring, just scattered `console.log`/`console.error` | Still open — wire Sentry (or equivalent) once a hosting target is picked |
 
 ### 11C — Hosting — still not provisioned
-Recommendation unchanged: a two-service container platform (Railway/Render/Fly), `web` (autoscaled) + `worker` (must stay single-instance — it's a polling loop with no distributed lock, and the new rate limiter is also in-memory-per-instance) sharing one managed MySQL instance. External integrations stay as direct HTTPS calls: `web` ↔ Stripe, `web` → Nextcloud (OCS API), browser → `meet.jit.si` directly, `web`/Next-Image → `api.dicebear.com`, `web` → Resend. Needs real accounts/credentials — no code branch, nothing to merge here.
+Recommendation unchanged: a two-service container platform (Railway/Render/Fly), `web` (autoscaled) + `worker` (must stay single-instance — it's a polling loop with no distributed lock, and the rate limiter added in 11A is also in-memory-per-instance) sharing one managed MySQL instance. External integrations stay as direct HTTPS calls: `web` ↔ Stripe, `web` → Nextcloud (OCS API), browser → `meet.jit.si` directly, `web`/Next-Image → `api.dicebear.com`, `web` → Resend. Needs real accounts/credentials — no code branch, nothing to merge here.
 
 ### 11D — Legal/compliance — still not started
 No terms of service, privacy policy, or cookie consent surface exists. Needs real legal review, not placeholder text — deliberately not drafted by an agent.
@@ -274,13 +276,13 @@ No terms of service, privacy policy, or cookie consent surface exists. Needs rea
 
 ## Still remaining, in order
 
-1. **Merge readiness check** — none of the four Phase 11 branches (`chore/pre-launch-env-docs`, `ci/build-lint-typecheck-gate`, `feat/health-check-endpoints`, `feat/auth-hardening-for-launch`) have been build/typecheck/test-verified: this environment only has Node 18 with no `node_modules` installed, and the project needs Node 20+. Before merging any of them, run `pnpm install && pnpm build && pnpm test` (and `pnpm lint`) for real on Node 20+. `feat/auth-hardening-for-launch` is the one most worth a close human read first — it touches every auth entry point.
-2. **Merge order** — `chore/pre-launch-env-docs` first (nothing depends on it), then `ci/build-lint-typecheck-gate` (so the gate is live before anything else lands), then `feat/health-check-endpoints`, then `feat/auth-hardening-for-launch` last since it's the largest diff and most likely to need a fixup pass.
-3. **Error monitoring** (11B) — pick a target (Sentry or similar) and wire it into both `web` and `worker`; easiest once a hosting decision is made since most APM tools want a deploy-time DSN/release tag.
-4. **Hosting provisioning** (11C) — needs real accounts: pick Railway/Render/Fly, provision managed MySQL, deploy `web` + `worker` as two services, run `prisma migrate deploy`, point DNS at it.
-5. **Stripe live mode** — switch keys, register the production webhook URL against the real domain from step 4, run one full manual pre-auth→capture→refund test.
-6. **Legal pages** (11D) — terms of service, privacy policy, cookie consent — needs business/legal input, not more code.
-7. **Feature-roadmap backlog**, lower priority than the above: Phase 9B (Admin CRUD), 9C/9D (search/filter + pagination), Phase 10 (polish pass).
+1. **Error monitoring** (11B) — pick a target (Sentry or similar) and wire it into both `web` and `worker`; easiest once a hosting decision is made since most APM tools want a deploy-time DSN/release tag.
+2. **Hosting provisioning** (11C) — needs real accounts: pick Railway/Render/Fly, provision managed MySQL, deploy `web` + `worker` as two services, run `prisma migrate deploy`, point DNS at it.
+3. **Stripe live mode** — switch keys, register the production webhook URL against the real domain from step 2, run one full manual pre-auth→capture→refund test.
+4. **Legal pages** (11D) — terms of service, privacy policy, cookie consent — needs business/legal input, not more code.
+5. **Feature-roadmap backlog**, lower priority than the above: Phase 9B (Admin CRUD), 9C/9D (search/filter + pagination), Phase 10 (polish pass).
+
+Note: none of the merged Phase 11 work has been build/typecheck/test-verified on a real Node 20+ install by a human — it was developed and CI-verified (Woodpecker's own environment is Node 20+), but worth a local sanity pass before relying on it, since it was never run on Node 20+ outside of CI.
 
 Known follow-ups from this pass, not yet scoped into a phase:
 - Presence-based reliability sparks (Jitsi join/leave events) — deferred until the completion worker's definition of "session happened" was validated in practice
