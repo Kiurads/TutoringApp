@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { fetchClassById } from "@/app/lib/actions/classes.actions";
-import { stripe } from "@/app/lib/stripe";
+import { getStripe } from "@/app/lib/stripe";
 
 export async function POST(req: Request) {
 	const session = await auth();
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
 	const amount = Math.round(parseFloat(classData.totalPrice) * 100);
 
-	const paymentIntent = await stripe.paymentIntents.create({
+	const paymentIntent = await getStripe().paymentIntents.create({
 		amount,
 		currency: "eur",
 		metadata: { classId: classData.id },
