@@ -13,3 +13,26 @@ steps:
       - corepack prepare pnpm@9 --activate
       - pnpm prisma generate
       - pnpm test
+
+  lint:
+    image: node:20-alpine
+    commands:
+      - corepack enable
+      - corepack prepare pnpm@9 --activate
+      - pnpm lint
+
+  typecheck:
+    image: node:20-alpine
+    commands:
+      - corepack enable
+      - corepack prepare pnpm@9 --activate
+      - pnpm prisma generate
+      - pnpm exec tsc --noEmit
+
+  build:
+    image: node:20-alpine
+    commands:
+      - corepack enable
+      - corepack prepare pnpm@9 --activate
+      - pnpm prisma generate
+      - pnpm build
