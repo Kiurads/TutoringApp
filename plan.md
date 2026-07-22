@@ -266,8 +266,16 @@ Merged via PRs #19, #20, #21.
 | No health-check surface for `web` or `worker` | Done — `/api/health` (checks real DB connectivity) on the web app; the worker got a minimal built-in-`http` `/health` endpoint that reports unhealthy if either poll loop stalls beyond 2x its interval |
 | No error monitoring, just scattered `console.log`/`console.error` | Still open — wire Sentry (or equivalent) once a hosting target is picked |
 
-### 11C — Hosting — decided: DigitalOcean, deploy config drafted (unmerged)
-Decision: **DigitalOcean App Platform + DO Managed MySQL**, not Railway/Render/Fly. Researched July 2026 (see below); revisit if pricing/reliability shifts materially before actual provisioning.
+### 11C — Hosting — ✅ live on DigitalOcean
+Decision: **DigitalOcean App Platform + DO Managed MySQL**, not Railway/Render/Fly. Researched July 2026 (see below); revisit if pricing/reliability shifts materially.
+
+**Provisioned and live** as of 2026-07-22: app `estudyou` (ID `f4b97948-e5a9-4ef3-86c0-d24e622d7a4e`) at `https://estudyou-g7mfy.ondigitalocean.app`, region `fra` (Frankfurt — chosen for a Europe-based audience). MySQL cluster `estudyou-mysql` (region `fra1`, `db-s-1vcpu-1gb`, single node, database `estudyou`) all 19 migrations applied. `web` and `worker` both deploy automatically on push to `master` (`deploy_on_push: true`); `/api/health` confirms real DB connectivity, worker confirmed running its poll loop with no errors.
+
+Two real bugs surfaced only by actually deploying (fixed via PR #25, `fix/do-deploy-issues`):
+- DO's app spec validator rejects a `production: true` database without `cluster_name` — App Platform can't provision a production DB inline, it must reference a pre-existing cluster. Fixed by creating the cluster via `doctl databases create` first and binding `DATABASE_URL` through App Platform's `${estudyou-db.DATABASE_URL}` interpolation (also gets automatic trust of DO's database CA for free — no manual SSL/CA handling needed).
+- DO's managed MySQL enforces `sql_require_primary_key`. `VerificationToken` had no primary key (only a composite unique index), so the very first migration failed against the real cluster. Fixed by changing `@@unique([identifier, token])` to `@@id([identifier, token])` in `prisma/schema.prisma` — verified this doesn't change the generated client's `identifier_token` compound-key accessor name, so no application code needed to change.
+
+Still open: real secret values (Stripe, Nextcloud, Resend, `AUTH_SECRET`) — see "Still remaining" below.
 
 Two-service shape as originally planned: `web` (Next.js, autoscale-capable) + `worker` (must stay single-instance — it's a polling loop with no distributed lock, and the rate limiter added in 11A is also in-memory-per-instance), sharing one managed MySQL cluster. External integrations stay as direct HTTPS calls: `web` ↔ Stripe, `web` → Nextcloud (OCS API), browser → `meet.jit.si` directly, `web`/Next-Image → `api.dicebear.com`, `web` → Resend.
 
@@ -287,7 +295,7 @@ Estimated cost (launch scale, single-node DB — see "Still remaining" below for
 
 Upgrading to HA MySQL (auto-failover primary+standby) + dedicated/autoscaling `web` compute once there's real user data on the line: ~$120/mo. Do this before depending on it for paying customers, not at initial launch.
 
-Deploy config drafted on branch `chore/digitalocean-deploy-config` (unmerged): root `Dockerfile` (web, multi-stage, `pnpm start`), `worker/Dockerfile` (must build with repo root as context — the worker resolves `@prisma/client` from the root project's `node_modules`, not its own), `.dockerignore`, and `.do/app.yaml` (App Platform spec: `web` + `worker` + `estudyou-db` MySQL, env var keys only — no secret values committed). **Not yet applied against a real DO account** — needs a human to actually run `doctl apps create --spec .do/app.yaml` (or import via dashboard), fill in secrets, and verify the worker's cross-directory Prisma-client resolution actually works inside the container before relying on it.
+Deploy config merged via PR #24 (`chore/digitalocean-deploy-config`) and PR #25 (`fix/do-deploy-issues`): root `Dockerfile` (web, multi-stage, `pnpm start`), `worker/Dockerfile` (built with repo root as context — the worker resolves `@prisma/client` and `app/lib/**` from the root project, not its own), `.dockerignore`, and `.do/app.yaml` (App Platform spec: `web` + `worker` + `estudyou-db` MySQL). Both Dockerfiles smoke-tested locally before deploy (build + boot against a fake DB, confirmed graceful failure not a crash).
 
 ### 11D — Legal/compliance — still not started
 No terms of service, privacy policy, or cookie consent surface exists. Needs real legal review, not placeholder text — deliberately not drafted by an agent.
@@ -296,13 +304,14 @@ No terms of service, privacy policy, or cookie consent surface exists. Needs rea
 
 ## Still remaining, in order
 
-1. **Hosting provisioning** (11C) — needs a human with a DO account: merge `chore/digitalocean-deploy-config`, create the DO app from `.do/app.yaml`, provision the MySQL cluster, fill in secrets, run `prisma migrate deploy`, verify the worker's Prisma-client resolution works in-container, point DNS at it.
-2. **Error monitoring** (11B) — pick a target (Sentry or similar) and wire it into both `web` and `worker`; do this once hosting exists since most APM tools want a deploy-time DSN/release tag.
-3. **Stripe live mode** — switch keys, register the production webhook URL against the real domain from step 2, run one full manual pre-auth→capture→refund test.
-4. **Legal pages** (11D) — terms of service, privacy policy, cookie consent — needs business/legal input, not more code.
-5. **Feature-roadmap backlog**, lower priority than the above: Phase 9B (Admin CRUD), 9C/9D (search/filter + pagination), Phase 10 (polish pass).
+1. **Fill in real secret values** (11C) — `AUTH_SECRET`/`NEXT_PUBLIC_APP_URL` are set; `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXTCLOUD_URL`/`USERNAME`/`PASSWORD`, `RESEND_API_KEY`/`FROM_EMAIL` are still placeholders on the live app — needs real third-party credentials filled in via the DO dashboard.
+2. **Custom domain + DNS** — currently only reachable at `estudyou-g7mfy.ondigitalocean.app`.
+3. **Error monitoring** (11B) — pick a target (Sentry or similar) and wire it into both `web` and `worker`, now that a deploy target exists for the DSN/release tag.
+4. **Stripe live mode** — switch keys, register the production webhook URL against the real domain from step 2, run one full manual pre-auth→capture→refund test.
+5. **Legal pages** (11D) — terms of service, privacy policy, cookie consent — needs business/legal input, not more code.
+6. **Feature-roadmap backlog**, lower priority than the above: Phase 9B (Admin CRUD), 9C/9D (search/filter + pagination), Phase 10 (polish pass).
 
-Note: none of the merged Phase 11 work has been build/typecheck/test-verified on a real Node 20+ install by a human — it was developed and CI-verified (Woodpecker's own environment is Node 20+), but worth a local sanity pass before relying on it, since it was never run on Node 20+ outside of CI.
+Note: none of the merged Phase 11 work has been build/typecheck/test-verified on a real Node 20+ install by a human before this session — it has now been verified: `tsc --noEmit` and `pnpm test` (306 passing) both run locally on Node 20+ while fixing the deploy issues above.
 
 Known follow-ups from this pass, not yet scoped into a phase:
 - Presence-based reliability sparks (Jitsi join/leave events) — deferred until the completion worker's definition of "session happened" was validated in practice
