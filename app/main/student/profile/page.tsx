@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { fetchUserByEmail, fetchAllBadges, fetchEarnedBadges } from "@/app/lib/actions/users.actions";
 import ProfileForm from "@/app/ui/main/users/profile-form";
+import ChangePasswordForm from "@/app/ui/main/users/change-password-form";
 import BadgeShowcase from "@/app/ui/main/badges/badge-showcase";
 import { getTierName, getTierProgress, calcTier } from "@/app/lib/gamification-utils";
 import { getFrameClass } from "@/app/lib/frame-utils";
@@ -109,6 +110,19 @@ export default async function StudentProfilePage() {
 									pricePerHour: null,
 								}}
 							/>
+						</div>
+					</div>
+
+					{/* Change password */}
+					<div className="card bg-base-200 shadow-lg">
+						<div className="card-body gap-2">
+							<div className="flex items-center gap-2 mb-2">
+								<i className="fa-solid fa-lock text-primary"></i>
+								<h2 className="text-xs font-semibold text-base-content/50 uppercase tracking-wide">
+									Change password
+								</h2>
+							</div>
+							<ChangePasswordForm />
 						</div>
 					</div>
 				</div>
