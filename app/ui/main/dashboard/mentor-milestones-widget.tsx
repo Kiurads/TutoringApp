@@ -19,6 +19,8 @@ export default async function MentorMilestonesWidget({
 	const rankName = getRankName(rank);
 	const progress = getRankProgress(sparks);
 	const isMaxRank = rank >= 4;
+	const currentStreak = profile?.currentStreakWeeks ?? 0;
+	const streakFreezes = profile?.streakFreezes ?? 0;
 
 	const recentBadges = await prisma.userBadge.findMany({
 		where: { userId: user.id },
@@ -45,6 +47,20 @@ export default async function MentorMilestonesWidget({
 					<span className="text-2xl font-bold">{sparks.toLocaleString()}</span>
 					<span className="text-base-content/50 text-sm">Reputation Sparks</span>
 				</div>
+
+				{/* Weekly activity streak */}
+				{currentStreak > 0 && (
+					<div className="flex items-center gap-2 text-sm">
+						<i className="fa-solid fa-fire text-warning"></i>
+						<span className="font-semibold">{currentStreak}-week streak</span>
+						{streakFreezes > 0 && (
+							<span className="badge badge-info badge-outline badge-sm gap-1">
+								<i className="fa-solid fa-snowflake text-[10px]"></i>
+								{streakFreezes}
+							</span>
+						)}
+					</div>
+				)}
 
 				{/* Rank progress */}
 				{!isMaxRank && (

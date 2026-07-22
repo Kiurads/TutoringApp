@@ -5,6 +5,7 @@ import UpcomingClasses from "@/app/ui/main/dashboard/upcoming-classes/upcoming-c
 import StudentPayments from "@/app/ui/main/dashboard/student-payments";
 import NextUpCard from "@/app/ui/main/dashboard/next-up-card";
 import AcademicArcWidget from "@/app/ui/main/dashboard/academic-arc-widget";
+import WeeklyQuestsWidget from "@/app/ui/main/dashboard/weekly-quests-widget";
 import { fetchPaymentsByUserId } from "@/app/lib/actions/paymets.actions";
 import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
 import Link from "next/link";
@@ -57,8 +58,9 @@ export default async function DashboardStudent() {
 				<div className="w-full lg:basis-3/5">
 					<UpcomingClasses userEmail={userEmail} />
 				</div>
-				<div className="w-full lg:basis-2/5">
+				<div className="w-full lg:basis-2/5 flex flex-col gap-6">
 					<StudentPayments payments={payments} />
+					<WeeklyQuestsWidget />
 				</div>
 			</div>
 		</div>

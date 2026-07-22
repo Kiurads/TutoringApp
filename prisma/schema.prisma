@@ -38,6 +38,8 @@ enum NotificationType {
   rank_up
   badge_earned
   gem_received
+  sparks_received
+  streak_saved
   counter_offer_proposed
   counter_offer_accepted
   counter_offer_declined
@@ -117,6 +119,7 @@ model User {
   teacherGameProfile      TeacherGameProfile?
   userBadges              UserBadge[]
   teacherAvailability     TeacherAvailability[]
+  questClaims             QuestClaim[]
 }
 
 model Subject {
@@ -338,30 +341,42 @@ model Notification {
 // ── Gamification ─────────────────────────────────────────────────────────────
 
 model StudentGameProfile {
-  id               String    @id @default(cuid())
-  userId           String    @unique
-  insightGems      Int       @default(0)
-  learningTier     Int       @default(0) // 0=Aspiring 1=Dedicated 2=Scholar 3=Luminary 4=Sage
-  streakDays       Int       @default(0)
-  lastActivityAt   DateTime?
-  ownedFrames      String    @default("")  // comma-separated frame keys
-  activeFrame      String?                // currently equipped frame key (null = none)
-  studyBoostActive Boolean   @default(false)
-  priorityBooking  Boolean   @default(false)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  insightGems        Int       @default(0)
+  learningTier       Int       @default(0) // 0=Aspiring 1=Dedicated 2=Scholar 3=Luminary 4=Sage
+  // Weekly (not daily) activity streak — tutoring's natural cadence is
+  // weekly/biweekly sessions, not daily practice, so a Duolingo-style daily
+  // streak would punish normal usage. "A week with a completed class" is the
+  // unit. streakFreezes lets a missed week be covered instead of resetting
+  // to 0 — earned for free at streak milestones, not sold as anxiety relief.
+  currentStreakWeeks Int       @default(0)
+  longestStreakWeeks Int       @default(0)
+  streakFreezes      Int       @default(0)
+  lastActivityAt     DateTime?
+  ownedFrames        String    @default("")  // comma-separated frame keys
+  activeFrame        String?                // currently equipped frame key (null = none)
+  studyBoostActive   Boolean   @default(false)
+  priorityBooking    Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model TeacherGameProfile {
-  id               String   @id @default(cuid())
-  userId           String   @unique
-  reputationSparks Int      @default(0)
-  mentorshipRank   Int      @default(0) // 0=Associate 1=Senior 2=Master 3=Elite 4=Global Lead
-  profileCompleted Boolean  @default(false)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  reputationSparks   Int      @default(0)
+  mentorshipRank     Int      @default(0) // 0=Associate 1=Senior 2=Master 3=Elite 4=Global Lead
+  profileCompleted   Boolean  @default(false)
+  // Same weekly-streak mechanic as StudentGameProfile — see there for why.
+  currentStreakWeeks Int      @default(0)
+  longestStreakWeeks Int      @default(0)
+  streakFreezes      Int      @default(0)
+  lastActivityAt     DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -386,6 +401,23 @@ model UserBadge {
   badge Badge @relation(fields: [badgeId], references: [id])
 
   @@unique([userId, badgeId])
+  @@index([userId])
+}
+
+// Records a claimed reward for one of the fixed weekly quests (see
+// app/lib/quests.ts) — quest progress itself is computed live from Class/
+// TeacherRating rows, not tracked here; this table only exists to make
+// claiming idempotent (one claim per user per quest per week).
+model QuestClaim {
+  id         String   @id @default(cuid())
+  userId     String
+  questKey   String
+  weekStart  DateTime // Monday 00:00 UTC of the week the quest was claimed for
+  claimedAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questKey, weekStart])
   @@index([userId])
 }
 

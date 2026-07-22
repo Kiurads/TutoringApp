@@ -14,7 +14,14 @@ import {
 } from "../types/classes.types";
 import { formatUser } from "../types/user.types";
 import { createNotification } from "@/app/lib/notifications";
-import { awardGems, awardSparks, checkSessionBadges, reverseClassPoints } from "@/app/lib/gamification";
+import {
+	awardGems,
+	awardSparks,
+	checkSessionBadges,
+	reverseClassPoints,
+	updateActivityStreak,
+	maybeAwardLuckyBonus,
+} from "@/app/lib/gamification";
 import Stripe from "stripe";
 
 export interface ClassDataCalendar {
@@ -855,16 +862,20 @@ export async function completeClass(classId: string): Promise<{ error?: string }
 
 	// Gamification
 	await awardGems(cls.studentId, 50);
+	const studentBonus = await maybeAwardLuckyBonus(cls.studentId, "student");
 	const pointsUpdate: { gemsAwarded: { increment: number }; sparksAwarded?: { increment: number } } = {
-		gemsAwarded: { increment: 50 },
+		gemsAwarded: { increment: 50 + studentBonus },
 	};
 	if (cls.teacherId) {
 		await awardSparks(cls.teacherId, 25);
-		pointsUpdate.sparksAwarded = { increment: 25 };
+		const teacherBonus = await maybeAwardLuckyBonus(cls.teacherId, "teacher");
+		pointsUpdate.sparksAwarded = { increment: 25 + teacherBonus };
 		await checkSessionBadges(cls.teacherId, "teacher");
+		await updateActivityStreak(cls.teacherId, "teacher");
 	}
 	await prisma.class.update({ where: { id: classId }, data: pointsUpdate });
 	await checkSessionBadges(cls.studentId, "student");
+	await updateActivityStreak(cls.studentId, "student");
 
 	// Notify student to leave a review
 	await createNotification(

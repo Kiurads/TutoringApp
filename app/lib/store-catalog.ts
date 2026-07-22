@@ -3,7 +3,8 @@ export type StoreItemKey =
 	| "frame_luminary"
 	| "frame_sage"
 	| "study_boost"
-	| "priority_booking";
+	| "priority_booking"
+	| "streak_freeze";
 
 export interface StoreItem {
 	key: StoreItemKey;
@@ -67,5 +68,14 @@ export const STORE_ITEMS: StoreItem[] = [
 		color: "text-info",
 		category: "boost",
 		consumable: true,
+	},
+	{
+		key: "streak_freeze",
+		name: "Streak Freeze",
+		description: "Covers one missed week without breaking your activity streak. Stacks — buy more than one.",
+		cost: 150,
+		iconKey: "fa-snowflake",
+		color: "text-info",
+		category: "boost",
 	},
 ];

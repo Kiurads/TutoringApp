@@ -1,6 +1,12 @@
 import prisma from "@/prisma";
 import { createNotification } from "@/app/lib/notifications";
-import { awardGems, awardSparks, checkSessionBadges } from "@/app/lib/gamification";
+import {
+	awardGems,
+	awardSparks,
+	checkSessionBadges,
+	updateActivityStreak,
+	maybeAwardLuckyBonus,
+} from "@/app/lib/gamification";
 
 /**
  * Marks `scheduled` classes as `completed` once their end time has passed,
@@ -44,8 +50,23 @@ export async function markCompletedClasses(): Promise<void> {
 
 		await awardGems(cls.studentId, 100);
 		await awardSparks(cls.teacherId, 20);
+
+		const studentBonus = await maybeAwardLuckyBonus(cls.studentId, "student");
+		const teacherBonus = await maybeAwardLuckyBonus(cls.teacherId, "teacher");
+		if (studentBonus > 0 || teacherBonus > 0) {
+			await prisma.class.update({
+				where: { id: cls.id },
+				data: {
+					gemsAwarded: { increment: studentBonus },
+					sparksAwarded: { increment: teacherBonus },
+				},
+			});
+		}
+
 		await checkSessionBadges(cls.studentId, "student");
 		await checkSessionBadges(cls.teacherId, "teacher");
+		await updateActivityStreak(cls.studentId, "student");
+		await updateActivityStreak(cls.teacherId, "teacher");
 
 		await createNotification(
 			cls.studentId,
