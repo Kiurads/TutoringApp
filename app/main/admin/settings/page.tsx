@@ -1,3 +1,5 @@
+import ChangePasswordForm from "@/app/ui/main/users/change-password-form";
+
 export default function SettingsPage() {
 	return (
 		<div className="flex flex-col gap-6 max-w-lg">
@@ -35,6 +37,15 @@ export default function SettingsPage() {
 							<span className="badge badge-success badge-sm">Active</span>
 						</div>
 					</div>
+				</div>
+			</div>
+
+			<div className="card bg-base-200 shadow">
+				<div className="card-body gap-2">
+					<h2 className="font-semibold text-sm text-base-content/60 uppercase tracking-wide mb-2">
+						Change password
+					</h2>
+					<ChangePasswordForm />
 				</div>
 			</div>
 		</div>
