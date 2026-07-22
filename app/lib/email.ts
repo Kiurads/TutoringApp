@@ -65,3 +65,27 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
 		`,
 	});
 }
+
+// Disputes need a human in the Stripe dashboard before the evidence deadline —
+// unlike the other webhook events this app just logs for reconciliation, a
+// dispute isn't actionable from inside eStudyou at all, so email is the right
+// channel rather than an in-app notification.
+export async function sendDisputeAlertEmail(
+	to: string,
+	details: { disputeId: string; paymentIntentId: string; reason: string; amount: number },
+) {
+	await sendEmail({
+		to,
+		subject: `Stripe dispute opened (${details.reason})`,
+		html: `
+			<p>A payment dispute was opened on a Stripe charge linked to eStudyou.</p>
+			<ul>
+				<li>Dispute ID: ${details.disputeId}</li>
+				<li>Payment intent: ${details.paymentIntentId}</li>
+				<li>Reason: ${details.reason}</li>
+				<li>Amount: ${(details.amount / 100).toFixed(2)}</li>
+			</ul>
+			<p>Respond to it in the <a href="https://dashboard.stripe.com/disputes">Stripe dashboard</a> before the evidence deadline.</p>
+		`,
+	});
+}
