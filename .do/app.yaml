@@ -1,14 +1,19 @@
-# DigitalOcean App Platform spec (starting point — not yet applied against a
-# real DO account/database). Apply with `doctl apps create --spec .do/app.yaml`
-# or import via the App Platform dashboard, then fill in the SECRET env vars
-# through the dashboard (this file intentionally carries no values, only
-# keys/scopes — see .env.example for what each one is).
+# DigitalOcean App Platform spec. The `estudyou-mysql` cluster (region fra1,
+# db-s-1vcpu-1gb, single node, database `estudyou`) already exists — created
+# via `doctl databases create`, referenced here by `cluster_name` rather than
+# provisioned inline, since production databases in App Platform must point
+# at a pre-existing cluster. DATABASE_URL is bound automatically via
+# `${estudyou-db.DATABASE_URL}`, not hand-copied — this also gets App
+# Platform's automatic trust of DO's database CA for free. Apply with
+# `doctl apps create --spec .do/app.yaml`, then fill in the remaining SECRET
+# env vars through the dashboard (this file intentionally carries no secret
+# values — see .env.example for what each one is).
 #
 # Shape matches plan.md Phase 11C: one autoscaled `web` service, one
 # single-instance `worker` (it's a polling loop with no distributed lock —
-# never raise instance_count above 1), sharing one managed MySQL cluster.
+# never raise instance_count above 1), sharing the estudyou-mysql cluster.
 name: estudyou
-region: nyc
+region: fra
 
 services:
   - name: web
@@ -28,7 +33,7 @@ services:
     envs:
       - key: DATABASE_URL
         scope: RUN_AND_BUILD_TIME
-        type: SECRET
+        value: ${estudyou-db.DATABASE_URL}
       - key: AUTH_SECRET
         scope: RUN_AND_BUILD_TIME
         type: SECRET
@@ -76,7 +81,7 @@ workers:
     envs:
       - key: DATABASE_URL
         scope: RUN_TIME
-        type: SECRET
+        value: ${estudyou-db.DATABASE_URL}
       - key: PORT
         scope: RUN_TIME
         value: "8081"
@@ -86,5 +91,6 @@ databases:
     engine: MYSQL
     version: "8"
     production: true
-    size: db-s-1vcpu-1gb
-    num_nodes: 1
+    cluster_name: estudyou-mysql
+    db_name: estudyou
+    db_user: doadmin

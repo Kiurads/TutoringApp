@@ -150,7 +150,7 @@ CREATE TABLE `VerificationToken` (
     `token` VARCHAR(191) NOT NULL,
     `expires` DATETIME(3) NOT NULL,
 
-    UNIQUE INDEX `VerificationToken_identifier_token_key`(`identifier`, `token`)
+    PRIMARY KEY (`identifier`, `token`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
