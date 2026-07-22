@@ -67,11 +67,13 @@ vi.mock("stripe", () => ({
   },
 }));
 vi.mock("@/app/lib/gamification", () => ({
-  awardGems:           vi.fn(),
-  awardSparks:         vi.fn(),
-  awardBadge:          vi.fn(),
-  checkSessionBadges:  vi.fn(),
-  reverseClassPoints:  vi.fn(),
+  awardGems:            vi.fn(),
+  awardSparks:          vi.fn(),
+  awardBadge:           vi.fn(),
+  checkSessionBadges:   vi.fn(),
+  reverseClassPoints:   vi.fn(),
+  updateActivityStreak: vi.fn(),
+  maybeAwardLuckyBonus: vi.fn().mockResolvedValue(0),
 }));
 
 const mockSession = { user: { email: "user@test.com" } };

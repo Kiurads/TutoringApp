@@ -5,6 +5,7 @@ import UpcomingClasses from "@/app/ui/main/dashboard/upcoming-classes/upcoming-c
 import TeacherEarnings from "@/app/ui/main/dashboard/teacher-earnings";
 import NextUpCard from "@/app/ui/main/dashboard/next-up-card";
 import MentorMilestonesWidget from "@/app/ui/main/dashboard/mentor-milestones-widget";
+import WeeklyQuestsWidget from "@/app/ui/main/dashboard/weekly-quests-widget";
 import { fetchPaymentsByTeacherId } from "@/app/lib/actions/paymets.actions";
 
 export default async function DashboardTeacher() {
@@ -34,8 +35,9 @@ export default async function DashboardTeacher() {
 				<div className="w-full lg:basis-3/5">
 					<UpcomingClasses userEmail={userEmail} />
 				</div>
-				<div className="w-full lg:basis-2/5">
+				<div className="w-full lg:basis-2/5 flex flex-col gap-6">
 					<TeacherEarnings payments={payments} />
+					<WeeklyQuestsWidget />
 				</div>
 			</div>
 		</div>

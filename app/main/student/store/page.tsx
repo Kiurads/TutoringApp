@@ -12,7 +12,7 @@ export default async function StorePage() {
 	const session = await auth();
 	if (!session?.user?.email) redirect("/login");
 
-	const { gems, ownedFrames, activeFrame, studyBoostActive, priorityBooking, avatarOptions } =
+	const { gems, ownedFrames, activeFrame, studyBoostActive, priorityBooking, streakFreezes, avatarOptions } =
 		await fetchStudentStoreState();
 
 	const cosmetics = STORE_ITEMS.filter((i) => i.category === "cosmetic");
@@ -21,6 +21,8 @@ export default async function StorePage() {
 	function isOwned(key: string, frameKey?: string): boolean {
 		if (key === "study_boost") return studyBoostActive;
 		if (key === "priority_booking") return priorityBooking;
+		// Streak freezes stack (not a one-shot "active" flag) — always
+		// re-purchasable, so never rendered as "owned".
 		if (frameKey) return ownedFrames.includes(frameKey);
 		return false;
 	}
@@ -215,6 +217,11 @@ export default async function StorePage() {
 											<p className="text-xs text-base-content/50 mt-0.5">
 												{item.description}
 											</p>
+											{item.key === "streak_freeze" && (
+												<p className="text-xs text-info mt-1 font-medium">
+													You have {streakFreezes} freeze{streakFreezes === 1 ? "" : "s"} banked
+												</p>
+											)}
 										</div>
 										<PurchaseButton
 											itemKey={item.key}

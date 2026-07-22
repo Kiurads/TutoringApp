@@ -15,6 +15,7 @@ export async function fetchStudentStoreState(): Promise<{
 	activeFrame: string | null;
 	studyBoostActive: boolean;
 	priorityBooking: boolean;
+	streakFreezes: number;
 	avatarOptions: string | null;
 }> {
 	const session = await auth();
@@ -31,6 +32,7 @@ export async function fetchStudentStoreState(): Promise<{
 					activeFrame: true,
 					studyBoostActive: true,
 					priorityBooking: true,
+					streakFreezes: true,
 				},
 			},
 		},
@@ -45,6 +47,7 @@ export async function fetchStudentStoreState(): Promise<{
 		activeFrame: profile?.activeFrame ?? null,
 		studyBoostActive: profile?.studyBoostActive ?? false,
 		priorityBooking: profile?.priorityBooking ?? false,
+		streakFreezes: profile?.streakFreezes ?? 0,
 		avatarOptions: user?.avatarOptions ?? null,
 	};
 }
@@ -133,6 +136,8 @@ export async function purchaseStoreItem(
 	if (itemKey === "priority_booking" && profile?.priorityBooking) {
 		return { error: "You already have Priority Match active." };
 	}
+	// No "already active" gate for streak_freeze — freezes stack, you can
+	// hold more than one.
 
 	// Build update payload
 	const updateData: Record<string, unknown> = {
@@ -147,6 +152,8 @@ export async function purchaseStoreItem(
 		updateData.studyBoostActive = true;
 	} else if (itemKey === "priority_booking") {
 		updateData.priorityBooking = true;
+	} else if (itemKey === "streak_freeze") {
+		updateData.streakFreezes = { increment: 1 };
 	}
 
 	// profile is guaranteed to exist (currentGems >= item.cost > 0 above)
