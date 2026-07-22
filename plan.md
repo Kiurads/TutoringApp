@@ -1,4 +1,5 @@
-# eStudyou — Master Plan
+# The Learning Nexus — Master Plan
+> The product is branded "The Learning Nexus." Earlier phases of this doc (and some still-live DigitalOcean resource names — the app, its MySQL cluster, and database are all internally named `estudyou`) predate the brand name and haven't been renamed; see Phase 11C.
 
 ## Completed ✅
 | Feature | Notes |
@@ -306,7 +307,7 @@ No terms of service, privacy policy, or cookie consent surface exists. Needs rea
 
 1. ~~Fill in real secret values~~ — ✅ done. `AUTH_SECRET`, `NEXT_PUBLIC_APP_URL`, `RESEND_API_KEY`/`FROM_EMAIL` (Resend sandbox `onboarding@resend.dev` — no custom domain verified yet), and **live-mode** Stripe keys (`STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`) are all set on the live app. Webhook registered at `https://estudyou-g7mfy.ondigitalocean.app/api/webhooks/stripe`, subscribed to `payment_intent.succeeded/.payment_failed/.canceled`, `charge.refunded`, `charge.dispute.created` — all 5 handled (PR #27, `feat/stripe-webhook-event-handling`); the four beyond `.succeeded` log for manual reconciliation (no error monitoring yet) and disputes additionally email every admin via Resend. **Nextcloud integration was discarded outright** (PR #26), not configured — see 11A.
    - ⚠️ Live keys mean real charges process now. Recommended before fully trusting it: one manual pre-auth→capture→refund test through the real UI with a real card.
-2. **Custom domain + DNS** — currently only reachable at `estudyou-g7mfy.ondigitalocean.app`. Also blocks verifying a real Resend sending domain (currently on their sandbox address, which only delivers to your own Resend account).
+2. **Custom domain + DNS** — currently only reachable at `estudyou-g7mfy.ondigitalocean.app`. Also blocks verifying a real Resend sending domain (currently on their sandbox address, which only delivers to your own Resend account). Good time to also revisit renaming the underlying DO app/database resource names from `estudyou` to match the brand (deliberately left alone for now — see the note at the top of this doc).
 3. **Error monitoring** (11B) — pick a target (Sentry or similar) and wire it into both `web` and `worker`, now that a deploy target exists for the DSN/release tag.
 4. **Stripe live mode** — switch keys, register the production webhook URL against the real domain from step 2, run one full manual pre-auth→capture→refund test.
 5. **Legal pages** (11D) — terms of service, privacy policy, cookie consent — needs business/legal input, not more code.

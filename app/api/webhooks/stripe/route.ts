@@ -90,7 +90,7 @@ export async function POST(req: Request) {
 				`[stripe webhook] charge.dispute.created: dispute ${dispute.id}, payment intent ${paymentIntentId}, reason ${dispute.reason}, amount ${dispute.amount}. Needs immediate manual review in the Stripe dashboard before the evidence deadline.`
 			);
 
-			// Disputes aren't actionable from inside eStudyou (they're resolved in
+			// Disputes aren't actionable from inside The Learning Nexus (they're resolved in
 			// the Stripe dashboard), so email is the right channel here rather
 			// than an in-app notification.
 			const admins = await prisma.user.findMany({

@@ -1,8 +1,8 @@
 {
-  "name": "estudyou-worker",
+  "name": "the-learning-nexus-worker",
   "version": "0.1.0",
   "private": true,
-  "description": "Standalone background worker for eStudyou: marks past-due scheduled classes as completed and generates recurring class occurrences. Deliberately has no dependency of its own on @prisma/client/prisma — it resolves the already-generated client from the root project's node_modules (run `pnpm install` at the repo root first), avoiding a second, conflicting client generation.",
+  "description": "Standalone background worker for The Learning Nexus: marks past-due scheduled classes as completed and generates recurring class occurrences. Deliberately has no dependency of its own on @prisma/client/prisma — it resolves the already-generated client from the root project's node_modules (run `pnpm install` at the repo root first), avoiding a second, conflicting client generation.",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
