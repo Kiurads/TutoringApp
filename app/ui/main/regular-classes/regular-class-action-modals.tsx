@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import {
 	acceptRegularClass,
 	refuseRegularClass,
@@ -28,6 +28,21 @@ export default function RegularClassActionModals({
 }: Props) {
 	const [open, setOpen] = useState<ModalType | null>(null);
 	const [isPending, startTransition] = useTransition();
+
+	// See class-action-modals.tsx for why real showModal()/close() replaces
+	// the CSS-only "modal-open" class: free focus trap + Escape-to-close.
+	const acceptRef = useRef<HTMLDialogElement>(null);
+	const refuseRef = useRef<HTMLDialogElement>(null);
+	const cancelRef = useRef<HTMLDialogElement>(null);
+
+	useEffect(() => {
+		if (open === "accept") acceptRef.current?.showModal();
+		else acceptRef.current?.close();
+		if (open === "refuse") refuseRef.current?.showModal();
+		else refuseRef.current?.close();
+		if (open === "cancel") cancelRef.current?.showModal();
+		else cancelRef.current?.close();
+	}, [open]);
 
 	function confirmAccept() {
 		startTransition(async () => {
@@ -71,79 +86,73 @@ export default function RegularClassActionModals({
 				)}
 			</div>
 
-			{open === "accept" && (
-				<dialog open className="modal modal-open">
-					<div className="modal-box max-w-sm text-center">
-						<div className="text-5xl text-success mb-4">
-							<i className="fa-solid fa-circle-check"></i>
-						</div>
-						<h3 className="font-bold text-lg mb-2">Accept Recurring Request</h3>
-						<p className="text-base-content/70 text-sm mb-6">
-							Accept the weekly <strong>{subject}</strong> series with{" "}
-							<strong>{otherPartyName}</strong>? Sessions will be scheduled automatically
-							every week.
-						</p>
-						<div className="flex gap-3">
-							<button className="btn btn-success flex-1" onClick={confirmAccept} disabled={isPending}>
-								{isPending ? <span className="loading loading-spinner loading-sm" /> : "Confirm"}
-							</button>
-							<button className="btn btn-ghost flex-1" onClick={() => setOpen(null)} disabled={isPending}>
-								Go Back
-							</button>
-						</div>
+			<dialog ref={acceptRef} className="modal" onClose={() => setOpen(null)}>
+				<div className="modal-box max-w-sm text-center">
+					<div className="text-5xl text-success mb-4">
+						<i className="fa-solid fa-circle-check"></i>
 					</div>
-					<div className="modal-backdrop" onClick={() => !isPending && setOpen(null)} />
-				</dialog>
-			)}
+					<h3 className="font-bold text-lg mb-2">Accept Recurring Request</h3>
+					<p className="text-base-content/70 text-sm mb-6">
+						Accept the weekly <strong>{subject}</strong> series with{" "}
+						<strong>{otherPartyName}</strong>? Sessions will be scheduled automatically
+						every week.
+					</p>
+					<div className="flex gap-3">
+						<button className="btn btn-success flex-1" onClick={confirmAccept} disabled={isPending}>
+							{isPending ? <span className="loading loading-spinner loading-sm" /> : "Confirm"}
+						</button>
+						<button className="btn btn-ghost flex-1" onClick={() => setOpen(null)} disabled={isPending}>
+							Go Back
+						</button>
+					</div>
+				</div>
+				<div className="modal-backdrop" onClick={() => !isPending && setOpen(null)} />
+			</dialog>
 
-			{open === "refuse" && (
-				<dialog open className="modal modal-open">
-					<div className="modal-box max-w-sm text-center">
-						<div className="text-5xl text-error mb-4">
-							<i className="fa-solid fa-circle-xmark"></i>
-						</div>
-						<h3 className="font-bold text-lg mb-2">Refuse Recurring Request</h3>
-						<p className="text-base-content/70 text-sm mb-6">
-							Refuse the weekly <strong>{subject}</strong> series with{" "}
-							<strong>{otherPartyName}</strong>?
-						</p>
-						<div className="flex gap-3">
-							<button className="btn btn-error flex-1" onClick={confirmRefuse} disabled={isPending}>
-								{isPending ? <span className="loading loading-spinner loading-sm" /> : "Confirm"}
-							</button>
-							<button className="btn btn-ghost flex-1" onClick={() => setOpen(null)} disabled={isPending}>
-								Go Back
-							</button>
-						</div>
+			<dialog ref={refuseRef} className="modal" onClose={() => setOpen(null)}>
+				<div className="modal-box max-w-sm text-center">
+					<div className="text-5xl text-error mb-4">
+						<i className="fa-solid fa-circle-xmark"></i>
 					</div>
-					<div className="modal-backdrop" onClick={() => !isPending && setOpen(null)} />
-				</dialog>
-			)}
+					<h3 className="font-bold text-lg mb-2">Refuse Recurring Request</h3>
+					<p className="text-base-content/70 text-sm mb-6">
+						Refuse the weekly <strong>{subject}</strong> series with{" "}
+						<strong>{otherPartyName}</strong>?
+					</p>
+					<div className="flex gap-3">
+						<button className="btn btn-error flex-1" onClick={confirmRefuse} disabled={isPending}>
+							{isPending ? <span className="loading loading-spinner loading-sm" /> : "Confirm"}
+						</button>
+						<button className="btn btn-ghost flex-1" onClick={() => setOpen(null)} disabled={isPending}>
+							Go Back
+						</button>
+					</div>
+				</div>
+				<div className="modal-backdrop" onClick={() => !isPending && setOpen(null)} />
+			</dialog>
 
-			{open === "cancel" && (
-				<dialog open className="modal modal-open">
-					<div className="modal-box max-w-sm text-center">
-						<div className="text-5xl text-warning mb-4">
-							<i className="fa-solid fa-triangle-exclamation"></i>
-						</div>
-						<h3 className="font-bold text-lg mb-2">Cancel Recurring Series</h3>
-						<p className="text-base-content/70 text-sm mb-4">
-							Cancel the weekly <strong>{subject}</strong> series with{" "}
-							<strong>{otherPartyName}</strong>? Future sessions will be cancelled — each
-							following its own refund policy if already paid. Past sessions are not affected.
-						</p>
-						<div className="flex gap-3">
-							<button className="btn btn-error flex-1" onClick={confirmCancel} disabled={isPending}>
-								{isPending ? <span className="loading loading-spinner loading-sm" /> : "Confirm"}
-							</button>
-							<button className="btn btn-ghost flex-1" onClick={() => setOpen(null)} disabled={isPending}>
-								Go Back
-							</button>
-						</div>
+			<dialog ref={cancelRef} className="modal" onClose={() => setOpen(null)}>
+				<div className="modal-box max-w-sm text-center">
+					<div className="text-5xl text-warning mb-4">
+						<i className="fa-solid fa-triangle-exclamation"></i>
 					</div>
-					<div className="modal-backdrop" onClick={() => !isPending && setOpen(null)} />
-				</dialog>
-			)}
+					<h3 className="font-bold text-lg mb-2">Cancel Recurring Series</h3>
+					<p className="text-base-content/70 text-sm mb-4">
+						Cancel the weekly <strong>{subject}</strong> series with{" "}
+						<strong>{otherPartyName}</strong>? Future sessions will be cancelled — each
+						following its own refund policy if already paid. Past sessions are not affected.
+					</p>
+					<div className="flex gap-3">
+						<button className="btn btn-error flex-1" onClick={confirmCancel} disabled={isPending}>
+							{isPending ? <span className="loading loading-spinner loading-sm" /> : "Confirm"}
+						</button>
+						<button className="btn btn-ghost flex-1" onClick={() => setOpen(null)} disabled={isPending}>
+							Go Back
+						</button>
+					</div>
+				</div>
+				<div className="modal-backdrop" onClick={() => !isPending && setOpen(null)} />
+			</dialog>
 		</>
 	);
 }

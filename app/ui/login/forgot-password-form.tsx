@@ -53,8 +53,8 @@ export default function ForgotPasswordForm() {
 			</div>
 
 			<div className="pt-2 col-span-6 flex items-center gap-4">
-				<button className="grow btn btn-primary" aria-disabled={isPending}>
-					Send reset link
+				<button type="submit" className="grow btn btn-primary" disabled={isPending}>
+					{isPending ? <span className="loading loading-spinner loading-sm"></span> : "Send reset link"}
 				</button>
 			</div>
 

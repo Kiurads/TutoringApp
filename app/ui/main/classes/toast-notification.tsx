@@ -72,7 +72,10 @@ export default function ToastNotification({ toast }: { toast?: string }) {
 
 	return (
 		<div
-			className={`fixed bottom-6 left-6 z-50 w-full max-w-sm transition-opacity duration-500 ${fading ? "opacity-0" : "opacity-100"}`}
+			// bottom-right rather than bottom-left: the mobile drawer-toggle
+			// button is fixed bottom-4 left-4, and this toast used to sit right
+			// on top of it on small viewports.
+			className={`fixed bottom-6 right-6 z-50 w-full max-w-sm transition-opacity duration-500 ${fading ? "opacity-0" : "opacity-100"}`}
 		>
 			<div
 				role="alert"

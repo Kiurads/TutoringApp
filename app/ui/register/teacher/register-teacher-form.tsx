@@ -102,10 +102,11 @@ export default function RegisterTeacherForm({
 			{/* Submit */}
 			<div className="mt-4">
 				<button
+					type="submit"
 					className="btn btn-primary w-full"
-					aria-disabled={isPending}
+					disabled={isPending}
 				>
-					Create Teacher
+					{isPending ? <span className="loading loading-spinner loading-sm"></span> : "Create Teacher"}
 				</button>
 			</div>
 		</form>

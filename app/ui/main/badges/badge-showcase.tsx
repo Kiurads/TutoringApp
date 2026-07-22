@@ -31,7 +31,12 @@ export default function BadgeShowcase({ allBadges, earnedBadges, compact = false
 						className="tooltip"
 						data-tip={ub.badge.name}
 					>
-						<div className="flex items-center justify-center w-9 h-9 rounded-xl bg-warning/15 text-warning text-lg shadow-sm">
+						<div
+							className="flex items-center justify-center w-9 h-9 rounded-xl bg-warning/15 text-warning text-lg shadow-sm"
+							role="img"
+							aria-label={ub.badge.name}
+							tabIndex={0}
+						>
 							<i className={`fa-solid ${ub.badge.iconKey}`}></i>
 						</div>
 					</div>

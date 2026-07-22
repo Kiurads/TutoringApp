@@ -119,8 +119,8 @@ export default function RegisterStudentForm() {
 			</div>
 
 			<div className="col-span-6 sm:flex sm:items-center sm:gap-4">
-				<button className="btn btn-primary" aria-disabled={isPending}>
-					Create an account
+				<button type="submit" className="btn btn-primary" disabled={isPending}>
+					{isPending ? <span className="loading loading-spinner loading-sm"></span> : "Create an account"}
 				</button>
 
 				<p className="mt-4 text-sm text-base-content/60 sm:mt-0">

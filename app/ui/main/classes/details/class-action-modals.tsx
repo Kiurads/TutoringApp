@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useTransition, useState, useRef, useEffect } from "react";
 import {
 	acceptClassById,
 	refuseClassById,
@@ -69,6 +69,31 @@ export default function ClassActionModals({
 	const [payLoading, setPayLoading] = useState(false);
 	const [counterTime, setCounterTime] = useState("");
 	const [counterError, setCounterError] = useState<string | null>(null);
+
+	// Real <dialog> elements (via showModal()/close()) instead of a CSS-only
+	// "modal-open" class: gets focus trapping, Escape-to-close, and focus
+	// return to the trigger for free from the browser, none of which a plain
+	// `open` attribute provides. onClose keeps `open` state in sync when the
+	// dialog is dismissed natively (Escape) rather than through one of our
+	// own buttons.
+	const acceptRef = useRef<HTMLDialogElement>(null);
+	const refuseRef = useRef<HTMLDialogElement>(null);
+	const cancelRef = useRef<HTMLDialogElement>(null);
+	const counterRef = useRef<HTMLDialogElement>(null);
+	const payRef = useRef<HTMLDialogElement>(null);
+
+	useEffect(() => {
+		if (open === "accept") acceptRef.current?.showModal();
+		else acceptRef.current?.close();
+		if (open === "refuse") refuseRef.current?.showModal();
+		else refuseRef.current?.close();
+		if (open === "cancel") cancelRef.current?.showModal();
+		else cancelRef.current?.close();
+		if (open === "counter") counterRef.current?.showModal();
+		else counterRef.current?.close();
+		if (open === "pay") payRef.current?.showModal();
+		else payRef.current?.close();
+	}, [open]);
 
 	// Format counterOfferTime from ISO string to datetime-local input default
 	const counterOfferFormatted = counterOfferTime
@@ -225,244 +250,237 @@ export default function ClassActionModals({
 			</div>
 
 			{/* Accept modal */}
-			{open === "accept" && (
-				<dialog open className="modal modal-open">
-					<div className="modal-box max-w-sm text-center">
-						<div className="text-5xl text-success mb-4">
-							<i className="fa-solid fa-circle-check"></i>
-						</div>
-						<h3 className="font-bold text-lg mb-2">Accept Request</h3>
-						<p className="text-base-content/70 text-sm mb-6">
-							Accept the <strong>{subject}</strong> class with{" "}
-							<strong>{otherPartyName}</strong>?
-						</p>
-						<div className="flex gap-3">
-							<button
-								className="btn btn-success flex-1"
-								onClick={confirmAccept}
-								disabled={isPending}
-							>
-								{isPending ? (
-									<span className="loading loading-spinner loading-sm"></span>
-								) : (
-									"Confirm"
-								)}
-							</button>
-							<button
-								className="btn btn-ghost flex-1"
-								onClick={() => setOpen(null)}
-								disabled={isPending}
-							>
-								Go Back
-							</button>
-						</div>
+			<dialog ref={acceptRef} className="modal" onClose={() => setOpen(null)}>
+				<div className="modal-box max-w-sm text-center">
+					<div className="text-5xl text-success mb-4">
+						<i className="fa-solid fa-circle-check"></i>
 					</div>
-					<div
-						className="modal-backdrop"
-						onClick={() => !isPending && setOpen(null)}
-					/>
-				</dialog>
-			)}
+					<h3 className="font-bold text-lg mb-2">Accept Request</h3>
+					<p className="text-base-content/70 text-sm mb-6">
+						Accept the <strong>{subject}</strong> class with{" "}
+						<strong>{otherPartyName}</strong>?
+					</p>
+					<div className="flex gap-3">
+						<button
+							className="btn btn-success flex-1"
+							onClick={confirmAccept}
+							disabled={isPending}
+						>
+							{isPending ? (
+								<span className="loading loading-spinner loading-sm"></span>
+							) : (
+								"Confirm"
+							)}
+						</button>
+						<button
+							className="btn btn-ghost flex-1"
+							onClick={() => setOpen(null)}
+							disabled={isPending}
+						>
+							Go Back
+						</button>
+					</div>
+				</div>
+				<div
+					className="modal-backdrop"
+					onClick={() => !isPending && setOpen(null)}
+				/>
+			</dialog>
 
 			{/* Refuse modal */}
-			{open === "refuse" && (
-				<dialog open className="modal modal-open">
-					<div className="modal-box max-w-sm text-center">
-						<div className="text-5xl text-error mb-4">
-							<i className="fa-solid fa-circle-xmark"></i>
-						</div>
-						<h3 className="font-bold text-lg mb-2">Refuse Request</h3>
-						<p className="text-base-content/70 text-sm mb-6">
-							Refuse the <strong>{subject}</strong> class with{" "}
-							<strong>{otherPartyName}</strong>?
-						</p>
-						<div className="flex gap-3">
-							<button
-								className="btn btn-error flex-1"
-								onClick={confirmRefuse}
-								disabled={isPending}
-							>
-								{isPending ? (
-									<span className="loading loading-spinner loading-sm"></span>
-								) : (
-									"Confirm"
-								)}
-							</button>
-							<button
-								className="btn btn-ghost flex-1"
-								onClick={() => setOpen(null)}
-								disabled={isPending}
-							>
-								Go Back
-							</button>
-						</div>
+			<dialog ref={refuseRef} className="modal" onClose={() => setOpen(null)}>
+				<div className="modal-box max-w-sm text-center">
+					<div className="text-5xl text-error mb-4">
+						<i className="fa-solid fa-circle-xmark"></i>
 					</div>
-					<div
-						className="modal-backdrop"
-						onClick={() => !isPending && setOpen(null)}
-					/>
-				</dialog>
-			)}
+					<h3 className="font-bold text-lg mb-2">Refuse Request</h3>
+					<p className="text-base-content/70 text-sm mb-6">
+						Refuse the <strong>{subject}</strong> class with{" "}
+						<strong>{otherPartyName}</strong>?
+					</p>
+					<div className="flex gap-3">
+						<button
+							className="btn btn-error flex-1"
+							onClick={confirmRefuse}
+							disabled={isPending}
+						>
+							{isPending ? (
+								<span className="loading loading-spinner loading-sm"></span>
+							) : (
+								"Confirm"
+							)}
+						</button>
+						<button
+							className="btn btn-ghost flex-1"
+							onClick={() => setOpen(null)}
+							disabled={isPending}
+						>
+							Go Back
+						</button>
+					</div>
+				</div>
+				<div
+					className="modal-backdrop"
+					onClick={() => !isPending && setOpen(null)}
+				/>
+			</dialog>
 
 			{/* Cancel modal */}
-			{open === "cancel" && (
-				<dialog open className="modal modal-open">
-					<div className="modal-box max-w-sm text-center">
-						<div className="text-5xl text-warning mb-4">
-							<i className="fa-solid fa-triangle-exclamation"></i>
-						</div>
-						<h3 className="font-bold text-lg mb-2">Confirm Cancellation</h3>
-						<p className="text-base-content/70 text-sm mb-4">
-							Cancel the <strong>{subject}</strong> class with{" "}
-							<strong>{otherPartyName}</strong>?
-						</p>
-						{refundNote && (
-							<div role="alert" className="alert alert-info text-sm py-2 mb-4">
-								<i className="fa-solid fa-circle-info"></i>
-								<span>{refundNote}</span>
-							</div>
-						)}
-						{cancelError && (
-							<div
-								role="alert"
-								className="alert alert-error text-sm py-2 mb-4"
-							>
-								<i className="fa-solid fa-circle-xmark"></i>
-								<span>{cancelError}</span>
-							</div>
-						)}
-						<div className="flex gap-3">
-							<button
-								className="btn btn-error flex-1"
-								onClick={confirmCancel}
-								disabled={isPending}
-							>
-								{isPending ? (
-									<span className="loading loading-spinner loading-sm"></span>
-								) : (
-									"Confirm"
-								)}
-							</button>
-							<button
-								className="btn btn-ghost flex-1"
-								onClick={() => setOpen(null)}
-								disabled={isPending}
-							>
-								Go Back
-							</button>
-						</div>
+			<dialog ref={cancelRef} className="modal" onClose={() => setOpen(null)}>
+				<div className="modal-box max-w-sm text-center">
+					<div className="text-5xl text-warning mb-4">
+						<i className="fa-solid fa-triangle-exclamation"></i>
 					</div>
-					<div
-						className="modal-backdrop"
-						onClick={() => !isPending && setOpen(null)}
-					/>
-				</dialog>
-			)}
+					<h3 className="font-bold text-lg mb-2">Confirm Cancellation</h3>
+					<p className="text-base-content/70 text-sm mb-4">
+						Cancel the <strong>{subject}</strong> class with{" "}
+						<strong>{otherPartyName}</strong>?
+					</p>
+					{refundNote && (
+						<div role="alert" className="alert alert-info text-sm py-2 mb-4">
+							<i className="fa-solid fa-circle-info"></i>
+							<span>{refundNote}</span>
+						</div>
+					)}
+					{cancelError && (
+						<div
+							role="alert"
+							className="alert alert-error text-sm py-2 mb-4"
+						>
+							<i className="fa-solid fa-circle-xmark"></i>
+							<span>{cancelError}</span>
+						</div>
+					)}
+					<div className="flex gap-3">
+						<button
+							className="btn btn-error flex-1"
+							onClick={confirmCancel}
+							disabled={isPending}
+						>
+							{isPending ? (
+								<span className="loading loading-spinner loading-sm"></span>
+							) : (
+								"Confirm"
+							)}
+						</button>
+						<button
+							className="btn btn-ghost flex-1"
+							onClick={() => setOpen(null)}
+							disabled={isPending}
+						>
+							Go Back
+						</button>
+					</div>
+				</div>
+				<div
+					className="modal-backdrop"
+					onClick={() => !isPending && setOpen(null)}
+				/>
+			</dialog>
 
 			{/* Counter-offer modal */}
-			{open === "counter" && (
-				<dialog open className="modal modal-open">
-					<div className="modal-box max-w-sm">
-						<button
-							className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-							onClick={() => !isPending && setOpen(null)}
-						>
-							<i className="fa-solid fa-xmark"></i>
-						</button>
-						<div className="text-4xl text-warning mb-3 text-center">
-							<i className="fa-solid fa-clock-rotate-left"></i>
-						</div>
-						<h3 className="font-bold text-lg mb-1 text-center">Suggest Alternative Time</h3>
-						<p className="text-base-content/70 text-sm mb-5 text-center">
-							Propose a new time for the <strong>{subject}</strong> class with{" "}
-							<strong>{otherPartyName}</strong>.
-						</p>
-						<div className="flex flex-col gap-1.5 mb-4">
-							<label className="text-sm font-medium">New date &amp; time</label>
-							<input
-								type="datetime-local"
-								className="input input-bordered w-full"
-								value={counterTime}
-								onChange={(e) => setCounterTime(e.target.value)}
-							/>
-						</div>
-						{counterError && (
-							<div role="alert" className="alert alert-error text-sm py-2 mb-4">
-								<i className="fa-solid fa-circle-xmark"></i>
-								<span>{counterError}</span>
-							</div>
-						)}
-						<div className="flex gap-3">
-							<button
-								className="btn btn-warning flex-1"
-								onClick={confirmCounterOffer}
-								disabled={isPending || !counterTime}
-							>
-								{isPending ? (
-									<span className="loading loading-spinner loading-sm"></span>
-								) : (
-									"Send Proposal"
-								)}
-							</button>
-							<button
-								className="btn btn-ghost flex-1"
-								onClick={() => setOpen(null)}
-								disabled={isPending}
-							>
-								Go Back
-							</button>
-						</div>
-					</div>
-					<div
-						className="modal-backdrop"
+			<dialog ref={counterRef} className="modal" onClose={() => setOpen(null)}>
+				<div className="modal-box max-w-sm">
+					<button
+						className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
 						onClick={() => !isPending && setOpen(null)}
-					/>
-				</dialog>
-			)}
+						aria-label="Close"
+					>
+						<i className="fa-solid fa-xmark"></i>
+					</button>
+					<div className="text-4xl text-warning mb-3 text-center">
+						<i className="fa-solid fa-clock-rotate-left"></i>
+					</div>
+					<h3 className="font-bold text-lg mb-1 text-center">Suggest Alternative Time</h3>
+					<p className="text-base-content/70 text-sm mb-5 text-center">
+						Propose a new time for the <strong>{subject}</strong> class with{" "}
+						<strong>{otherPartyName}</strong>.
+					</p>
+					<div className="flex flex-col gap-1.5 mb-4">
+						<label htmlFor="counter-offer-time" className="text-sm font-medium">New date &amp; time</label>
+						<input
+							id="counter-offer-time"
+							type="datetime-local"
+							className="input input-bordered w-full"
+							value={counterTime}
+							onChange={(e) => setCounterTime(e.target.value)}
+						/>
+					</div>
+					{counterError && (
+						<div role="alert" className="alert alert-error text-sm py-2 mb-4">
+							<i className="fa-solid fa-circle-xmark"></i>
+							<span>{counterError}</span>
+						</div>
+					)}
+					<div className="flex gap-3">
+						<button
+							className="btn btn-warning flex-1"
+							onClick={confirmCounterOffer}
+							disabled={isPending || !counterTime}
+						>
+							{isPending ? (
+								<span className="loading loading-spinner loading-sm"></span>
+							) : (
+								"Send Proposal"
+							)}
+						</button>
+						<button
+							className="btn btn-ghost flex-1"
+							onClick={() => setOpen(null)}
+							disabled={isPending}
+						>
+							Go Back
+						</button>
+					</div>
+				</div>
+				<div
+					className="modal-backdrop"
+					onClick={() => !isPending && setOpen(null)}
+				/>
+			</dialog>
 
 			{/* Pay modal */}
-			{open === "pay" && (
-				<dialog open className="modal modal-open">
-					<div className="modal-box max-w-lg">
-						<button
-							className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-							onClick={() => !payLoading && setOpen(null)}
-						>
-							<i className="fa-solid fa-xmark"></i>
-						</button>
-						<h3 className="font-bold text-lg mb-4">Pay for Class</h3>
-
-						{payLoading && (
-							<div className="flex justify-center py-8">
-								<span className="loading loading-spinner loading-lg"></span>
-							</div>
-						)}
-
-						{payFetchError && (
-							<div role="alert" className="alert alert-error text-sm">
-								<i className="fa-solid fa-triangle-exclamation"></i>
-								<span>{payFetchError}</span>
-							</div>
-						)}
-
-						{!payLoading && clientSecret && (
-							<>
-								<div className="flex justify-between items-center text-sm p-3 bg-base-200 rounded-lg mb-4">
-									<span className="text-base-content/70">
-										{subject} with {otherPartyName}
-									</span>
-									<span className="font-bold text-lg">{totalPrice}€</span>
-								</div>
-								<CheckoutForm clientSecret={clientSecret} classId={id} />
-							</>
-						)}
-					</div>
-					<div
-						className="modal-backdrop"
+			<dialog ref={payRef} className="modal" onClose={() => setOpen(null)}>
+				<div className="modal-box max-w-lg">
+					<button
+						className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
 						onClick={() => !payLoading && setOpen(null)}
-					/>
-				</dialog>
-			)}
+						aria-label="Close"
+					>
+						<i className="fa-solid fa-xmark"></i>
+					</button>
+					<h3 className="font-bold text-lg mb-4">Pay for Class</h3>
+
+					{payLoading && (
+						<div className="flex justify-center py-8">
+							<span className="loading loading-spinner loading-lg"></span>
+						</div>
+					)}
+
+					{payFetchError && (
+						<div role="alert" className="alert alert-error text-sm">
+							<i className="fa-solid fa-triangle-exclamation"></i>
+							<span>{payFetchError}</span>
+						</div>
+					)}
+
+					{!payLoading && clientSecret && (
+						<>
+							<div className="flex justify-between items-center text-sm p-3 bg-base-200 rounded-lg mb-4">
+								<span className="text-base-content/70">
+									{subject} with {otherPartyName}
+								</span>
+								<span className="font-bold text-lg">{totalPrice}€</span>
+							</div>
+							<CheckoutForm clientSecret={clientSecret} classId={id} />
+						</>
+					)}
+				</div>
+				<div
+					className="modal-backdrop"
+					onClick={() => !payLoading && setOpen(null)}
+				/>
+			</dialog>
 		</>
 	);
 }

@@ -97,6 +97,15 @@ export default function WeeklySchedule({ classes, basePath }: Props) {
 
 	// Ref tracks the active drag so global listeners never have stale closures
 	const activeDrag = useRef<{ colEl: HTMLElement; date: string; startSlot: number } | null>(null);
+	const modalRef = useRef<HTMLDialogElement>(null);
+
+	// Real showModal()/close() instead of a CSS-only "modal-open" class: free
+	// focus trap + Escape-to-close (see class-action-modals.tsx for the same
+	// pattern). onClose keeps `modal` state in sync when dismissed via Escape.
+	useEffect(() => {
+		if (modal) modalRef.current?.showModal();
+		else modalRef.current?.close();
+	}, [modal]);
 
 	const todayStr = toDateStr(new Date());
 	const weekDates = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -363,8 +372,8 @@ export default function WeeklySchedule({ classes, basePath }: Props) {
 			</div>
 
 			{/* Schedule modal */}
-			{modal && (
-				<dialog open className="modal modal-open">
+			<dialog ref={modalRef} className="modal" onClose={() => setModal(null)}>
+				{modal && (
 					<div className="modal-box max-w-sm animate-scale-in">
 						<h3 className="font-bold text-lg mb-1">Schedule a Class</h3>
 						<p className="text-sm text-base-content/60 mb-4">{formatDate(modal.date)}</p>
@@ -390,9 +399,9 @@ export default function WeeklySchedule({ classes, basePath }: Props) {
 							</button>
 						</div>
 					</div>
-					<div className="modal-backdrop" onClick={() => setModal(null)} />
-				</dialog>
-			)}
+				)}
+				<div className="modal-backdrop" onClick={() => setModal(null)} />
+			</dialog>
 		</>
 	);
 }
