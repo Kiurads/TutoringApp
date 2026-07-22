@@ -246,10 +246,10 @@ The `email/` directory exists but nothing sends mail.
 
 ### 11A — Third-party service resilience — ✅ merged
 Merged via PR #22 (`feat/auth-hardening-for-launch`) plus PR #23 (`fix/lazy-stripe-client-init`, found while getting CI green — see 11B).
+
+**Nextcloud integration discarded (2026-07-22)**, not just deferred: the teacher-account-provisioning sync in `register-teacher.ts` (`addNextcloudUser` and its env vars) was removed entirely rather than left unconfigured, since the product decision is to drop it, not to fix it later.
 | Item | File(s) | Status |
 |---|---|---|
-| Nextcloud sync blocked teacher registration | `app/lib/auth/register-teacher.ts` | Fixed — `User` row is created first; Nextcloud sync is now a separate best-effort try/catch after, logs and never blocks/rolls back registration |
-| Real password forwarded to Nextcloud | same file | Fixed — generates an independent `crypto.randomBytes` credential instead of reusing the teacher's real password |
 | No rate limiting on login/register | `app/lib/auth/rate-limit.ts` | Added — in-memory fixed-window limiter, per-email and per-IP. Documented as a single-instance stopgap: resets on restart, doesn't coordinate across horizontally-scaled instances (would need Redis at that point) |
 | `Resend` installed but never called; no verification/reset flow | `app/lib/email.ts`, `app/lib/auth/verification.ts`, `app/api/auth/verify/route.ts`, `request-password-reset.ts`, `reset-password.ts`, `/forgot-password`, `/reset-password` pages | Done — uses the schema's existing `VerificationToken` model; email send is best-effort (logs instead of throwing if `RESEND_API_KEY` is unset). Login is **not** gated on `emailVerified` yet — intentionally deferred, not a bug |
 | `authenticate.ts` redirects to non-existent `/dashboard` | `app/lib/auth/authenticate.ts` | Fixed — redirects to `/` and lets `auth.config.ts`'s `authorized()` callback route by role |
@@ -261,7 +261,7 @@ Merged via PR #22 (`feat/auth-hardening-for-launch`) plus PR #23 (`fix/lazy-stri
 Merged via PRs #19, #20, #21.
 | Item | Status |
 |---|---|
-| No `.env.example` | Done — documents `DATABASE_URL`, `AUTH_SECRET`, `AUTH_TRUST_HOST`, Stripe keys, Nextcloud creds, `RESEND_API_KEY`/`RESEND_FROM_EMAIL`, `NEXT_PUBLIC_APP_URL` |
+| No `.env.example` | Done — documents `DATABASE_URL`, `AUTH_SECRET`, `AUTH_TRUST_HOST`, Stripe keys, `RESEND_API_KEY`/`RESEND_FROM_EMAIL`, `NEXT_PUBLIC_APP_URL` (Nextcloud vars removed — see 11A) |
 | CI only ran `pnpm test` | Done — added `lint`, `typecheck` (`tsc --noEmit`), and `build` steps to `.woodpecker.yml`. Also fixed the underlying GitHub→Woodpecker webhook itself, which had been silently failing ("failure to parse token from hook") on every push/PR since before this work started — the repo had to be reactivated in Woodpecker to regenerate a valid webhook token before any of this CI could actually run |
 | No health-check surface for `web` or `worker` | Done — `/api/health` (checks real DB connectivity) on the web app; the worker got a minimal built-in-`http` `/health` endpoint that reports unhealthy if either poll loop stalls beyond 2x its interval |
 | No error monitoring, just scattered `console.log`/`console.error` | Still open — wire Sentry (or equivalent) once a hosting target is picked |
@@ -275,9 +275,9 @@ Two real bugs surfaced only by actually deploying (fixed via PR #25, `fix/do-dep
 - DO's app spec validator rejects a `production: true` database without `cluster_name` — App Platform can't provision a production DB inline, it must reference a pre-existing cluster. Fixed by creating the cluster via `doctl databases create` first and binding `DATABASE_URL` through App Platform's `${estudyou-db.DATABASE_URL}` interpolation (also gets automatic trust of DO's database CA for free — no manual SSL/CA handling needed).
 - DO's managed MySQL enforces `sql_require_primary_key`. `VerificationToken` had no primary key (only a composite unique index), so the very first migration failed against the real cluster. Fixed by changing `@@unique([identifier, token])` to `@@id([identifier, token])` in `prisma/schema.prisma` — verified this doesn't change the generated client's `identifier_token` compound-key accessor name, so no application code needed to change.
 
-Still open: real secret values (Stripe, Nextcloud, Resend, `AUTH_SECRET`) — see "Still remaining" below.
+Still open: real secret values (Stripe, Resend) — see "Still remaining" below.
 
-Two-service shape as originally planned: `web` (Next.js, autoscale-capable) + `worker` (must stay single-instance — it's a polling loop with no distributed lock, and the rate limiter added in 11A is also in-memory-per-instance), sharing one managed MySQL cluster. External integrations stay as direct HTTPS calls: `web` ↔ Stripe, `web` → Nextcloud (OCS API), browser → `meet.jit.si` directly, `web`/Next-Image → `api.dicebear.com`, `web` → Resend.
+Two-service shape as originally planned: `web` (Next.js, autoscale-capable) + `worker` (must stay single-instance — it's a polling loop with no distributed lock, and the rate limiter added in 11A is also in-memory-per-instance), sharing one managed MySQL cluster. External integrations stay as direct HTTPS calls: `web` ↔ Stripe, browser → `meet.jit.si` directly, `web`/Next-Image → `api.dicebear.com`, `web` → Resend.
 
 Why DO over the alternatives:
 - **Render** has no native managed MySQL (only Postgres/Redis) — MySQL there means a hand-rolled, self-backed-up container.
@@ -304,7 +304,7 @@ No terms of service, privacy policy, or cookie consent surface exists. Needs rea
 
 ## Still remaining, in order
 
-1. **Fill in real secret values** (11C) — `AUTH_SECRET`/`NEXT_PUBLIC_APP_URL` are set; `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXTCLOUD_URL`/`USERNAME`/`PASSWORD`, `RESEND_API_KEY`/`FROM_EMAIL` are still placeholders on the live app — needs real third-party credentials filled in via the DO dashboard.
+1. **Fill in real secret values** (11C) — `AUTH_SECRET`/`NEXT_PUBLIC_APP_URL` are set; `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`/`FROM_EMAIL` are still placeholders on the live app — needs real third-party credentials filled in via the DO dashboard.
 2. **Custom domain + DNS** — currently only reachable at `estudyou-g7mfy.ondigitalocean.app`.
 3. **Error monitoring** (11B) — pick a target (Sentry or similar) and wire it into both `web` and `worker`, now that a deploy target exists for the DSN/release tag.
 4. **Stripe live mode** — switch keys, register the production webhook URL against the real domain from step 2, run one full manual pre-auth→capture→refund test.

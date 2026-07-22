@@ -49,15 +49,6 @@ services:
       - key: STRIPE_WEBHOOK_SECRET
         scope: RUN_AND_BUILD_TIME
         type: SECRET
-      - key: NEXTCLOUD_URL
-        scope: RUN_AND_BUILD_TIME
-        type: SECRET
-      - key: NEXTCLOUD_USERNAME
-        scope: RUN_AND_BUILD_TIME
-        type: SECRET
-      - key: NEXTCLOUD_PASSWORD
-        scope: RUN_AND_BUILD_TIME
-        type: SECRET
       - key: RESEND_API_KEY
         scope: RUN_AND_BUILD_TIME
         type: SECRET
