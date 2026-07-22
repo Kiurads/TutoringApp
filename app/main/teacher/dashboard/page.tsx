@@ -6,7 +6,9 @@ import TeacherEarnings from "@/app/ui/main/dashboard/teacher-earnings";
 import NextUpCard from "@/app/ui/main/dashboard/next-up-card";
 import MentorMilestonesWidget from "@/app/ui/main/dashboard/mentor-milestones-widget";
 import WeeklyQuestsWidget from "@/app/ui/main/dashboard/weekly-quests-widget";
+import WelcomeTourModal from "@/app/ui/onboarding/welcome-tour-modal";
 import { fetchPaymentsByTeacherId } from "@/app/lib/actions/paymets.actions";
+import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
 
 export default async function DashboardTeacher() {
 	const session = await auth();
@@ -14,10 +16,17 @@ export default async function DashboardTeacher() {
 	if (!session?.user?.email) redirect("/login");
 
 	const userEmail = session.user.email!;
-	const payments = await fetchPaymentsByTeacherId(userEmail);
+	const [payments, user] = await Promise.all([
+		fetchPaymentsByTeacherId(userEmail),
+		fetchUserByEmail(userEmail),
+	]);
 
 	return (
 		<div className="flex flex-col gap-6">
+			{user && !user.hasCompletedOnboarding && (
+				<WelcomeTourModal role="teacher" firstName={user.firstName} />
+			)}
+
 			<DashboardHeader userEmail={userEmail} />
 
 			{/* Top row: Next Up + Mentor Milestones */}

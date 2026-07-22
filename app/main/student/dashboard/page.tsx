@@ -6,6 +6,7 @@ import StudentPayments from "@/app/ui/main/dashboard/student-payments";
 import NextUpCard from "@/app/ui/main/dashboard/next-up-card";
 import AcademicArcWidget from "@/app/ui/main/dashboard/academic-arc-widget";
 import WeeklyQuestsWidget from "@/app/ui/main/dashboard/weekly-quests-widget";
+import WelcomeTourModal from "@/app/ui/onboarding/welcome-tour-modal";
 import { fetchPaymentsByUserId } from "@/app/lib/actions/paymets.actions";
 import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
 import Link from "next/link";
@@ -25,6 +26,10 @@ export default async function DashboardStudent() {
 
 	return (
 		<div className="flex flex-col gap-6">
+			{user && !user.hasCompletedOnboarding && (
+				<WelcomeTourModal role="student" firstName={user.firstName} />
+			)}
+
 			<DashboardHeader userEmail={userEmail} />
 
 			{/* Onboarding CTA */}
