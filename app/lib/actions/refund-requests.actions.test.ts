@@ -32,8 +32,10 @@ vi.mock("@/prisma", () => ({
       create:     vi.fn(),
       update:     vi.fn(),
     },
-    class: { findUnique: vi.fn() },
+    class: { findUnique: vi.fn(), update: vi.fn() },
     user:  { findMany:   vi.fn() },
+    studentGameProfile: { findUnique: vi.fn(), upsert: vi.fn() },
+    teacherGameProfile: { findUnique: vi.fn(), upsert: vi.fn() },
   },
 }));
 
@@ -76,6 +78,9 @@ const makeClass = (ov: Record<string, unknown> = {}) => ({
   teacher:       { firstName: "Alice", lastName: "Smith" },
   payments:      [{ intentId: "pi_test_123" }],
   refundRequest: null,
+  gemsAwarded:     0,
+  sparksAwarded:   0,
+  pointsReversed:  false,
   ...ov,
 });
 
@@ -92,10 +97,16 @@ const makeRequest = (ov: Record<string, unknown> = {}) => ({
   createdAt: new Date("2026-04-28T10:00:00Z"),
   updatedAt: new Date("2026-04-28T10:00:00Z"),
   class: {
-    subject:    { name: "Math" },
-    startTime:  new Date("2026-04-01T10:00:00Z"),
-    totalPrice: dec(50),
-    payments:   [{ intentId: "pi_test_123" }],
+    id:             "class1",
+    studentId:      "student1",
+    teacherId:      "teacher1",
+    subject:        { name: "Math" },
+    startTime:      new Date("2026-04-01T10:00:00Z"),
+    totalPrice:     dec(50),
+    payments:       [{ intentId: "pi_test_123" }],
+    gemsAwarded:    0,
+    sparksAwarded:  0,
+    pointsReversed: false,
   },
   student: { firstName: "Ana",   lastName: "Lima",  email: "ana@test.com"   },
   teacher: { firstName: "Alice", lastName: "Smith", email: "alice@test.com" },
@@ -300,6 +311,43 @@ describe("acceptRefundRequest", () => {
     expect(prisma.refundRequest.update).not.toHaveBeenCalled();
   });
 
+  it("claws back gems/sparks that were awarded for the class on a successful refund", async () => {
+    vi.mocked(prisma.refundRequest.findUnique).mockResolvedValue(
+      makeRequest({
+        class: { ...makeRequest().class, gemsAwarded: 150, sparksAwarded: 70 },
+      }) as never,
+    );
+    vi.mocked(prisma.studentGameProfile.findUnique).mockResolvedValue({ insightGems: 200 } as never);
+    vi.mocked(prisma.teacherGameProfile.findUnique).mockResolvedValue({ reputationSparks: 100 } as never);
+
+    await acceptRefundRequest("req1");
+
+    expect(prisma.studentGameProfile.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ update: { insightGems: 50 } }), // 200 - 150
+    );
+    expect(prisma.teacherGameProfile.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ update: { reputationSparks: 30 } }), // 100 - 70
+    );
+    expect(prisma.class.update).toHaveBeenCalledWith({
+      where: { id: "class1" },
+      data: { pointsReversed: true, gemsAwarded: 0, sparksAwarded: 0 },
+    });
+  });
+
+  it("does not reverse points a second time if already reversed", async () => {
+    vi.mocked(prisma.refundRequest.findUnique).mockResolvedValue(
+      makeRequest({
+        class: { ...makeRequest().class, gemsAwarded: 150, sparksAwarded: 70, pointsReversed: true },
+      }) as never,
+    );
+
+    await acceptRefundRequest("req1");
+
+    expect(prisma.studentGameProfile.upsert).not.toHaveBeenCalled();
+    expect(prisma.teacherGameProfile.upsert).not.toHaveBeenCalled();
+    expect(prisma.class.update).not.toHaveBeenCalled();
+  });
+
   it("skips Stripe when the class has no payment record", async () => {
     vi.mocked(prisma.refundRequest.findUnique).mockResolvedValue(
       makeRequest({ class: { ...makeRequest().class, payments: [] } }) as never,
@@ -491,6 +539,37 @@ describe("adminResolveRefundRequest", () => {
     );
   });
 
+  it("claws back gems/sparks when resolving with a refund", async () => {
+    vi.mocked(prisma.refundRequest.findUnique).mockResolvedValue(
+      makeRequest({
+        status: "admin_review",
+        class: { ...makeRequest().class, gemsAwarded: 50, sparksAwarded: 25 },
+      }) as never,
+    );
+    vi.mocked(prisma.studentGameProfile.findUnique).mockResolvedValue({ insightGems: 50 } as never);
+    vi.mocked(prisma.teacherGameProfile.findUnique).mockResolvedValue({ reputationSparks: 25 } as never);
+
+    await adminResolveRefundRequest("req1", "refund");
+
+    expect(prisma.class.update).toHaveBeenCalledWith({
+      where: { id: "class1" },
+      data: { pointsReversed: true, gemsAwarded: 0, sparksAwarded: 0 },
+    });
+  });
+
+  it("does NOT claw back points when action is 'dismiss'", async () => {
+    vi.mocked(prisma.refundRequest.findUnique).mockResolvedValue(
+      makeRequest({
+        status: "admin_review",
+        class: { ...makeRequest().class, gemsAwarded: 50, sparksAwarded: 25 },
+      }) as never,
+    );
+
+    await adminResolveRefundRequest("req1", "dismiss");
+
+    expect(prisma.class.update).not.toHaveBeenCalled();
+  });
+
   it("persists the admin note when provided", async () => {
     await adminResolveRefundRequest("req1", "dismiss", "Reviewed — teacher confirmed attendance.");
 
@@ -558,6 +637,36 @@ describe("fetchRefundRequestByIdForTeacher — auto-expiry", () => {
       expect.any(String),
       expect.any(String),
     );
+  });
+
+  it("claws back gems/sparks on expiry even though the Stripe call result is ignored either way", async () => {
+    vi.mocked(prisma.refundRequest.findUnique)
+      .mockResolvedValueOnce({
+        id: "req1", status: "pending", expiresAt: PAST_EXPIRY, classId: "class1", studentId: "student1",
+      } as never)
+      .mockResolvedValueOnce(makeRequest({ status: "expired", expiresAt: PAST_EXPIRY }) as never);
+
+    vi.mocked(prisma.class.findUnique).mockResolvedValue({
+      id: "class1",
+      studentId: "student1",
+      teacherId: "teacher1",
+      payments: [{ intentId: "pi_expired_123" }],
+      gemsAwarded: 50,
+      sparksAwarded: 25,
+      pointsReversed: false,
+    } as never);
+    vi.mocked(prisma.studentGameProfile.findUnique).mockResolvedValue({ insightGems: 50 } as never);
+    vi.mocked(prisma.teacherGameProfile.findUnique).mockResolvedValue({ reputationSparks: 25 } as never);
+
+    mockRefundsCreate.mockResolvedValue({ id: "re_expired" });
+    vi.mocked(prisma.refundRequest.update).mockResolvedValue({} as never);
+
+    await fetchRefundRequestByIdForTeacher("req1");
+
+    expect(prisma.class.update).toHaveBeenCalledWith({
+      where: { id: "class1" },
+      data: { pointsReversed: true, gemsAwarded: 0, sparksAwarded: 0 },
+    });
   });
 
   it("skips expiry logic entirely when the request is already accepted", async () => {

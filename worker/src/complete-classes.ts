@@ -35,7 +35,11 @@ export async function markCompletedClasses(): Promise<void> {
 
 		await prisma.class.update({
 			where: { id: cls.id },
-			data: { status: "completed" },
+			data: {
+				status: "completed",
+				gemsAwarded: { increment: 100 },
+				sparksAwarded: { increment: 20 },
+			},
 		});
 
 		await awardGems(cls.studentId, 100);

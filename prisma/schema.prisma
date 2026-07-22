@@ -150,6 +150,14 @@ model Class {
   paid              Boolean  @default(false)
   preAuthIntentId   String?
   requesterId       String
+  // Running totals of gamification points actually awarded for this class
+  // (accept bonus + completion bonus can both contribute), so a refund can
+  // claw back exactly what was given regardless of which award path fired —
+  // the amounts differ between the worker's auto-complete and the manual
+  // "Mark Complete" action, so they can't be safely re-derived after the fact.
+  gemsAwarded       Int      @default(0)
+  sparksAwarded     Int      @default(0)
+  pointsReversed    Boolean  @default(false)
   counterOfferTime  DateTime?
   priority          Boolean  @default(false)
   jitsiRoom         String?  @unique
