@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE `Class` ADD COLUMN `gemsAwarded` INTEGER NOT NULL DEFAULT 0,
+    ADD COLUMN `sparksAwarded` INTEGER NOT NULL DEFAULT 0,
+    ADD COLUMN `pointsReversed` BOOLEAN NOT NULL DEFAULT false;

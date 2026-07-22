@@ -67,10 +67,11 @@ vi.mock("stripe", () => ({
   },
 }));
 vi.mock("@/app/lib/gamification", () => ({
-  awardGems:          vi.fn(),
-  awardSparks:        vi.fn(),
-  awardBadge:         vi.fn(),
-  checkSessionBadges: vi.fn(),
+  awardGems:           vi.fn(),
+  awardSparks:         vi.fn(),
+  awardBadge:          vi.fn(),
+  checkSessionBadges:  vi.fn(),
+  reverseClassPoints:  vi.fn(),
 }));
 
 const mockSession = { user: { email: "user@test.com" } };
@@ -268,6 +269,112 @@ describe("cancelClassById", () => {
 
     expect(redirect).toHaveBeenCalledWith("/main/teacher/classes?toast=cancelled");
   });
+
+  it("reverses gamification points on a full refund (>24h before start)", async () => {
+    const { reverseClassPoints } = await import("@/app/lib/gamification");
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(fetchUserByEmail).mockResolvedValue({ id: "student1", role: "student" } as never);
+    const classRow = {
+      id: "class1",
+      paid: true,
+      totalPrice: dec(50),
+      startTime: new Date(Date.now() + 48 * 3_600_000), // 48h out — full refund
+      payments: [{ intentId: "pi_test_123" }],
+      teacherId: "teacher1",
+      studentId: "student1",
+      gemsAwarded: 50,
+      sparksAwarded: 50,
+      pointsReversed: false,
+      student: { id: "student1", firstName: "Bob", lastName: "Jones" },
+      teacher: { id: "teacher1", firstName: "Alice", lastName: "Smith" },
+      subject: { name: "Math" },
+    };
+    vi.mocked(prisma.class.findUnique).mockResolvedValue(classRow as never);
+    vi.mocked(prisma.class.delete).mockResolvedValue({} as never);
+
+    await cancelClassById("class1");
+
+    expect(reverseClassPoints).toHaveBeenCalledWith(classRow);
+  });
+
+  it("reverses gamification points on a partial refund (12-24h before start)", async () => {
+    const { reverseClassPoints } = await import("@/app/lib/gamification");
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(fetchUserByEmail).mockResolvedValue({ id: "student1", role: "student" } as never);
+    const classRow = {
+      id: "class1",
+      paid: true,
+      totalPrice: dec(50),
+      startTime: new Date(Date.now() + 18 * 3_600_000), // 18h out — 50% refund
+      payments: [{ intentId: "pi_test_123" }],
+      teacherId: "teacher1",
+      studentId: "student1",
+      gemsAwarded: 50,
+      sparksAwarded: 50,
+      pointsReversed: false,
+      student: { id: "student1", firstName: "Bob", lastName: "Jones" },
+      teacher: { id: "teacher1", firstName: "Alice", lastName: "Smith" },
+      subject: { name: "Math" },
+    };
+    vi.mocked(prisma.class.findUnique).mockResolvedValue(classRow as never);
+    vi.mocked(prisma.class.delete).mockResolvedValue({} as never);
+
+    await cancelClassById("class1");
+
+    expect(reverseClassPoints).toHaveBeenCalledWith(classRow);
+  });
+
+  it("does NOT reverse points when cancelling within 12h of start (no refund issued)", async () => {
+    const { reverseClassPoints } = await import("@/app/lib/gamification");
+    vi.mocked(reverseClassPoints).mockClear();
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(fetchUserByEmail).mockResolvedValue({ id: "student1", role: "student" } as never);
+    vi.mocked(prisma.class.findUnique).mockResolvedValue({
+      id: "class1",
+      paid: true,
+      totalPrice: dec(50),
+      startTime: new Date(Date.now() + 6 * 3_600_000), // 6h out — no refund
+      payments: [{ intentId: "pi_test_123" }],
+      teacherId: "teacher1",
+      studentId: "student1",
+      gemsAwarded: 50,
+      sparksAwarded: 50,
+      pointsReversed: false,
+      student: { id: "student1", firstName: "Bob", lastName: "Jones" },
+      teacher: { id: "teacher1", firstName: "Alice", lastName: "Smith" },
+      subject: { name: "Math" },
+    } as never);
+    vi.mocked(prisma.class.delete).mockResolvedValue({} as never);
+
+    await cancelClassById("class1");
+
+    expect(reverseClassPoints).not.toHaveBeenCalled();
+  });
+
+  it("does NOT reverse points when the class was never paid", async () => {
+    const { reverseClassPoints } = await import("@/app/lib/gamification");
+    vi.mocked(reverseClassPoints).mockClear();
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(fetchUserByEmail).mockResolvedValue({ id: "student1", role: "student" } as never);
+    vi.mocked(prisma.class.findUnique).mockResolvedValue({
+      id: "class1",
+      paid: false,
+      payments: [],
+      teacherId: "teacher1",
+      studentId: "student1",
+      gemsAwarded: 0,
+      sparksAwarded: 0,
+      pointsReversed: false,
+      student: { id: "student1", firstName: "Bob", lastName: "Jones" },
+      teacher: { id: "teacher1", firstName: "Alice", lastName: "Smith" },
+      subject: { name: "Math" },
+    } as never);
+    vi.mocked(prisma.class.delete).mockResolvedValue({} as never);
+
+    await cancelClassById("class1");
+
+    expect(reverseClassPoints).not.toHaveBeenCalled();
+  });
 });
 
 describe("acceptClassById", () => {
@@ -350,6 +457,39 @@ describe("acceptClassById", () => {
     expect(prisma.class.update).toHaveBeenCalledWith({
       where: { id: "class1" },
       data: { status: "scheduled" },
+    });
+  });
+
+  it("records gems/sparks awarded on the class when a pre-auth is captured", async () => {
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(fetchUserByEmail).mockResolvedValue({
+      id: "teacher1",
+      role: "teacher",
+    } as never);
+    vi.mocked(prisma.class.findUnique).mockResolvedValue({
+      id: "class1",
+      teacherId: "teacher1",
+      studentId: "student1",
+      requesterId: "student1",
+      preAuthIntentId: "pi_test123",
+      totalPrice: dec(50),
+      teacher: { firstName: "Alice", lastName: "Smith" },
+      student: { firstName: "Bob", lastName: "Jones" },
+      subject: { name: "Math" },
+    } as never);
+    vi.mocked(prisma.class.update).mockResolvedValue({} as never);
+    vi.mocked((prisma as never as { payment: { create: ReturnType<typeof vi.fn> } }).payment.create)
+      .mockResolvedValue({} as never);
+
+    await acceptClassById("class1");
+
+    expect(prisma.class.update).toHaveBeenCalledWith({
+      where: { id: "class1" },
+      data: { status: "scheduled", paid: true, gemsAwarded: { increment: 50 } },
+    });
+    expect(prisma.class.update).toHaveBeenCalledWith({
+      where: { id: "class1" },
+      data: { sparksAwarded: { increment: 50 } },
     });
   });
 });
@@ -546,6 +686,19 @@ describe("completeClass", () => {
     const result = await completeClass("class1");
 
     expect(result).toEqual({ error: "Class hasn't ended yet." });
+  });
+
+  it("records the gems/sparks awarded on completion", async () => {
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(prisma.class.findUnique).mockResolvedValue(makeScheduledClass() as never);
+    vi.mocked(prisma.class.update).mockResolvedValue({} as never);
+
+    await completeClass("class1");
+
+    expect(prisma.class.update).toHaveBeenCalledWith({
+      where: { id: "class1" },
+      data: { gemsAwarded: { increment: 50 }, sparksAwarded: { increment: 25 } },
+    });
   });
 
   it("marks a paid scheduled class as completed", async () => {

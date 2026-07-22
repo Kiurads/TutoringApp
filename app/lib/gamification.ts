@@ -13,18 +13,23 @@ export async function awardGems(userId: string, amount: number): Promise<void> {
 	});
 
 	const oldGems = before?.insightGems ?? 0;
+	// Clamped, not just incremented — `amount` can be negative (point
+	// reversal on a refund), and there's nowhere else floors this at 0.
+	const newGems = Math.max(0, oldGems + amount);
 
 	await prisma.studentGameProfile.upsert({
 		where: { userId },
-		create: { userId, insightGems: amount },
-		update: { insightGems: { increment: amount } },
+		create: { userId, insightGems: newGems },
+		update: { insightGems: newGems },
 	});
 
-	const newGems = oldGems + amount;
 	const oldTier = calcTier(oldGems);
 	const newTier = calcTier(newGems);
 
-	if (newTier !== oldTier) {
+	// Only the increase direction is a "tier up" worth notifying about — a
+	// negative amount (reversal) can lower the tier too, which must not fire
+	// the congratulatory notification.
+	if (newTier > oldTier) {
 		await prisma.studentGameProfile.update({
 			where: { userId },
 			data: { learningTier: newTier },
@@ -51,18 +56,21 @@ export async function awardSparks(
 	});
 
 	const oldSparks = before?.reputationSparks ?? 0;
+	// Clamped, not just incremented — see awardGems for why.
+	const newSparks = Math.max(0, oldSparks + amount);
 
 	await prisma.teacherGameProfile.upsert({
 		where: { userId },
-		create: { userId, reputationSparks: amount },
-		update: { reputationSparks: { increment: amount } },
+		create: { userId, reputationSparks: newSparks },
+		update: { reputationSparks: newSparks },
 	});
 
-	const newSparks = oldSparks + amount;
 	const oldRank = calcRank(oldSparks);
 	const newRank = calcRank(newSparks);
 
-	if (newRank !== oldRank) {
+	// Only the increase direction is a "rank up" worth notifying about — see
+	// awardGems for why this isn't just `!==`.
+	if (newRank > oldRank) {
 		await prisma.teacherGameProfile.update({
 			where: { userId },
 			data: { mentorshipRank: newRank },
@@ -75,6 +83,38 @@ export async function awardSparks(
 			"/main/teacher/dashboard",
 		);
 	}
+}
+
+// ── Refund: claw back whatever points this class actually granted ───────────
+//
+// `gemsAwarded`/`sparksAwarded` are running totals maintained by whichever
+// award call sites fired for this class (accept bonus, completion bonus —
+// the amounts differ between the worker's auto-complete and the manual
+// "Mark Complete" action, and a class can receive both), so this reverses
+// exactly what was given rather than guessing a fixed amount. Idempotent via
+// `pointsReversed` — safe to call even if a class somehow gets refunded
+// twice (e.g. a retried webhook).
+export async function reverseClassPoints(cls: {
+	id: string;
+	studentId: string;
+	teacherId: string | null;
+	gemsAwarded: number;
+	sparksAwarded: number;
+	pointsReversed: boolean;
+}): Promise<void> {
+	if (cls.pointsReversed) return;
+
+	if (cls.gemsAwarded > 0) {
+		await awardGems(cls.studentId, -cls.gemsAwarded);
+	}
+	if (cls.teacherId && cls.sparksAwarded > 0) {
+		await awardSparks(cls.teacherId, -cls.sparksAwarded);
+	}
+
+	await prisma.class.update({
+		where: { id: cls.id },
+		data: { pointsReversed: true, gemsAwarded: 0, sparksAwarded: 0 },
+	});
 }
 
 // ── Award a badge (no-op if already held) ────────────────────────────────────

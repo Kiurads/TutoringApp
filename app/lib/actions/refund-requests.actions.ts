@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { fetchUserByEmail } from "./users.actions";
 import { createNotification } from "@/app/lib/notifications";
+import { reverseClassPoints } from "@/app/lib/gamification";
 import Stripe from "stripe";
 
 const EXPIRY_DAYS = 5;
@@ -79,6 +80,9 @@ async function expireIfNeeded(requestId: string) {
 			await stripe.refunds.create({ payment_intent: cls.payments[0].intentId });
 		} catch { /* already refunded or failed — mark resolved anyway */ }
 	}
+	// Reverses regardless of the try/catch outcome above, matching this
+	// function's existing "proceed as refunded either way" tolerance.
+	if (cls) await reverseClassPoints(cls);
 
 	await prisma.refundRequest.update({
 		where: { id: requestId },
@@ -224,6 +228,7 @@ export async function acceptRefundRequest(requestId: string): Promise<{ error?: 
 			const msg = err instanceof Error ? err.message : "Unknown error";
 			return { error: `Refund failed: ${msg}` };
 		}
+		await reverseClassPoints(req.class);
 	}
 
 	await prisma.refundRequest.update({
@@ -366,6 +371,7 @@ export async function adminResolveRefundRequest(
 			const msg = err instanceof Error ? err.message : "Unknown error";
 			return { error: `Refund failed: ${msg}` };
 		}
+		await reverseClassPoints(req.class);
 	}
 
 	await prisma.refundRequest.update({

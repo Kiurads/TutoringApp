@@ -14,7 +14,7 @@ import {
 } from "../types/classes.types";
 import { formatUser } from "../types/user.types";
 import { createNotification } from "@/app/lib/notifications";
-import { awardGems, awardSparks, checkSessionBadges } from "@/app/lib/gamification";
+import { awardGems, awardSparks, checkSessionBadges, reverseClassPoints } from "@/app/lib/gamification";
 import Stripe from "stripe";
 
 export interface ClassDataCalendar {
@@ -461,15 +461,20 @@ export async function cancelClassCore(
 			if (hoursUntil > 24) {
 				// Full refund
 				await stripe.refunds.create({ payment_intent: cls.payments[0].intentId });
+				await reverseClassPoints(cls);
 			} else if (hoursUntil > 12) {
-				// 50% refund
+				// 50% refund — still claws back the full points award, not half:
+				// gems/sparks aren't meaningfully divisible, and the accept/
+				// completion bonus was for the class happening, not which
+				// fraction of the price was refunded.
 				const halfCents = Math.round(Number(cls.totalPrice) * 100 * 0.5);
 				await stripe.refunds.create({
 					payment_intent: cls.payments[0].intentId,
 					amount: halfCents,
 				});
+				await reverseClassPoints(cls);
 			}
-			// ≤ 12 h before class — no refund
+			// ≤ 12 h before class — no refund, no point reversal
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : "Unknown error";
 			return `Refund failed: ${msg}. The class was not cancelled.`;
@@ -564,7 +569,7 @@ export async function acceptClassById(classId: string) {
 			});
 			await prisma.class.update({
 				where: { id: classId },
-				data: { status: "scheduled", paid: true },
+				data: { status: "scheduled", paid: true, gemsAwarded: { increment: 50 } },
 			});
 			await awardGems(cls.studentId, 50);
 		} catch {
@@ -610,6 +615,10 @@ export async function acceptClassById(classId: string) {
 		// Award sparks to the teacher who accepted
 		if (cls.teacherId) {
 			await awardSparks(cls.teacherId, 50);
+			await prisma.class.update({
+				where: { id: classId },
+				data: { sparksAwarded: { increment: 50 } },
+			});
 		}
 	}
 
@@ -846,10 +855,15 @@ export async function completeClass(classId: string): Promise<{ error?: string }
 
 	// Gamification
 	await awardGems(cls.studentId, 50);
+	const pointsUpdate: { gemsAwarded: { increment: number }; sparksAwarded?: { increment: number } } = {
+		gemsAwarded: { increment: 50 },
+	};
 	if (cls.teacherId) {
 		await awardSparks(cls.teacherId, 25);
+		pointsUpdate.sparksAwarded = { increment: 25 };
 		await checkSessionBadges(cls.teacherId, "teacher");
 	}
+	await prisma.class.update({ where: { id: classId }, data: pointsUpdate });
 	await checkSessionBadges(cls.studentId, "student");
 
 	// Notify student to leave a review

@@ -323,3 +323,13 @@ Note: none of the merged Phase 11 work has been build/typecheck/test-verified on
 Known follow-ups from this pass, not yet scoped into a phase:
 - Presence-based reliability sparks (Jitsi join/leave events) — deferred until the completion worker's definition of "session happened" was validated in practice
 - Recurring series editing (day/time/price) without a full cancel-and-recreate
+
+## Refund → gamification point reversal
+Gems/sparks were awarded from multiple, inconsistent call sites (accept: 50/50, worker auto-complete: 100/20, manual "Mark Complete": 50/25) with no record anywhere of which path fired or how much a given class had actually granted — a refund had no way to know what to claw back. Added `Class.gemsAwarded`/`sparksAwarded` (running totals, incremented by whichever award path actually fires) and `Class.pointsReversed` (idempotency guard) via migration `20260722205907_add_class_points_tracking`, plus `reverseClassPoints()` in `app/lib/gamification.ts`, wired into all 4 real refund trigger points: `cancelClassCore`'s full/50% refund branches, and `expireIfNeeded`/`acceptRefundRequest`/`adminResolveRefundRequest` in `refund-requests.actions.ts`.
+
+Also fixed a real bug this surfaced: `awardGems`/`awardSparks` fired their "Tier Up!"/"Rank Up!" congratulatory notification on *any* tier change, not just increases — a negative (reversal) amount that dropped a tier would have wrongly congratulated the user. Now gated on `newTier > oldTier`, and both functions floor at 0 instead of letting a reversal go negative.
+
+Scoping decisions worth confirming, not obviously "the only correct answer":
+- A 50%-refund cancellation (12–24h before start) still reverses the *full* point award, not half — gems/sparks aren't meaningfully divisible, and the award was for the class happening, not which fraction of the price came back.
+- Review-based gems/sparks (`ratings.actions.ts` — 50 gems to the reviewer, 75–100 sparks to the teacher) are deliberately **not** tracked/reversed. A no-show refund happens before a review could exist, but the completed-class refund-request paths (no-show/dispute after the fact) could technically overlap with an already-left review — left out of scope since reversing it would also mean un-awarding any badge that review triggered (e.g. "Feedback Champion").
+- The pre-existing "unconditional spark award on accept regardless of whether payment capture actually succeeded" (`acceptClassById`) was left as-is — tightening it was out of scope for this task, and since an unpaid class can never actually be refunded anyway (no `Payment` row to refund), any sparks awarded in that edge case just never get clawed back, same blast radius as before this change.
