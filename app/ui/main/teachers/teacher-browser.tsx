@@ -8,12 +8,14 @@ export default function TeacherBrowser({
 	teachers,
 	subjects,
 	hasHistory,
+	initialSubject = null,
 }: {
 	teachers: TeacherExtended[];
 	subjects: string[];
 	hasHistory: boolean;
+	initialSubject?: string | null;
 }) {
-	const [activeSubject, setActiveSubject] = useState<string | null>(null);
+	const [activeSubject, setActiveSubject] = useState<string | null>(initialSubject);
 
 	const filtered =
 		activeSubject === null

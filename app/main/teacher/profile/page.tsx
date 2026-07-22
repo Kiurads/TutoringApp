@@ -1,7 +1,9 @@
 import { auth } from "@/auth";
 import { fetchUserByEmail, fetchAllBadges, fetchEarnedBadges } from "@/app/lib/actions/users.actions";
+import { fetchSubjects, fetchSubjectsByTeacherId } from "@/app/lib/actions/subjects.actions";
 import ProfileForm from "@/app/ui/main/users/profile-form";
 import ChangePasswordForm from "@/app/ui/main/users/change-password-form";
+import TeacherSubjectsForm from "@/app/ui/main/users/teacher-subjects-form";
 import BadgeShowcase from "@/app/ui/main/badges/badge-showcase";
 import { getRankName, getRankProgress, calcRank } from "@/app/lib/gamification-utils";
 import AvatarCustomizer from "@/app/ui/main/users/avatar-customizer";
@@ -17,10 +19,13 @@ export default async function TeacherProfilePage() {
 	const user = await fetchUserByEmail(session.user.email);
 	if (!user) redirect("/login");
 
-	const [allBadges, earnedBadges] = await Promise.all([
+	const [allBadges, earnedBadges, allSubjects, teacherSubjects] = await Promise.all([
 		fetchAllBadges(),
 		fetchEarnedBadges(user.id),
+		fetchSubjects(),
+		fetchSubjectsByTeacherId(user.id),
 	]);
+	const teacherSubjectIds = teacherSubjects.map((s) => s.id);
 
 	const teacherBadges = allBadges.filter(
 		(b) => b.category === "milestone" || b.category === "expertise" || b.category === "pedagogy",
@@ -113,6 +118,22 @@ export default async function TeacherProfilePage() {
 									teachingStyle: user.teachingStyle,
 									pricePerHour: user.pricePerHour ? Number(user.pricePerHour) : null,
 								}}
+							/>
+						</div>
+					</div>
+
+					{/* Subjects taught */}
+					<div className="card bg-base-200 shadow-lg">
+						<div className="card-body gap-2">
+							<div className="flex items-center gap-2 mb-2">
+								<i className="fa-solid fa-book text-secondary"></i>
+								<h2 className="text-xs font-semibold text-base-content/50 uppercase tracking-wide">
+									Subjects taught
+								</h2>
+							</div>
+							<TeacherSubjectsForm
+								allSubjects={allSubjects}
+								initialSubjectIds={teacherSubjectIds}
 							/>
 						</div>
 					</div>
