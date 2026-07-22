@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { saveAvatarOptions } from "@/app/lib/actions/avatar.actions";
 import {
@@ -103,11 +103,21 @@ export default function AvatarCustomizer({ email, avatarOptionsJson }: Props) {
 	const [saved, setSaved] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [isPending, startTransition] = useTransition();
+	const dialogRef = useRef<HTMLDialogElement>(null);
 
 	// Generated locally — instant, no network
 	const previewDataUri = buildAvatarDataUri(email, opts);
 
 	useEffect(() => { setMounted(true); }, []);
+
+	// Real showModal()/close() instead of a CSS-only "modal-open" class: free
+	// focus trap + Escape-to-close (see class-action-modals.tsx for the same
+	// pattern). onClose keeps isOpen in sync when dismissed via Escape.
+	useEffect(() => {
+		if (!mounted) return;
+		if (isOpen) dialogRef.current?.showModal();
+		else dialogRef.current?.close();
+	}, [isOpen, mounted]);
 
 	function set<K extends keyof AvatarOptions>(key: K, value: AvatarOptions[K]) {
 		setOpts((prev) => ({ ...prev, [key]: value }));
@@ -152,15 +162,17 @@ export default function AvatarCustomizer({ email, avatarOptionsJson }: Props) {
 				<i className="fa-solid fa-pen text-[9px]" />
 			</button>
 
-			{/* Modal — portalled to <body> to escape overflow:hidden ancestors */}
-			{mounted && isOpen && createPortal(
-				<dialog open className="modal modal-open" style={{ zIndex: 9999 }}>
+			{/* Modal — portalled to <body> to escape overflow:hidden ancestors.
+			    Always rendered once mounted; visibility is driven entirely by
+			    showModal()/close() via dialogRef (see the useEffect above). */}
+			{mounted && createPortal(
+				<dialog ref={dialogRef} className="modal" style={{ zIndex: 9999 }} onClose={() => setIsOpen(false)}>
 					<div className="modal-box w-full max-w-3xl p-0 overflow-hidden flex flex-col max-h-[92vh]">
 
 						{/* Header */}
 						<div className="flex items-center justify-between px-5 py-4 border-b border-base-300 shrink-0">
 							<h3 className="font-bold text-lg">Customize Avatar</h3>
-							<button className="btn btn-sm btn-ghost btn-circle" onClick={() => setIsOpen(false)}>
+							<button className="btn btn-sm btn-ghost btn-circle" onClick={() => setIsOpen(false)} aria-label="Close">
 								<i className="fa-solid fa-xmark" />
 							</button>
 						</div>
@@ -281,6 +293,8 @@ export default function AvatarCustomizer({ email, avatarOptionsJson }: Props) {
 														key={c}
 														onClick={() => set("skinColor", c)}
 														title={`#${c}`}
+														aria-label={`Skin tone #${c}`}
+														aria-pressed={opts.skinColor === c}
 														className={`w-9 h-9 rounded-full border-2 transition-all ${
 															opts.skinColor === c
 																? "ring-2 ring-offset-2 ring-base-content scale-110 border-transparent"
@@ -371,6 +385,8 @@ export default function AvatarCustomizer({ email, avatarOptionsJson }: Props) {
 												<button
 													key={hex}
 													title={label}
+													aria-label={label}
+													aria-pressed={opts.backgroundColor === hex}
 													onClick={() => set("backgroundColor", hex)}
 													className={`w-9 h-9 rounded-full border-2 transition-all ${
 														opts.backgroundColor === hex
@@ -490,6 +506,8 @@ function SwatchGroups({ groups, selected, onChange }: {
 								key={c}
 								onClick={() => onChange(c)}
 								title={`#${c}`}
+								aria-label={`${g.label} #${c}`}
+								aria-pressed={selected === c}
 								className={`w-7 h-7 rounded-full border-2 transition-all ${
 									selected === c
 										? "ring-2 ring-offset-1 ring-base-content scale-125 border-transparent"

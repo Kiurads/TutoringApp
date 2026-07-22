@@ -71,6 +71,7 @@ export default function AdminLayout({
 				{/* Mobile menu toggle */}
 				<label
 					htmlFor="admin-drawer"
+					aria-label="Open menu"
 					className="btn btn-primary drawer-button lg:hidden fixed bottom-4 left-4 shadow-lg"
 				>
 					<i className="fa-solid fa-bars"></i>

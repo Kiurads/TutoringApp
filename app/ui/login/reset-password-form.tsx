@@ -63,8 +63,8 @@ export default function ResetPasswordForm({ token }: { token: string }) {
 			</div>
 
 			<div className="pt-2 col-span-6 flex items-center gap-4">
-				<button className="grow btn btn-primary" aria-disabled={isPending}>
-					Reset password
+				<button type="submit" className="grow btn btn-primary" disabled={isPending}>
+					{isPending ? <span className="loading loading-spinner loading-sm"></span> : "Reset password"}
 				</button>
 			</div>
 		</form>

@@ -27,6 +27,7 @@ export default function ThemeChanger() {
 				value="dark"
 				checked={isDark}
 				onChange={handleChange}
+				aria-label="Toggle dark mode"
 			/>
 
 			{/* sun icon */}

@@ -21,7 +21,7 @@ export default function CreateSubjectForm() {
 			)}
 
 			<div className="form-control">
-				<label className="label font-semibold">Subject Name</label>
+				<label htmlFor="name" className="label font-semibold">Subject Name</label>
 				<input
 					type="text"
 					id="name"
@@ -34,9 +34,9 @@ export default function CreateSubjectForm() {
 			<button
 				type="submit"
 				className="btn btn-primary w-full"
-				aria-disabled={isPending}
+				disabled={isPending}
 			>
-				Save Subject
+				{isPending ? <span className="loading loading-spinner loading-sm"></span> : "Save Subject"}
 			</button>
 		</form>
 	);

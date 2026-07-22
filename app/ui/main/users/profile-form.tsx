@@ -74,8 +74,9 @@ export default function ProfileForm({ role, initialData }: Props) {
 			{/* Name row */}
 			<div className="flex flex-col sm:flex-row gap-4">
 				<div className="flex flex-col gap-1 flex-1">
-					<label className="text-sm font-medium">First name</label>
+					<label htmlFor="profile-first-name" className="text-sm font-medium">First name</label>
 					<input
+						id="profile-first-name"
 						className="input input-bordered w-full"
 						value={firstName}
 						onChange={(e) => setFirstName(e.target.value)}
@@ -83,8 +84,9 @@ export default function ProfileForm({ role, initialData }: Props) {
 					/>
 				</div>
 				<div className="flex flex-col gap-1 flex-1">
-					<label className="text-sm font-medium">Last name</label>
+					<label htmlFor="profile-last-name" className="text-sm font-medium">Last name</label>
 					<input
+						id="profile-last-name"
 						className="input input-bordered w-full"
 						value={lastName}
 						onChange={(e) => setLastName(e.target.value)}
@@ -95,8 +97,9 @@ export default function ProfileForm({ role, initialData }: Props) {
 
 			{/* Bio */}
 			<div className="flex flex-col gap-1">
-				<label className="text-sm font-medium">Bio</label>
+				<label htmlFor="profile-bio" className="text-sm font-medium">Bio</label>
 				<textarea
+					id="profile-bio"
 					className="textarea textarea-bordered w-full h-24 resize-none"
 					placeholder="Tell others a bit about yourself…"
 					value={bio}
@@ -112,8 +115,9 @@ export default function ProfileForm({ role, initialData }: Props) {
 			{role === "student" && (
 				<>
 					<div className="flex flex-col gap-1">
-						<label className="text-sm font-medium">Learning style</label>
+						<label htmlFor="profile-learning-style" className="text-sm font-medium">Learning style</label>
 						<select
+							id="profile-learning-style"
 							className="select select-bordered w-full"
 							value={learningStyle}
 							onChange={(e) => setLearningStyle(e.target.value)}
@@ -127,8 +131,9 @@ export default function ProfileForm({ role, initialData }: Props) {
 						</select>
 					</div>
 					<div className="flex flex-col gap-1">
-						<label className="text-sm font-medium">Current learning goal</label>
+						<label htmlFor="profile-learning-goal" className="text-sm font-medium">Current learning goal</label>
 						<input
+							id="profile-learning-goal"
 							className="input input-bordered w-full"
 							placeholder="e.g. Prepare for SAT Math, improve essay writing…"
 							value={learningGoal}
@@ -143,8 +148,9 @@ export default function ProfileForm({ role, initialData }: Props) {
 			{role === "teacher" && (
 				<>
 					<div className="flex flex-col gap-1">
-						<label className="text-sm font-medium">Teaching style</label>
+						<label htmlFor="profile-teaching-style" className="text-sm font-medium">Teaching style</label>
 						<input
+							id="profile-teaching-style"
 							className="input input-bordered w-full"
 							placeholder="e.g. Structured, Socratic, hands-on with examples…"
 							value={teachingStyle}
@@ -153,8 +159,9 @@ export default function ProfileForm({ role, initialData }: Props) {
 						/>
 					</div>
 					<div className="flex flex-col gap-1">
-						<label className="text-sm font-medium">Price per hour (€)</label>
+						<label htmlFor="profile-price-per-hour" className="text-sm font-medium">Price per hour (€)</label>
 						<input
+							id="profile-price-per-hour"
 							type="number"
 							min={0}
 							step={0.01}

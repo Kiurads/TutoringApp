@@ -2,8 +2,12 @@
 
 import prisma from "@/prisma";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
+// Deliberately does not redirect() here — this is called directly from a
+// client component's onClick (not a <form action>), and redirect() throws a
+// special Next.js error to perform the navigation; a caller wrapping this in
+// try/catch for its own error handling would swallow that and silently break
+// the redirect. The client navigates itself via useRouter().push() instead.
 export default async function deleteTeacherById(
 	teacherId: string
 ): Promise<void> {
@@ -22,5 +26,4 @@ export default async function deleteTeacherById(
 	});
 
 	revalidatePath("/main/admin/teachers");
-	redirect("/main/admin/teachers");
 }

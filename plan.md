@@ -232,13 +232,18 @@ The `email/` directory exists but nothing sends mail.
 
 ## Phase 10 — Polish & Reliability
 
-| Item | File | Work |
-|---|---|---|
-| Skeleton loaders | `app/ui/main/classes/classes-table.tsx`, `app/ui/main/teachers/teacher-browser.tsx` | Wrap data fetch in Suspense; add `loading.tsx` skeleton files |
-| Mobile sidebar | `app/main/student/_components/StudentSidebar.tsx`, teacher equivalent | Collapse to hamburger/bottom nav below `md` breakpoint |
-| Error boundaries | `app/main/student/error.tsx`, teacher equivalent | Replace bare stubs with informative error UI + retry button |
-| Accessibility | All modals, icon-only buttons | Add focus traps in modals; `aria-label` on all icon-only buttons |
-| DaisyUI v5 theme fix | `app/globals.css` or downgrade to `daisyui@4` | Primary colour currently falls back to default purple because v5 ignores `tailwind.config.ts` theme — either downgrade to v4 or move theme to CSS custom properties |
+| Item | Status |
+|---|---|
+| Mobile sidebar | ✅ Already implemented (daisyUI drawer + hamburger, `lg:hidden`) — this line was stale, not actually outstanding |
+| Error boundaries | ✅ Done — `app/main/{student,teacher,admin}/error.tsx` added (previously only a single root `app/error.tsx`, which unmounted the whole app shell including the sidebar on any nested error). Each keeps the user in their own section with a "Try again"/"Go to dashboard" recovery path |
+| Accessibility (modals) | ✅ Done — every modal across the app faked "open" with a CSS `modal-open` class instead of the real `<dialog>` API, so none of them had focus trapping or Escape-to-close. Converted all 10 (`class-action-modals.tsx` ×5, `regular-class-action-modals.tsx` ×3, `avatar-customizer.tsx`, `weekly-schedule.tsx`) to `ref` + `showModal()`/`close()`, matching the one modal that was already doing this correctly (`notification-dropdown.tsx`) |
+| Accessibility (icon-only buttons/inputs) | ✅ Done for the representative set found in a full-app audit: sidebar hamburgers ×3, "New Class" buttons ×2, notification-dropdown close button, modal close buttons, theme toggle, badge tooltips, avatar/background swatch buttons (`aria-pressed` added since state was color-only) |
+| Accessibility (form labels) | ✅ Done — added missing `htmlFor`/`id` pairing across `profile-form.tsx`, `change-password-form.tsx`, `subject-create-form.tsx`, `no-show-report-section.tsx`, `refund-request-actions.tsx`, and the counter-offer datetime input |
+| Correctness bugs found during the audit | ✅ Fixed — 6 submit buttons used `aria-disabled` instead of `disabled` (stayed clickable during submission: `login-form.tsx`, `register-student-form.tsx`, `register-teacher-form.tsx`, `forgot-password-form.tsx`, `reset-password-form.tsx`, `create-class-form.tsx`); `DeleteTeacherButton` had no pending guard at all (double-click could fire two deletes) — also refactored `deleteTeacherById` to stop calling `redirect()` internally, since a client `onClick` caller wrapping it in try/catch (needed for real error handling) would have swallowed Next's internal redirect-signal error; the button now navigates itself via `useRouter()` on success. `complete-class-button.tsx` used a blocking native `alert()` for errors instead of the inline banner pattern used everywhere else |
+| Skeleton loaders | Still open — no `loading.tsx` exists anywhere in the app (confirmed via `find app -name "loading.tsx"`), so slow data fetches show a blank page rather than a skeleton |
+| DaisyUI v5 theme fix | Still open, not re-verified this pass (needs a browser to actually see the rendered color) — primary colour may still fall back to default purple because v5 ignores `tailwind.config.ts` theme |
+| Keyboard accessibility, calendar & availability grids | **New finding, not fixed** — `app/ui/main/calendar/weekly-schedule.tsx` and `app/ui/main/availability/availability-grid.tsx` are both pure mouse-drag interactions (`onMouseDown`/`onMouseMove`, no `onKeyDown`, no `tabIndex` on cells). A keyboard-only user cannot schedule a class from the calendar view or set fine-grained availability at all. Deliberately out of scope for this pass — it's an interaction redesign (needs a real keyboard equivalent for multi-cell drag-select), not a mechanical fix like the rest of this list |
+| Footer dead features | **New finding, not fixed** — `app/ui/footer.tsx`: the newsletter signup form has no `action`/`onSubmit` at all (Subscribe does nothing), and the social links point to internal placeholder routes (`/facebook`, `/twitter`, `/linkedin`) rather than real URLs. Low priority — content/marketing issue, not core app UX |
 
 ---
 

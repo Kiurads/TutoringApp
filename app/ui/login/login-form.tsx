@@ -74,10 +74,11 @@ export default function LoginForm() {
 
 			<div className="pt-2 col-span-6 flex items-center gap-4">
 				<button
+					type="submit"
 					className="grow btn btn-primary"
-					aria-disabled={isPending}
+					disabled={isPending}
 				>
-					Login
+					{isPending ? <span className="loading loading-spinner loading-sm"></span> : "Login"}
 				</button>
 			</div>
 		</form>

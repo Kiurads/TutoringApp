@@ -111,8 +111,9 @@ export default function RefundRequestActions({
 					Admin Resolution
 				</h2>
 				<div className="flex flex-col gap-1">
-					<label className="text-sm font-medium">Admin note (optional)</label>
+					<label htmlFor="refund-admin-note" className="text-sm font-medium">Admin note (optional)</label>
 					<textarea
+						id="refund-admin-note"
 						className="textarea textarea-bordered w-full h-20 resize-none text-sm"
 						placeholder="Add a note visible to both parties…"
 						value={adminNote}

@@ -111,7 +111,7 @@ export default function NotificationDropdown({
 								</button>
 							)}
 							<form method="dialog">
-								<button className="btn btn-ghost btn-xs btn-square">
+								<button className="btn btn-ghost btn-xs btn-square" aria-label="Close">
 									<i className="fa-solid fa-xmark text-xs"></i>
 								</button>
 							</form>

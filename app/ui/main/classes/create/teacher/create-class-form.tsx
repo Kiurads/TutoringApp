@@ -84,8 +84,9 @@ export default function CreateClassForm({
 				{/* Buttons */}
 				<div className="flex items-center gap-4 mt-2">
 					<button
+						type="submit"
 						className="btn btn-primary flex-grow"
-						aria-disabled={isPending}
+						disabled={isPending}
 					>
 						{isPending ? (
 							<>

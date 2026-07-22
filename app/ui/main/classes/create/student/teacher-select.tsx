@@ -48,7 +48,9 @@ const TeacherSelect: FC<TeacherSelectProps> = ({
 												{teacher.name.charAt(0).toUpperCase()}
 											</div>
 											{teacher.isOnline && (
-												<span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-success rounded-full border-2 border-base-100" />
+												<span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-success rounded-full border-2 border-base-100">
+													<span className="sr-only">Online</span>
+												</span>
 											)}
 										</div>
 										<span className="font-medium text-sm">{teacher.name}</span>

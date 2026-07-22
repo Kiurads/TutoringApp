@@ -100,8 +100,9 @@ export default function NoShowReportSection({
 							Did the teacher not show up for this session? Submit a no-show report and the teacher will have 5 days to respond. If they accept or don&apos;t respond, you&apos;ll be refunded automatically.
 						</p>
 						<div className="flex flex-col gap-1">
-							<label className="text-sm font-medium">Reason</label>
+							<label htmlFor="no-show-reason" className="text-sm font-medium">Reason</label>
 							<textarea
+								id="no-show-reason"
 								className="textarea textarea-bordered w-full h-24 resize-none"
 								placeholder="Describe what happened…"
 								value={reason}

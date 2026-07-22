@@ -46,8 +46,9 @@ export default function ChangePasswordForm() {
 	return (
 		<form onSubmit={handleSubmit} className="flex flex-col gap-4">
 			<div className="flex flex-col gap-1">
-				<label className="text-sm font-medium">Current password</label>
+				<label htmlFor="current-password" className="text-sm font-medium">Current password</label>
 				<input
+					id="current-password"
 					type="password"
 					className="input input-bordered w-full"
 					value={currentPassword}
@@ -58,8 +59,9 @@ export default function ChangePasswordForm() {
 			</div>
 
 			<div className="flex flex-col gap-1">
-				<label className="text-sm font-medium">New password</label>
+				<label htmlFor="new-password" className="text-sm font-medium">New password</label>
 				<input
+					id="new-password"
 					type="password"
 					className="input input-bordered w-full"
 					value={newPassword}
@@ -71,8 +73,9 @@ export default function ChangePasswordForm() {
 			</div>
 
 			<div className="flex flex-col gap-1">
-				<label className="text-sm font-medium">Confirm new password</label>
+				<label htmlFor="confirm-new-password" className="text-sm font-medium">Confirm new password</label>
 				<input
+					id="confirm-new-password"
 					type="password"
 					className="input input-bordered w-full"
 					value={confirmPassword}
