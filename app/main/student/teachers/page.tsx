@@ -4,10 +4,15 @@ import { fetchStudentClassHistory } from "@/app/lib/actions/students.actions";
 import { computeFitScore } from "@/app/lib/teachers/fit-score";
 import TeacherBrowser from "@/app/ui/main/teachers/teacher-browser";
 
-export default async function TeachersPage() {
-	const [teachers, session] = await Promise.all([
+export default async function TeachersPage({
+	searchParams,
+}: {
+	searchParams: Promise<{ subject?: string }>;
+}) {
+	const [teachers, session, { subject }] = await Promise.all([
 		fetchTeachersExtended(),
 		auth(),
+		searchParams,
 	]);
 
 	// Fetch student's completed class history for fit score computation
@@ -46,7 +51,12 @@ export default async function TeachersPage() {
 					Browse available tutors and book a session
 				</p>
 			</div>
-			<TeacherBrowser teachers={scored} subjects={subjects} hasHistory={history.length > 0} />
+			<TeacherBrowser
+				teachers={scored}
+				subjects={subjects}
+				hasHistory={history.length > 0}
+				initialSubject={subject && subjects.includes(subject) ? subject : null}
+			/>
 		</div>
 	);
 }
