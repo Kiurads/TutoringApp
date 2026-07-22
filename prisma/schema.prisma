@@ -83,6 +83,12 @@ model User {
   sessions      Session[]
   role          Role      @default(student)
   bio           String?
+  // Gates the one-time welcome tour + preferences prompt shown on first
+  // login — see app/ui/onboarding/welcome-tour-modal.tsx. Deliberately
+  // separate from learningStyle/teachingStyle being set: preferences stay
+  // freely revisitable afterward and are never re-forced on the user, this
+  // flag only controls whether the *tour itself* has been seen once.
+  hasCompletedOnboarding Boolean @default(false)
 
   // Teacher-specific fields
   isOnline       Boolean  @default(false)

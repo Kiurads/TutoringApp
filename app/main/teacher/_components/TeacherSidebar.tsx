@@ -36,7 +36,8 @@ const sections: { heading: string; items: NavItem[] }[] = [
 	{
 		heading: "Account",
 		items: [
-			{ href: "/main/teacher/profile", icon: "fa-circle-user", label: "Profile" },
+			{ href: "/main/teacher/profile",    icon: "fa-circle-user",         label: "Profile"     },
+			{ href: "/main/teacher/onboarding", icon: "fa-wand-magic-sparkles", label: "Preferences" },
 		],
 	},
 ];
