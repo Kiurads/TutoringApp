@@ -12,7 +12,7 @@ const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 const FROM_EMAIL =
-	process.env.RESEND_FROM_EMAIL || "eStudyou <onboarding@resend.dev>";
+	process.env.RESEND_FROM_EMAIL || "The Learning Nexus <onboarding@resend.dev>";
 
 async function sendEmail({
 	to,
@@ -43,9 +43,9 @@ async function sendEmail({
 export async function sendVerificationEmail(to: string, verifyUrl: string) {
 	await sendEmail({
 		to,
-		subject: "Verify your eStudyou email address",
+		subject: "Verify your email address for The Learning Nexus",
 		html: `
-			<p>Welcome to eStudyou!</p>
+			<p>Welcome to The Learning Nexus!</p>
 			<p>Please confirm your email address by clicking the link below:</p>
 			<p><a href="${verifyUrl}">${verifyUrl}</a></p>
 			<p>This link expires in 24 hours. If you didn't create an account, you can ignore this email.</p>
@@ -56,9 +56,9 @@ export async function sendVerificationEmail(to: string, verifyUrl: string) {
 export async function sendPasswordResetEmail(to: string, resetUrl: string) {
 	await sendEmail({
 		to,
-		subject: "Reset your eStudyou password",
+		subject: "Reset your password for The Learning Nexus",
 		html: `
-			<p>We received a request to reset the password for your eStudyou account.</p>
+			<p>We received a request to reset your Learning Nexus account password.</p>
 			<p>Click the link below to choose a new password:</p>
 			<p><a href="${resetUrl}">${resetUrl}</a></p>
 			<p>This link expires in 1 hour. If you didn't request this, you can safely ignore this email — your password will not change.</p>
@@ -68,8 +68,8 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
 
 // Disputes need a human in the Stripe dashboard before the evidence deadline —
 // unlike the other webhook events this app just logs for reconciliation, a
-// dispute isn't actionable from inside eStudyou at all, so email is the right
-// channel rather than an in-app notification.
+// dispute isn't actionable from inside The Learning Nexus at all, so email
+// is the right channel rather than an in-app notification.
 export async function sendDisputeAlertEmail(
 	to: string,
 	details: { disputeId: string; paymentIntentId: string; reason: string; amount: number },
@@ -78,7 +78,7 @@ export async function sendDisputeAlertEmail(
 		to,
 		subject: `Stripe dispute opened (${details.reason})`,
 		html: `
-			<p>A payment dispute was opened on a Stripe charge linked to eStudyou.</p>
+			<p>A payment dispute was opened on a Stripe charge linked to The Learning Nexus.</p>
 			<ul>
 				<li>Dispute ID: ${details.disputeId}</li>
 				<li>Payment intent: ${details.paymentIntentId}</li>

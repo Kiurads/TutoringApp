@@ -22,7 +22,7 @@ vi.mock("@/prisma", () => ({
 }));
 
 vi.mock("@/app/lib/classes/generate-jitsi-room", () => ({
-	generateJitsiRoom: () => "estudyou-test-room",
+	generateJitsiRoom: () => "learning-nexus-test-room",
 }));
 
 const baseRegularClass = {
@@ -85,7 +85,7 @@ describe("materializeOccurrences", () => {
 					status: "scheduled",
 					requesterId: "student1",
 					regularClassId: "rc1",
-					jitsiRoom: "estudyou-test-room",
+					jitsiRoom: "learning-nexus-test-room",
 					totalPrice: baseRegularClass.totalPrice,
 				}),
 			}),

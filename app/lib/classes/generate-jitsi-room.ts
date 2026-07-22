@@ -7,5 +7,5 @@ import { randomBytes } from "crypto";
  * without touching anything else.
  */
 export function generateJitsiRoom(): string {
-	return `estudyou-${randomBytes(16).toString("hex")}`;
+	return `learning-nexus-${randomBytes(16).toString("hex")}`;
 }
