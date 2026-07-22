@@ -304,8 +304,9 @@ No terms of service, privacy policy, or cookie consent surface exists. Needs rea
 
 ## Still remaining, in order
 
-1. **Fill in real secret values** (11C) — `AUTH_SECRET`/`NEXT_PUBLIC_APP_URL` are set; `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`/`FROM_EMAIL` are still placeholders on the live app — needs real third-party credentials filled in via the DO dashboard.
-2. **Custom domain + DNS** — currently only reachable at `estudyou-g7mfy.ondigitalocean.app`.
+1. ~~Fill in real secret values~~ — ✅ done. `AUTH_SECRET`, `NEXT_PUBLIC_APP_URL`, `RESEND_API_KEY`/`FROM_EMAIL` (Resend sandbox `onboarding@resend.dev` — no custom domain verified yet), and **live-mode** Stripe keys (`STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`) are all set on the live app. Webhook registered at `https://estudyou-g7mfy.ondigitalocean.app/api/webhooks/stripe`, subscribed to `payment_intent.succeeded/.payment_failed/.canceled`, `charge.refunded`, `charge.dispute.created` — all 5 handled (PR #27, `feat/stripe-webhook-event-handling`); the four beyond `.succeeded` log for manual reconciliation (no error monitoring yet) and disputes additionally email every admin via Resend. **Nextcloud integration was discarded outright** (PR #26), not configured — see 11A.
+   - ⚠️ Live keys mean real charges process now. Recommended before fully trusting it: one manual pre-auth→capture→refund test through the real UI with a real card.
+2. **Custom domain + DNS** — currently only reachable at `estudyou-g7mfy.ondigitalocean.app`. Also blocks verifying a real Resend sending domain (currently on their sandbox address, which only delivers to your own Resend account).
 3. **Error monitoring** (11B) — pick a target (Sentry or similar) and wire it into both `web` and `worker`, now that a deploy target exists for the DSN/release tag.
 4. **Stripe live mode** — switch keys, register the production webhook URL against the real domain from step 2, run one full manual pre-auth→capture→refund test.
 5. **Legal pages** (11D) — terms of service, privacy policy, cookie consent — needs business/legal input, not more code.
