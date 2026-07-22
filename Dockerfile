@@ -14,6 +14,21 @@ RUN pnpm install --frozen-lockfile
 FROM deps AS builder
 COPY . .
 RUN pnpm prisma generate
+# NEXT_PUBLIC_* vars are inlined into the client bundle at build time by
+# webpack's static replacement of process.env.NEXT_PUBLIC_*, so they must
+# reach this `docker build` step specifically — not just `docker run`.
+# DigitalOcean App Platform passes RUN_AND_BUILD_TIME/BUILD_TIME env vars to
+# `docker build` as --build-arg; without a matching ARG here, Docker
+# silently drops any build-arg with no matching declaration, so
+# process.env.NEXT_PUBLIC_* would compile to `undefined` even though the
+# value is correctly set on the app (this broke the Stripe Elements
+# checkout in production: the publishable key baked into the bundle was
+# undefined, so stripe.js never initialized and the pay button stayed
+# permanently disabled).
+ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+ARG NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 RUN pnpm build
 
 FROM base AS runner
