@@ -131,7 +131,10 @@ export default function OnboardingPage() {
 	const STEPS = 2;
 
 	function handleSkip() {
-		router.push("/main/student/dashboard");
+		// See app/main/student/dashboard/page.tsx: ?tour=1 is what lets a
+		// first-time student actually reach the dashboard (and its welcome
+		// tour) instead of being redirected straight back here.
+		router.push("/main/student/dashboard?tour=1");
 	}
 
 	function handleFinish() {
@@ -149,7 +152,7 @@ export default function OnboardingPage() {
 			if (result.error) {
 				setError(result.error);
 			} else {
-				router.push("/main/student/dashboard");
+				router.push("/main/student/dashboard?tour=1");
 			}
 		});
 	}

@@ -105,6 +105,7 @@ export default function TeacherSidebar({
 					{/* Online toggle */}
 					<div className="px-3 pb-3 shrink-0">
 						<button
+							data-tour="online-toggle"
 							onClick={handleToggle}
 							disabled={isPending}
 							className={`flex items-center gap-3 w-full rounded-lg px-3 py-2 font-semibold transition-colors text-sm ${
