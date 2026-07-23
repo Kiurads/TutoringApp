@@ -11,6 +11,8 @@ vi.mock("@/prisma", () => ({
 
 vi.mock("@/auth", () => ({ auth: vi.fn() }));
 
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+
 beforeEach(() => {
 	vi.clearAllMocks();
 });

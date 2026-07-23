@@ -45,6 +45,7 @@ export const {
 						email: true,
 						password: true,
 						role: true,
+						teachingStyle: true,
 					},
 				});
 
@@ -72,6 +73,9 @@ export const {
 					id: user.id,
 					email: user.email,
 					role: user.role,
+					// Non-teachers are never gated on this, so `true` is a safe default.
+					teacherPreferencesSet:
+						user.role === "teacher" ? user.teachingStyle !== null : true,
 				};
 			},
 		}),

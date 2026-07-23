@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import NotificationDropdown from "@/app/ui/main/notifications/notification-dropdown";
 import type { NotificationData } from "@/app/lib/actions/notifications.actions";
 
-type NavItem = { href: string; icon: string; label: string };
+type NavItem = { href: string; icon: string; label: string; dataTour?: string };
 
 const sections: { heading: string; items: NavItem[] }[] = [
 	{
@@ -21,7 +21,7 @@ const sections: { heading: string; items: NavItem[] }[] = [
 			{ href: "/main/student/regular-classes", icon: "fa-rotate",          label: "Recurring Classes" },
 			{ href: "/main/student/calendar",        icon: "fa-calendar-days",   label: "Calendar" },
 			{ href: "/main/student/subjects",        icon: "fa-book",            label: "Subjects" },
-			{ href: "/main/student/teachers",        icon: "fa-chalkboard-user", label: "Teachers" },
+			{ href: "/main/student/teachers",        icon: "fa-chalkboard-user", label: "Teachers", dataTour: "nav-teachers" },
 		],
 	},
 	{
@@ -108,6 +108,7 @@ export default function StudentSidebar({
 											<li key={link.href}>
 												<Link
 													href={link.href}
+													data-tour={link.dataTour}
 													className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
 														isActive
 															? "bg-primary text-primary-content"

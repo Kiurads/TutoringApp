@@ -2,6 +2,7 @@
 
 import { auth } from "@/auth";
 import prisma from "@/prisma";
+import { revalidatePath } from "next/cache";
 
 // Marks the one-time welcome tour as seen — called when the user finishes
 // or explicitly skips it (see app/ui/onboarding/welcome-tour-modal.tsx).
@@ -16,6 +17,12 @@ export async function completeOnboardingTour(): Promise<{ error?: string }> {
 		where: { email: session.user.email },
 		data: { hasCompletedOnboarding: true },
 	});
+
+	// Without this, the dashboard's client-side Router Cache can keep serving
+	// the RSC payload rendered before this flip, making the tour reappear on
+	// the very next visit even though the DB is already updated.
+	revalidatePath("/main/student/dashboard");
+	revalidatePath("/main/teacher/dashboard");
 
 	return {};
 }
