@@ -24,30 +24,39 @@ export async function startConnectOnboarding(): Promise<{ url?: string; error?: 
 	const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 	let accountId = user.stripeConnectAccountId;
 
-	if (!accountId) {
-		const account = await stripe.accounts.create({
-			type: "express",
-			email: user.email,
-			capabilities: { transfers: { requested: true } },
-			business_type: "individual",
-			metadata: { userId: user.id },
+	try {
+		if (!accountId) {
+			const account = await stripe.accounts.create({
+				type: "express",
+				email: user.email,
+				capabilities: { transfers: { requested: true } },
+				business_type: "individual",
+				metadata: { userId: user.id },
+			});
+			accountId = account.id;
+			await prisma.user.update({
+				where: { id: user.id },
+				data: { stripeConnectAccountId: accountId, connectStatus: "pending" },
+			});
+		}
+
+		const appUrl = getAppUrl();
+		const accountLink = await stripe.accountLinks.create({
+			account: accountId,
+			type: "account_onboarding",
+			refresh_url: `${appUrl}/main/teacher/payouts?refresh=true`,
+			return_url: `${appUrl}/main/teacher/payouts?return=true`,
 		});
-		accountId = account.id;
-		await prisma.user.update({
-			where: { id: user.id },
-			data: { stripeConnectAccountId: accountId, connectStatus: "pending" },
-		});
+
+		return { url: accountLink.url };
+	} catch (err) {
+		// Surfaces as a friendly inline error (see ConnectOnboardingButton)
+		// instead of crashing the whole page — e.g. Stripe Connect not yet
+		// enabled for this platform account, or a transient API error.
+		const message = err instanceof Error ? err.message : "Unknown error";
+		console.error("[startConnectOnboarding]", message);
+		return { error: "Couldn't start payout setup. Please try again shortly." };
 	}
-
-	const appUrl = getAppUrl();
-	const accountLink = await stripe.accountLinks.create({
-		account: accountId,
-		type: "account_onboarding",
-		refresh_url: `${appUrl}/main/teacher/payouts?refresh=true`,
-		return_url: `${appUrl}/main/teacher/payouts?return=true`,
-	});
-
-	return { url: accountLink.url };
 }
 
 export interface ConnectStatusInfo {
