@@ -1,16 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import prisma from "@/prisma";
 import { createNotification } from "@/app/lib/notifications";
-import { transferPayoutForClass, transferPendingPayoutsForTeacher } from "./payouts";
+import {
+	transferPayoutForClass,
+	transferPendingPayoutsForTeacher,
+	ensureConnectAccount,
+} from "./payouts";
 
-const { mockTransferCreate } = vi.hoisted(() => ({
+const { mockTransferCreate, mockAccountsCreate } = vi.hoisted(() => ({
 	mockTransferCreate: vi.fn(),
+	mockAccountsCreate: vi.fn(),
 }));
 
 // Stripe must be mocked as a class (constructor) — arrow functions cannot be called with `new`
 vi.mock("stripe", () => ({
 	default: class MockStripe {
 		transfers = { create: mockTransferCreate };
+		accounts = { create: mockAccountsCreate };
 	},
 }));
 
@@ -20,6 +26,9 @@ vi.mock("@/prisma", () => ({
 			findFirst: vi.fn(),
 			findMany: vi.fn(),
 			updateMany: vi.fn(),
+			update: vi.fn(),
+		},
+		user: {
 			update: vi.fn(),
 		},
 	},
@@ -165,5 +174,50 @@ describe("transferPendingPayoutsForTeacher", () => {
 			select: { classId: true },
 		});
 		expect(prisma.payment.findFirst).toHaveBeenCalledTimes(2);
+	});
+});
+
+describe("ensureConnectAccount", () => {
+	it("returns the existing account id without calling Stripe", async () => {
+		const accountId = await ensureConnectAccount({
+			id: "t1",
+			email: "teacher@test.com",
+			stripeConnectAccountId: "acct_existing",
+		});
+
+		expect(accountId).toBe("acct_existing");
+		expect(mockAccountsCreate).not.toHaveBeenCalled();
+	});
+
+	it("creates a new Express account and persists it when none exists", async () => {
+		mockAccountsCreate.mockResolvedValue({ id: "acct_new" });
+
+		const accountId = await ensureConnectAccount({
+			id: "t1",
+			email: "teacher@test.com",
+			stripeConnectAccountId: null,
+		});
+
+		expect(mockAccountsCreate).toHaveBeenCalledWith(
+			expect.objectContaining({ type: "express", email: "teacher@test.com" }),
+		);
+		expect(prisma.user.update).toHaveBeenCalledWith({
+			where: { id: "t1" },
+			data: { stripeConnectAccountId: "acct_new", connectStatus: "pending" },
+		});
+		expect(accountId).toBe("acct_new");
+	});
+
+	it("returns null without throwing when Stripe rejects the request", async () => {
+		mockAccountsCreate.mockRejectedValue(new Error("Connect not enabled"));
+
+		const accountId = await ensureConnectAccount({
+			id: "t1",
+			email: "teacher@test.com",
+			stripeConnectAccountId: null,
+		});
+
+		expect(accountId).toBeNull();
+		expect(prisma.user.update).not.toHaveBeenCalled();
 	});
 });

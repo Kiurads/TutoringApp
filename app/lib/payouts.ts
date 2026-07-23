@@ -90,3 +90,40 @@ export async function transferPendingPayoutsForTeacher(teacherId: string): Promi
 		await transferPayoutForClass(p.classId);
 	}
 }
+
+// Creates a Stripe Express account "shell" for a teacher if they don't have
+// one yet, and persists it — the account just sits unverified/restricted
+// until they actually complete the Account Link onboarding flow, which is
+// unavoidably interactive (Stripe needs the teacher present for identity/bank
+// details). Called both from registerTeacher (best-effort, at signup, so an
+// account already exists by the time a teacher gets to /main/teacher/payouts)
+// and from startConnectOnboarding (idempotent — a no-op if already called at
+// signup). Returns the account id on success, or null if creation failed
+// (caller decides whether that's fatal — registration never should be).
+export async function ensureConnectAccount(user: {
+	id: string;
+	email: string;
+	stripeConnectAccountId: string | null;
+}): Promise<string | null> {
+	if (user.stripeConnectAccountId) return user.stripeConnectAccountId;
+
+	const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+	try {
+		const account = await stripe.accounts.create({
+			type: "express",
+			email: user.email,
+			capabilities: { transfers: { requested: true } },
+			business_type: "individual",
+			metadata: { userId: user.id },
+		});
+		await prisma.user.update({
+			where: { id: user.id },
+			data: { stripeConnectAccountId: account.id, connectStatus: "pending" },
+		});
+		return account.id;
+	} catch (err) {
+		const message = err instanceof Error ? err.message : "Unknown error";
+		console.error("[ensureConnectAccount]", message);
+		return null;
+	}
+}

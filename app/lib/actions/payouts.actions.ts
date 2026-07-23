@@ -1,19 +1,20 @@
 "use server";
 
 import { auth } from "@/auth";
-import prisma from "@/prisma";
 import Stripe from "stripe";
 import type { ConnectStatus } from "@prisma/client";
 import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
+import { ensureConnectAccount } from "@/app/lib/payouts";
 
 function getAppUrl() {
 	return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 }
 
-// Creates (if needed) a Stripe Express account for the current teacher and
-// returns a fresh onboarding link. Account Links are single-use and expire
-// after a few minutes, so this must be called fresh on every "Set up
-// payouts" / "Continue onboarding" click — never cached or stored.
+// Returns a fresh onboarding link for the current teacher's Stripe Express
+// account (creating the account first if registerTeacher's best-effort
+// creation didn't already, or somehow failed). Account Links are single-use
+// and expire after a few minutes, so this must be called fresh on every
+// "Set up payouts" / "Continue onboarding" click — never cached or stored.
 export async function startConnectOnboarding(): Promise<{ url?: string; error?: string }> {
 	const session = await auth();
 	if (!session?.user?.email) return { error: "Not authenticated." };
@@ -21,25 +22,13 @@ export async function startConnectOnboarding(): Promise<{ url?: string; error?: 
 	const user = await fetchUserByEmail(session.user.email);
 	if (!user || user.role !== "teacher") return { error: "Only teachers can set up payouts." };
 
-	const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
-	let accountId = user.stripeConnectAccountId;
+	const accountId = await ensureConnectAccount(user);
+	if (!accountId) {
+		return { error: "Couldn't start payout setup. Please try again shortly." };
+	}
 
 	try {
-		if (!accountId) {
-			const account = await stripe.accounts.create({
-				type: "express",
-				email: user.email,
-				capabilities: { transfers: { requested: true } },
-				business_type: "individual",
-				metadata: { userId: user.id },
-			});
-			accountId = account.id;
-			await prisma.user.update({
-				where: { id: user.id },
-				data: { stripeConnectAccountId: accountId, connectStatus: "pending" },
-			});
-		}
-
+		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 		const appUrl = getAppUrl();
 		const accountLink = await stripe.accountLinks.create({
 			account: accountId,

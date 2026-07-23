@@ -1,0 +1,94 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import prisma from "@/prisma";
+import { redirect } from "next/navigation";
+import { createAndSendVerificationEmail } from "@/app/lib/auth/verification";
+import { ensureConnectAccount } from "@/app/lib/payouts";
+import { registerTeacher } from "./register-teacher";
+
+vi.mock("@/prisma", () => ({
+	default: {
+		user: { findUnique: vi.fn(), create: vi.fn() },
+		teacherSubject: { createMany: vi.fn() },
+	},
+}));
+
+vi.mock("bcryptjs", () => ({
+	default: { hash: vi.fn().mockResolvedValue("hashed") },
+}));
+
+vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
+
+vi.mock("@/app/lib/auth/rate-limit", () => ({
+	getClientIp: vi.fn().mockResolvedValue("127.0.0.1"),
+	rateLimit: vi.fn().mockReturnValue({ allowed: true }),
+}));
+
+vi.mock("@/app/lib/auth/verification", () => ({
+	createAndSendVerificationEmail: vi.fn(),
+}));
+
+vi.mock("@/app/lib/payouts", () => ({
+	ensureConnectAccount: vi.fn(),
+}));
+
+function formData(fields: Record<string, string | string[]>) {
+	const fd = new FormData();
+	for (const [key, value] of Object.entries(fields)) {
+		if (Array.isArray(value)) {
+			for (const v of value) fd.append(key, v);
+		} else {
+			fd.append(key, value);
+		}
+	}
+	return fd;
+}
+
+const validFields = {
+	email: "teacher@test.com",
+	password: "password123",
+	firstName: "Ada",
+	lastName: "Lovelace",
+	phoneNumber: "",
+	subjects: [] as string[],
+};
+
+beforeEach(() => {
+	vi.clearAllMocks();
+});
+
+describe("registerTeacher", () => {
+	it("pre-creates a Stripe Connect account after a successful registration", async () => {
+		vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+		vi.mocked(prisma.user.create).mockResolvedValue({ id: "t1", email: "teacher@test.com" } as never);
+
+		await registerTeacher(undefined, formData(validFields));
+
+		expect(ensureConnectAccount).toHaveBeenCalledWith({
+			id: "t1",
+			email: "teacher@test.com",
+			stripeConnectAccountId: null,
+		});
+		expect(createAndSendVerificationEmail).toHaveBeenCalledWith("teacher@test.com");
+		expect(redirect).toHaveBeenCalledWith("/login");
+	});
+
+	it("still redirects to login even when ensureConnectAccount fails", async () => {
+		vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+		vi.mocked(prisma.user.create).mockResolvedValue({ id: "t1", email: "teacher@test.com" } as never);
+		vi.mocked(ensureConnectAccount).mockResolvedValue(null);
+
+		await registerTeacher(undefined, formData(validFields));
+
+		expect(redirect).toHaveBeenCalledWith("/login");
+	});
+
+	it("does not create a Stripe account when the user already exists", async () => {
+		vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "existing" } as never);
+
+		const result = await registerTeacher(undefined, formData(validFields));
+
+		expect(result).toBe("User already exists");
+		expect(ensureConnectAccount).not.toHaveBeenCalled();
+		expect(redirect).not.toHaveBeenCalled();
+	});
+});
