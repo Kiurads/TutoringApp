@@ -22,7 +22,7 @@ export default async function NextUpCard({ userEmail }: { userEmail: string }) {
 
 	if (!next) {
 		return (
-			<div className="card bg-base-200 shadow-lg" data-tour="next-up-card">
+			<div className="card bg-base-200 shadow-lg">
 				<div className="card-body">
 					<h3 className="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">
 						Next Up

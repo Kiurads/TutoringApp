@@ -30,7 +30,7 @@ export default async function AcademicArcWidget({
 	});
 
 	return (
-		<div className="card bg-base-200 shadow-lg" data-tour="academic-arc-widget">
+		<div className="card bg-base-200 shadow-lg">
 			<div className="card-body gap-4">
 				<div className="flex items-center justify-between">
 					<h3 className="text-xs font-semibold text-base-content/50 uppercase tracking-wide">
