@@ -7,7 +7,7 @@ import { toggleTeacherOnline } from "@/app/lib/actions/teachers.actions";
 import NotificationDropdown from "@/app/ui/main/notifications/notification-dropdown";
 import type { NotificationData } from "@/app/lib/actions/notifications.actions";
 
-type NavItem = { href: string; icon: string; label: string };
+type NavItem = { href: string; icon: string; label: string; dataTour?: string };
 
 const sections: { heading: string; items: NavItem[] }[] = [
 	{
@@ -19,7 +19,7 @@ const sections: { heading: string; items: NavItem[] }[] = [
 	{
 		heading: "Teaching",
 		items: [
-			{ href: "/main/teacher/classes",         icon: "fa-school",         label: "Classes"      },
+			{ href: "/main/teacher/classes",         icon: "fa-school",         label: "Classes", dataTour: "nav-classes" },
 			{ href: "/main/teacher/regular-classes", icon: "fa-rotate",         label: "Recurring Classes" },
 			{ href: "/main/teacher/calendar",        icon: "fa-calendar-days",  label: "Calendar"     },
 			{ href: "/main/teacher/availability",    icon: "fa-clock",          label: "Availability" },
@@ -142,6 +142,7 @@ export default function TeacherSidebar({
 											<li key={link.href}>
 												<Link
 													href={link.href}
+													data-tour={link.dataTour}
 													className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
 														isActive
 															? "bg-primary text-primary-content"

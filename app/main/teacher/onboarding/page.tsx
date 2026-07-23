@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { updateProfile } from "@/app/lib/actions/users.actions";
 
 // ── Step data ──────────────────────────────────────────────────────────────────
@@ -99,6 +100,7 @@ function StepDots({ total, current }: { total: number; current: number }) {
 
 export default function TeacherOnboardingPage() {
 	const router = useRouter();
+	const { update } = useSession();
 	const [step, setStep] = useState(0);
 	const [teachingStyle, setTeachingStyle] = useState("");
 	const [pricePerHour, setPricePerHour] = useState("");
@@ -108,10 +110,6 @@ export default function TeacherOnboardingPage() {
 	const STEPS = 2;
 	const priceValue = parseFloat(pricePerHour);
 	const priceIsValid = pricePerHour !== "" && !Number.isNaN(priceValue) && priceValue > 0;
-
-	function handleSkip() {
-		router.push("/main/teacher/dashboard");
-	}
 
 	function handleFinish() {
 		if (!teachingStyle || !priceIsValid) return;
@@ -128,9 +126,13 @@ export default function TeacherOnboardingPage() {
 			});
 			if (result.error) {
 				setError(result.error);
-			} else {
-				router.push("/main/teacher/dashboard");
+				return;
 			}
+			// Refreshes the JWT so middleware immediately sees these
+			// preferences as set — otherwise it would keep redirecting back
+			// here until the next full login (see auth.config.ts).
+			await update({ teacherPreferencesSet: true });
+			router.push("/main/teacher/dashboard");
 		});
 	}
 
@@ -202,16 +204,9 @@ export default function TeacherOnboardingPage() {
 					</div>
 				)}
 
-				{/* Navigation */}
-				<div className="flex items-center justify-between mt-8 gap-3">
-					<button
-						type="button"
-						className="btn btn-ghost btn-sm text-base-content/40"
-						onClick={handleSkip}
-					>
-						Skip for now
-					</button>
-
+				{/* Navigation — this step is mandatory for teachers, so there is
+				    deliberately no "Skip" option here (see auth.config.ts). */}
+				<div className="flex items-center justify-end mt-8 gap-3">
 					<div className="flex gap-2">
 						{step > 0 && (
 							<button
