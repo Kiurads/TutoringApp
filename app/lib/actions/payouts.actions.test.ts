@@ -95,6 +95,24 @@ describe("startConnectOnboarding", () => {
 			expect.objectContaining({ account: "acct_existing" }),
 		);
 	});
+
+	it("returns a friendly error instead of throwing when Stripe rejects the request", async () => {
+		vi.mocked(auth).mockResolvedValue({ user: { email: "teacher@test.com" } } as never);
+		vi.mocked(fetchUserByEmail).mockResolvedValue({
+			id: "t1",
+			email: "teacher@test.com",
+			role: "teacher",
+			stripeConnectAccountId: null,
+		} as never);
+		mockAccountsCreate.mockRejectedValue(
+			new Error("You can only create new accounts if you've signed up for Connect."),
+		);
+
+		const result = await startConnectOnboarding();
+
+		expect(result).toEqual({ error: "Couldn't start payout setup. Please try again shortly." });
+		expect(prisma.user.update).not.toHaveBeenCalled();
+	});
 });
 
 describe("getConnectStatus", () => {
