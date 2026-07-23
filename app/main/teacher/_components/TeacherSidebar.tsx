@@ -30,6 +30,7 @@ const sections: { heading: string; items: NavItem[] }[] = [
 		items: [
 			{ href: "/main/teacher/students",        icon: "fa-user-graduate",  label: "Students", dataTour: "nav-students" },
 			{ href: "/main/teacher/earnings",        icon: "fa-dollar-sign",    label: "Earnings", dataTour: "nav-earnings" },
+			{ href: "/main/teacher/payouts",         icon: "fa-money-bill-transfer", label: "Payouts", dataTour: "nav-payouts" },
 			{ href: "/main/teacher/refund-requests", icon: "fa-rotate-left",    label: "Refund Requests", dataTour: "nav-refund-requests" },
 		],
 	},

@@ -22,6 +22,8 @@ import {
 	updateActivityStreak,
 	maybeAwardLuckyBonus,
 } from "@/app/lib/gamification";
+import { computeCommissionSplit } from "@/app/lib/payouts-utils";
+import { transferPayoutForClass } from "@/app/lib/payouts";
 import Stripe from "stripe";
 
 export interface ClassDataCalendar {
@@ -565,6 +567,7 @@ export async function acceptClassById(classId: string) {
 		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 		try {
 			await stripe.paymentIntents.capture(cls.preAuthIntentId);
+			const split = computeCommissionSplit(Number(cls.totalPrice));
 			await prisma.payment.create({
 				data: {
 					amount: cls.totalPrice,
@@ -572,6 +575,9 @@ export async function acceptClassById(classId: string) {
 					classId: cls.id,
 					studentId: cls.studentId,
 					teacherId: cls.teacherId,
+					platformFeeAmount: split.platformFeeAmount,
+					teacherPayoutAmount: split.teacherPayoutAmount,
+					platformFeeRateBps: split.platformFeeRateBps,
 				},
 			});
 			await prisma.class.update({
@@ -840,6 +846,7 @@ export async function completeClass(classId: string): Promise<{ error?: string }
 		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 		try {
 			await stripe.paymentIntents.capture(cls.preAuthIntentId);
+			const split = computeCommissionSplit(Number(cls.totalPrice));
 			await prisma.payment.create({
 				data: {
 					amount: cls.totalPrice,
@@ -847,6 +854,9 @@ export async function completeClass(classId: string): Promise<{ error?: string }
 					classId: cls.id,
 					studentId: cls.studentId,
 					teacherId: cls.teacherId,
+					platformFeeAmount: split.platformFeeAmount,
+					teacherPayoutAmount: split.teacherPayoutAmount,
+					platformFeeRateBps: split.platformFeeRateBps,
 				},
 			});
 			await prisma.class.update({
@@ -859,6 +869,10 @@ export async function completeClass(classId: string): Promise<{ error?: string }
 	} else {
 		await prisma.class.update({ where: { id: classId }, data: { status: "completed" } });
 	}
+
+	// Teacher payout — no-ops gracefully if there's no Payment row (e.g. the
+	// capture above failed) or the teacher hasn't onboarded to Connect yet.
+	await transferPayoutForClass(classId);
 
 	// Gamification
 	await awardGems(cls.studentId, 50);

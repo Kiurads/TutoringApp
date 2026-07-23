@@ -49,6 +49,7 @@ export default function TeachersTable(props: {
 							<th>Email</th>
 							<th>Subjects</th>
 							<th>Status</th>
+							<th>Payouts</th>
 							<th>Actions</th>
 						</tr>
 					</thead>
@@ -79,6 +80,23 @@ export default function TeachersTable(props: {
 									</span>
 								</td>
 								<td>
+									<span
+										className={`badge ${
+											teacher.connectStatus === "active"
+												? "badge-success"
+												: teacher.connectStatus === "restricted"
+													? "badge-error"
+													: teacher.connectStatus === "pending"
+														? "badge-warning"
+														: "badge-ghost"
+										}`}
+									>
+										{teacher.connectStatus === "not_started"
+											? "Not set up"
+											: teacher.connectStatus}
+									</span>
+								</td>
+								<td>
 									<div className="flex gap-2">
 										<Link
 											href={`/main/admin/teachers/${teacher.id}`}
@@ -100,7 +118,7 @@ export default function TeachersTable(props: {
 						{filteredTeachers.length === 0 && (
 							<tr>
 								<td
-									colSpan={5}
+									colSpan={6}
 									className="text-center py-6 text-base-content/50"
 								>
 									No teachers found.

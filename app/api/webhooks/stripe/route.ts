@@ -1,7 +1,9 @@
 import { createPaymentForClass } from "@/app/lib/actions/paymets.actions";
 import { sendDisputeAlertEmail } from "@/app/lib/email";
+import { transferPendingPayoutsForTeacher } from "@/app/lib/payouts";
 import prisma from "@/prisma";
 import Stripe from "stripe";
+import type { ConnectStatus } from "@prisma/client";
 
 export async function POST(req: Request) {
 	const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -107,6 +109,43 @@ export async function POST(req: Request) {
 					})
 				)
 			);
+			break;
+		}
+
+		case "account.updated": {
+			const account = event.data.object;
+			const user = await prisma.user.findUnique({
+				where: { stripeConnectAccountId: account.id },
+				select: { id: true },
+			});
+			if (!user) break; // Not one of ours, or arrived before we persisted the id — safe to ignore
+
+			const chargesEnabled = account.charges_enabled;
+			const payoutsEnabled = account.payouts_enabled;
+			const detailsSubmitted = account.details_submitted;
+			const newStatus: ConnectStatus =
+				chargesEnabled && payoutsEnabled && detailsSubmitted
+					? "active"
+					: detailsSubmitted
+						? "restricted"
+						: "pending";
+
+			await prisma.user.update({
+				where: { id: user.id },
+				data: {
+					connectChargesEnabled: chargesEnabled,
+					connectPayoutsEnabled: payoutsEnabled,
+					connectDetailsSubmitted: detailsSubmitted,
+					connectStatus: newStatus,
+					connectUpdatedAt: new Date(),
+				},
+			});
+
+			// Just went fully active — sweep any completed-class payouts that
+			// accrued while this teacher hadn't onboarded yet.
+			if (newStatus === "active") {
+				await transferPendingPayoutsForTeacher(user.id);
+			}
 			break;
 		}
 

@@ -192,6 +192,15 @@ function buildSteps(role: "student" | "teacher", firstName: string): DriveStep[]
 			},
 		},
 		{
+			element: '[data-tour="nav-payouts"]',
+			popover: {
+				title: "Payouts",
+				description:
+					"Connect a Stripe account here so your share of each class gets transferred to you automatically.",
+				side: "right",
+			},
+		},
+		{
 			element: '[data-tour="nav-refund-requests"]',
 			popover: {
 				title: "Refund Requests",
