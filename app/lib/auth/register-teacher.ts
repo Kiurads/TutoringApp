@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { getClientIp, rateLimit } from "@/app/lib/auth/rate-limit";
 import { createAndSendVerificationEmail } from "@/app/lib/auth/verification";
+import { ensureConnectAccount } from "@/app/lib/payouts";
 
 // Deter signup spam: cap registration attempts per IP within a rolling
 // ten-minute window. See rate-limit.ts for storage caveats. This route is
@@ -42,6 +43,8 @@ export async function registerTeacher(
 	if (phoneNumber && /^\d{9}$/.test(phoneNumber) === false)
 		return "Please enter a valid phone number";
 
+	let teacherId: string;
+
 	try {
 		const existingUser = await prisma.user.findUnique({ where: { email } });
 		if (existingUser) return "User already exists";
@@ -58,6 +61,7 @@ export async function registerTeacher(
 				role: "teacher",
 			},
 		});
+		teacherId = teacher.id;
 
 		// Assign subjects
 		if (subjects.length > 0) {
@@ -81,6 +85,17 @@ export async function registerTeacher(
 	// Best-effort — a failure here (e.g. Resend outage) must not prevent
 	// the teacher account that was just created from being usable.
 	await createAndSendVerificationEmail(email);
+
+	// Best-effort — pre-creates an (unverified) Stripe Connect account so a
+	// teacher can go straight to the Account Link onboarding flow later from
+	// /main/teacher/payouts, without an extra account-creation round trip.
+	// ensureConnectAccount already swallows its own errors and returns null
+	// on failure, so this can never block registration either.
+	await ensureConnectAccount({
+		id: teacherId,
+		email,
+		stripeConnectAccountId: null,
+	});
 
 	redirect("/login");
 }
