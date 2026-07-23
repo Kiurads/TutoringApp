@@ -6,7 +6,7 @@ export default async function WeeklyQuestsWidget() {
 	if (quests.length === 0) return null;
 
 	return (
-		<div className="card bg-base-200 shadow-lg">
+		<div className="card bg-base-200 shadow-lg" data-tour="weekly-quests-widget">
 			<div className="card-body gap-4">
 				<div className="flex items-center gap-2">
 					<i className="fa-solid fa-flag-checkered text-secondary"></i>

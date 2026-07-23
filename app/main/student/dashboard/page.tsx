@@ -11,16 +11,29 @@ import { fetchPaymentsByUserId } from "@/app/lib/actions/paymets.actions";
 import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
 import Link from "next/link";
 
-export default async function DashboardStudent() {
+export default async function DashboardStudent({
+	searchParams,
+}: {
+	searchParams: Promise<{ tour?: string }>;
+}) {
 	const session = await auth();
 
 	if (!session?.user?.email) redirect("/login");
 
 	const userEmail = session.user.email!;
-	const [payments, user] = await Promise.all([
+	const [payments, user, { tour }] = await Promise.all([
 		fetchPaymentsByUserId(userEmail),
 		fetchUserByEmail(userEmail),
+		searchParams,
 	]);
+
+	// First-time visit: send students through preferences before they ever
+	// see the dashboard or the welcome tour. `?tour=1` is how the onboarding
+	// page (skip or finish, either way) hands them back here afterward —
+	// without it, this would redirect right back and never show the tour.
+	if (user && !user.hasCompletedOnboarding && tour !== "1") {
+		redirect("/main/student/onboarding");
+	}
 
 	const needsOnboarding = user && !user.learningStyle;
 
