@@ -13,31 +13,31 @@ const sections: { heading: string; items: NavItem[] }[] = [
 	{
 		heading: "Overview",
 		items: [
-			{ href: "/main/teacher/dashboard", icon: "fa-house-user",     label: "Dashboard"    },
+			{ href: "/main/teacher/dashboard", icon: "fa-house-user",     label: "Dashboard", dataTour: "nav-dashboard" },
 		],
 	},
 	{
 		heading: "Teaching",
 		items: [
 			{ href: "/main/teacher/classes",         icon: "fa-school",         label: "Classes", dataTour: "nav-classes" },
-			{ href: "/main/teacher/regular-classes", icon: "fa-rotate",         label: "Recurring Classes" },
-			{ href: "/main/teacher/calendar",        icon: "fa-calendar-days",  label: "Calendar"     },
-			{ href: "/main/teacher/availability",    icon: "fa-clock",          label: "Availability" },
+			{ href: "/main/teacher/regular-classes", icon: "fa-rotate",         label: "Recurring Classes", dataTour: "nav-recurring-classes" },
+			{ href: "/main/teacher/calendar",        icon: "fa-calendar-days",  label: "Calendar", dataTour: "nav-calendar" },
+			{ href: "/main/teacher/availability",    icon: "fa-clock",          label: "Availability", dataTour: "nav-availability" },
 		],
 	},
 	{
 		heading: "People & Money",
 		items: [
-			{ href: "/main/teacher/students",        icon: "fa-user-graduate",  label: "Students"        },
-			{ href: "/main/teacher/earnings",        icon: "fa-dollar-sign",    label: "Earnings"        },
-			{ href: "/main/teacher/refund-requests", icon: "fa-rotate-left",    label: "Refund Requests" },
+			{ href: "/main/teacher/students",        icon: "fa-user-graduate",  label: "Students", dataTour: "nav-students" },
+			{ href: "/main/teacher/earnings",        icon: "fa-dollar-sign",    label: "Earnings", dataTour: "nav-earnings" },
+			{ href: "/main/teacher/refund-requests", icon: "fa-rotate-left",    label: "Refund Requests", dataTour: "nav-refund-requests" },
 		],
 	},
 	{
 		heading: "Account",
 		items: [
-			{ href: "/main/teacher/profile",    icon: "fa-circle-user",         label: "Profile"     },
-			{ href: "/main/teacher/onboarding", icon: "fa-wand-magic-sparkles", label: "Preferences" },
+			{ href: "/main/teacher/profile",    icon: "fa-circle-user",         label: "Profile", dataTour: "nav-profile" },
+			{ href: "/main/teacher/onboarding", icon: "fa-wand-magic-sparkles", label: "Preferences", dataTour: "nav-preferences" },
 		],
 	},
 ];

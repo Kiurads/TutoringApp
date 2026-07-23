@@ -11,30 +11,30 @@ const sections: { heading: string; items: NavItem[] }[] = [
 	{
 		heading: "Overview",
 		items: [
-			{ href: "/main/student/dashboard", icon: "fa-house-user", label: "Dashboard" },
+			{ href: "/main/student/dashboard", icon: "fa-house-user", label: "Dashboard", dataTour: "nav-dashboard" },
 		],
 	},
 	{
 		heading: "Learning",
 		items: [
-			{ href: "/main/student/classes",         icon: "fa-school",          label: "Classes"  },
-			{ href: "/main/student/regular-classes", icon: "fa-rotate",          label: "Recurring Classes" },
-			{ href: "/main/student/calendar",        icon: "fa-calendar-days",   label: "Calendar" },
-			{ href: "/main/student/subjects",        icon: "fa-book",            label: "Subjects" },
+			{ href: "/main/student/classes",         icon: "fa-school",          label: "Classes", dataTour: "nav-classes" },
+			{ href: "/main/student/regular-classes", icon: "fa-rotate",          label: "Recurring Classes", dataTour: "nav-recurring-classes" },
+			{ href: "/main/student/calendar",        icon: "fa-calendar-days",   label: "Calendar", dataTour: "nav-calendar" },
+			{ href: "/main/student/subjects",        icon: "fa-book",            label: "Subjects", dataTour: "nav-subjects" },
 			{ href: "/main/student/teachers",        icon: "fa-chalkboard-user", label: "Teachers", dataTour: "nav-teachers" },
 		],
 	},
 	{
 		heading: "Rewards",
 		items: [
-			{ href: "/main/student/store", icon: "fa-gem", label: "Gem Store" },
+			{ href: "/main/student/store", icon: "fa-gem", label: "Gem Store", dataTour: "nav-store" },
 		],
 	},
 	{
 		heading: "Account",
 		items: [
-			{ href: "/main/student/profile",    icon: "fa-circle-user",           label: "Profile"    },
-			{ href: "/main/student/onboarding", icon: "fa-wand-magic-sparkles",   label: "Preferences" },
+			{ href: "/main/student/profile",    icon: "fa-circle-user",           label: "Profile", dataTour: "nav-profile" },
+			{ href: "/main/student/onboarding", icon: "fa-wand-magic-sparkles",   label: "Preferences", dataTour: "nav-preferences" },
 		],
 	},
 ];
