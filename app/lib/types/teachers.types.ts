@@ -15,4 +15,5 @@ export interface TeacherExtended extends TeacherDetails {
 	availabilityDays: number[]; // unique dayOfWeek values (fit score)
 	status: "Active" | "Pending" | "Inactive";
 	fitScore?: number | null;
+	connectStatus: "not_started" | "pending" | "restricted" | "active";
 }

@@ -3,6 +3,7 @@
 import prisma from "@/prisma";
 import { createNotification } from "@/app/lib/notifications";
 import { awardGems } from "@/app/lib/gamification";
+import { computeCommissionSplit } from "@/app/lib/payouts-utils";
 
 export async function fetchPaymentsByUserId(email: string) {
 	// Get student ID from email
@@ -57,6 +58,9 @@ export async function fetchPaymentsByTeacherId(email: string) {
 		select: {
 			id: true,
 			amount: true,
+			teacherPayoutAmount: true,
+			platformFeeAmount: true,
+			payoutStatus: true,
 			student: {
 				select: {
 					firstName: true,
@@ -71,6 +75,14 @@ export async function fetchPaymentsByTeacherId(email: string) {
 	return payments.map((p) => ({
 		id: p.id,
 		amount: p.amount,
+		// Nullable only for the handful of rows that could somehow predate the
+		// migration backfill — falls back to the gross amount so the UI never
+		// shows a blank/zero payout for those. Converted to plain numbers
+		// (unlike `amount`, kept as Decimal above for backwards compatibility)
+		// so callers never have to juggle a Decimal-or-number union.
+		teacherPayoutAmount: (p.teacherPayoutAmount ?? p.amount).toNumber(),
+		platformFeeAmount: p.platformFeeAmount ? p.platformFeeAmount.toNumber() : 0,
+		payoutStatus: p.payoutStatus,
 		studentName: `${p.student.firstName} ${p.student.lastName}`,
 		date: p.createdAt,
 	}));
@@ -95,6 +107,8 @@ export async function createPaymentForClass(
 		return null;
 	}
 
+	const split = computeCommissionSplit(Number(classData.totalPrice));
+
 	await prisma.payment.create({
 		data: {
 			amount: classData.totalPrice,
@@ -102,6 +116,9 @@ export async function createPaymentForClass(
 			classId: classData.id,
 			studentId: classData.studentId,
 			teacherId: classData.teacherId,
+			platformFeeAmount: split.platformFeeAmount,
+			teacherPayoutAmount: split.teacherPayoutAmount,
+			platformFeeRateBps: split.platformFeeRateBps,
 		},
 	});
 

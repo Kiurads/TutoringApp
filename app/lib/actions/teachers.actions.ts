@@ -128,6 +128,7 @@ export async function fetchTeachersExtended(): Promise<TeacherExtended[]> {
 			isOnline: true,
 			pricePerHour: true,
 			avatarOptions: true,
+			connectStatus: true,
 			teacherRatingsAsTeacher: {
 				select: { rating: true },
 			},
@@ -164,6 +165,7 @@ export async function fetchTeachersExtended(): Promise<TeacherExtended[]> {
 			subjectIds: teacher.teacherSubject.map((ts) => ts.subject.id),
 			availabilityDays: [...new Set(teacher.teacherAvailability.map((a) => a.dayOfWeek))],
 			status: "Active" as const,
+			connectStatus: teacher.connectStatus,
 		};
 	});
 }

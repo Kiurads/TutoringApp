@@ -75,6 +75,8 @@ vi.mock("@/app/lib/gamification", () => ({
   updateActivityStreak: vi.fn(),
   maybeAwardLuckyBonus: vi.fn().mockResolvedValue(0),
 }));
+const transferPayoutForClass = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+vi.mock("@/app/lib/payouts", () => ({ transferPayoutForClass }));
 
 const mockSession = { user: { email: "user@test.com" } };
 
@@ -715,6 +717,16 @@ describe("completeClass", () => {
       where: { id: "class1" },
       data: { status: "completed" },
     });
+  });
+
+  it("triggers the teacher payout after marking a class completed", async () => {
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(prisma.class.findUnique).mockResolvedValue(makeScheduledClass() as never);
+    vi.mocked(prisma.class.update).mockResolvedValue({} as never);
+
+    await completeClass("class1");
+
+    expect(transferPayoutForClass).toHaveBeenCalledWith("class1");
   });
 
   it("captures uncaptured pre-auth on completion", async () => {

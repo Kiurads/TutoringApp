@@ -36,6 +36,7 @@ const mockTeacherRow = (overrides: Record<string, unknown> = {}) => ({
   bio: "Experienced tutor",
   isOnline: true,
   pricePerHour: dec(25),
+  connectStatus: "not_started",
   teacherRatingsAsTeacher: [{ rating: dec(4) }, { rating: dec(5) }],
   teacherAvailability: [],
   ...overrides,

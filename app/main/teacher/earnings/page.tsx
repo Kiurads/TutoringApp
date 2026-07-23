@@ -1,8 +1,23 @@
 import { fetchPaymentsByTeacherId } from "@/app/lib/actions/paymets.actions";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import MonthlyEarningsChart from "@/app/ui/main/earnings/monthly-earnings-chart";
 import StudentBreakdownChart from "@/app/ui/main/earnings/student-breakdown-chart";
+
+const PAYOUT_STATUS_BADGE: Record<string, string> = {
+	transferred: "badge-success",
+	pending: "badge-warning",
+	failed: "badge-error",
+	not_applicable: "badge-ghost",
+};
+
+const PAYOUT_STATUS_LABEL: Record<string, string> = {
+	transferred: "Paid out",
+	pending: "Pending",
+	failed: "Failed",
+	not_applicable: "—",
+};
 
 export default async function TeacherEarningsPage() {
 	const session = await auth();
@@ -12,13 +27,16 @@ export default async function TeacherEarningsPage() {
 	const userEmail = session.user.email!;
 	const payments = await fetchPaymentsByTeacherId(userEmail);
 
+	// "Earnings" means what the teacher actually receives — net of the
+	// platform's commission — not the gross amount the student paid.
 	const paymentsForCharts = payments.map((p) => ({
-		amount: p.amount.toNumber(),
+		amount: p.teacherPayoutAmount,
 		studentName: p.studentName,
 		date: p.date,
 	}));
 
 	const totalEarnings = paymentsForCharts.reduce((sum, p) => sum + p.amount, 0);
+	const totalPlatformFee = payments.reduce((sum, p) => sum + p.platformFeeAmount, 0);
 
 	const now = new Date();
 	const thisMonthEarnings = paymentsForCharts
@@ -32,11 +50,16 @@ export default async function TeacherEarningsPage() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<div>
-				<h1 className="text-2xl font-bold">Earnings</h1>
-				<p className="text-base-content/60 text-sm mt-1">
-					Track your teaching income and payment history
-				</p>
+			<div className="flex items-start justify-between gap-4">
+				<div>
+					<h1 className="text-2xl font-bold">Earnings</h1>
+					<p className="text-base-content/60 text-sm mt-1">
+						Track your teaching income and payment history
+					</p>
+				</div>
+				<Link href="/main/teacher/payouts" className="btn btn-outline btn-sm shrink-0">
+					<i className="fa-solid fa-money-bill-transfer" /> Payouts
+				</Link>
 			</div>
 
 			{/* Stat cards */}
@@ -48,7 +71,9 @@ export default async function TeacherEarningsPage() {
 						</div>
 						<div className="stat-title">Total Earned</div>
 						<div className="stat-value text-primary">{totalEarnings.toFixed(2)}€</div>
-						<div className="stat-desc">All time</div>
+						<div className="stat-desc">
+							All time — of which {totalPlatformFee.toFixed(2)}€ was the platform fee
+						</div>
 					</div>
 				</div>
 
@@ -111,7 +136,8 @@ export default async function TeacherEarningsPage() {
 							<thead>
 								<tr className="bg-base-200">
 									<th className="px-4 py-3 font-medium text-base-content text-left">Student</th>
-									<th className="px-4 py-3 font-medium text-base-content text-left">Amount</th>
+									<th className="px-4 py-3 font-medium text-base-content text-left">You received</th>
+									<th className="px-4 py-3 font-medium text-base-content text-left">Payout</th>
 									<th className="px-4 py-3 font-medium text-base-content text-left">Date</th>
 									<th className="px-4 py-3 font-medium text-base-content text-left">Transaction ID</th>
 								</tr>
@@ -123,7 +149,15 @@ export default async function TeacherEarningsPage() {
 											{payment.studentName}
 										</td>
 										<td className="px-4 py-3 text-success font-semibold">
-											+{payment.amount.toNumber().toFixed(2)}€
+											+{payment.teacherPayoutAmount.toFixed(2)}€
+											<span className="block text-xs font-normal text-base-content/40">
+												of {payment.amount.toNumber().toFixed(2)}€ paid
+											</span>
+										</td>
+										<td className="px-4 py-3">
+											<span className={`badge badge-sm ${PAYOUT_STATUS_BADGE[payment.payoutStatus]}`}>
+												{PAYOUT_STATUS_LABEL[payment.payoutStatus]}
+											</span>
 										</td>
 										<td className="px-4 py-3 text-base-content text-xs whitespace-nowrap">
 											{new Date(payment.date).toLocaleDateString("en-US", {

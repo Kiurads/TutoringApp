@@ -51,6 +51,7 @@ enum NotificationType {
   regular_class_accepted
   regular_class_refused
   regular_class_cancelled
+  payout_sent
 }
 
 enum BadgeCategory {
@@ -68,6 +69,25 @@ enum RefundRequestStatus {
   expired
   admin_review
   resolved
+}
+
+// Stripe Connect Express account status for a teacher's payouts.
+enum ConnectStatus {
+  not_started // no Stripe account created yet
+  pending     // account created, onboarding link sent, not yet fully verified
+  restricted  // Stripe requires more info (charges/payouts disabled)
+  active      // charges_enabled && payouts_enabled && details_submitted
+}
+
+// Tracks whether a captured class Payment's teacher cut has been sent via
+// Stripe Connect. Separate from ConnectStatus: a teacher can be "active" but
+// an individual payout can still be "pending" (e.g. the class hasn't
+// completed yet) or "failed" (e.g. a transient Stripe error).
+enum PayoutStatus {
+  not_applicable // default; becomes meaningful once the class completes
+  pending        // class completed, but teacher not yet onboarded — accrued
+  transferred    // stripe.transfers.create succeeded
+  failed         // transfer attempted and errored
 }
 
 model User {
@@ -96,6 +116,16 @@ model User {
   teachingStyle  String?
   teacherRating  TeacherRating[]  @relation("TeacherRatingStudent")
   teacherSubject TeacherSubject[]
+
+  // Stripe Connect (teacher payouts) — see app/lib/payouts.ts. No separate
+  // Teacher model exists, so like pricePerHour/teachingStyle this lives on
+  // User even though it's only ever populated for role: teacher.
+  stripeConnectAccountId  String?       @unique
+  connectStatus           ConnectStatus @default(not_started)
+  connectChargesEnabled   Boolean       @default(false)
+  connectPayoutsEnabled   Boolean       @default(false)
+  connectDetailsSubmitted Boolean       @default(false)
+  connectUpdatedAt        DateTime?
 
   // Student-specific fields
   learningStyle  String?
@@ -260,6 +290,22 @@ model Payment {
   intentId     String
   createdAt    DateTime @default(now())
 
+  // Commission split — computed once via computeCommissionSplit() at the
+  // same time this row is created (i.e. at charge/capture time), and never
+  // recomputed later, so a future rate change never silently reprices a
+  // historical payment. Nullable only so pre-migration rows stay valid;
+  // the migration backfills them immediately.
+  platformFeeAmount   Decimal?
+  teacherPayoutAmount Decimal?
+  platformFeeRateBps  Int?
+
+  // Payout tracking — mutated later, at class-completion time, by
+  // app/lib/payouts.ts's transferPayoutForClass.
+  payoutStatus      PayoutStatus @default(not_applicable)
+  transferId        String?
+  payoutAttemptedAt DateTime?
+  payoutError       String?      @db.Text
+
   student User  @relation("PaymentStudent", fields: [studentId], references: [id], onDelete: Cascade)
   teacher User  @relation("PaymentTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
   class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
@@ -267,6 +313,7 @@ model Payment {
   @@index([studentId])
   @@index([teacherId])
   @@index([classId])
+  @@index([payoutStatus])
 }
 
 model Account {

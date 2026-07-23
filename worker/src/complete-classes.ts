@@ -7,6 +7,7 @@ import {
 	updateActivityStreak,
 	maybeAwardLuckyBonus,
 } from "@/app/lib/gamification";
+import { transferPayoutForClass } from "@/app/lib/payouts";
 
 /**
  * Marks `scheduled` classes as `completed` once their end time has passed,
@@ -47,6 +48,10 @@ export async function markCompletedClasses(): Promise<void> {
 				sparksAwarded: { increment: 20 },
 			},
 		});
+
+		// Teacher payout — no-ops gracefully if the teacher hasn't onboarded
+		// to Stripe Connect yet (accrues as "pending" for later).
+		await transferPayoutForClass(cls.id);
 
 		await awardGems(cls.studentId, 100);
 		await awardSparks(cls.teacherId, 20);

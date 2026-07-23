@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import prisma from "@/prisma";
 import { createPaymentForClass } from "@/app/lib/actions/paymets.actions";
 import { sendDisputeAlertEmail } from "@/app/lib/email";
+import { transferPendingPayoutsForTeacher } from "@/app/lib/payouts";
 import { POST } from "./route";
 
 // vi.hoisted ensures these are available inside vi.mock factory functions
@@ -19,7 +20,7 @@ vi.mock("stripe", () => ({
 vi.mock("@/prisma", () => ({
 	default: {
 		payment: { findFirst: vi.fn() },
-		user: { findMany: vi.fn() },
+		user: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
 	},
 }));
 
@@ -29,6 +30,10 @@ vi.mock("@/app/lib/actions/paymets.actions", () => ({
 
 vi.mock("@/app/lib/email", () => ({
 	sendDisputeAlertEmail: vi.fn(),
+}));
+
+vi.mock("@/app/lib/payouts", () => ({
+	transferPendingPayoutsForTeacher: vi.fn(),
 }));
 
 function makeRequest(body: string) {
@@ -168,5 +173,80 @@ describe("POST /api/webhooks/stripe", () => {
 		expect(res.status).toBe(200);
 		expect(createPaymentForClass).not.toHaveBeenCalled();
 		expect(sendDisputeAlertEmail).not.toHaveBeenCalled();
+	});
+
+	describe("account.updated", () => {
+		function accountEvent(overrides: Record<string, unknown> = {}) {
+			return {
+				type: "account.updated",
+				data: {
+					object: {
+						id: "acct_1",
+						charges_enabled: true,
+						payouts_enabled: true,
+						details_submitted: true,
+						...overrides,
+					},
+				},
+			};
+		}
+
+		it("is a safe no-op when the account id doesn't match any User", async () => {
+			mockConstructEvent.mockReturnValue(accountEvent());
+			vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
+			const res = await POST(makeRequest("{}"));
+
+			expect(prisma.user.update).not.toHaveBeenCalled();
+			expect(res.status).toBe(200);
+		});
+
+		it("sets connectStatus to active when all three flags are true, and sweeps pending payouts", async () => {
+			mockConstructEvent.mockReturnValue(accountEvent());
+			vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "u1" } as never);
+
+			await POST(makeRequest("{}"));
+
+			expect(prisma.user.update).toHaveBeenCalledWith({
+				where: { id: "u1" },
+				data: expect.objectContaining({
+					connectChargesEnabled: true,
+					connectPayoutsEnabled: true,
+					connectDetailsSubmitted: true,
+					connectStatus: "active",
+				}),
+			});
+			expect(transferPendingPayoutsForTeacher).toHaveBeenCalledWith("u1");
+		});
+
+		it("sets connectStatus to restricted when details are submitted but not all capabilities are enabled", async () => {
+			mockConstructEvent.mockReturnValue(
+				accountEvent({ charges_enabled: false, payouts_enabled: false }),
+			);
+			vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "u1" } as never);
+
+			await POST(makeRequest("{}"));
+
+			expect(prisma.user.update).toHaveBeenCalledWith({
+				where: { id: "u1" },
+				data: expect.objectContaining({ connectStatus: "restricted" }),
+			});
+			expect(transferPendingPayoutsForTeacher).not.toHaveBeenCalled();
+		});
+
+		it("sets connectStatus to pending when details haven't been submitted yet", async () => {
+			mockConstructEvent.mockReturnValue(
+				accountEvent({ charges_enabled: false, payouts_enabled: false, details_submitted: false }),
+			);
+			vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "u1" } as never);
+
+			await POST(makeRequest("{}"));
+
+			expect(prisma.user.update).toHaveBeenCalledWith({
+				where: { id: "u1" },
+				data: expect.objectContaining({ connectStatus: "pending" }),
+			});
+			expect(transferPendingPayoutsForTeacher).not.toHaveBeenCalled();
+		});
 	});
 });
