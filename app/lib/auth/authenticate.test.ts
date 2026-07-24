@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { signIn } from "@/auth";
-import { redirect } from "next/navigation";
 import { rateLimit, getClientIp } from "@/app/lib/auth/rate-limit";
 import { authenticate } from "./authenticate";
 
@@ -16,7 +15,6 @@ const { MockAuthError } = vi.hoisted(() => ({
 
 vi.mock("@/auth", () => ({ signIn: vi.fn() }));
 vi.mock("next-auth", () => ({ AuthError: MockAuthError }));
-vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 vi.mock("@/app/lib/auth/rate-limit", () => ({
 	getClientIp: vi.fn().mockResolvedValue("127.0.0.1"),
 	rateLimit: vi.fn().mockReturnValue({ allowed: true, retryAfterSeconds: 0 }),
@@ -35,26 +33,33 @@ beforeEach(() => {
 });
 
 describe("authenticate", () => {
-	it("calls signIn with redirect:false and its own redirect('/') on success, so middleware can route onward", async () => {
+	it("calls signIn with redirect:false and returns no error on success, leaving navigation to the client", async () => {
 		vi.mocked(signIn).mockResolvedValue(undefined as never);
 
-		await authenticate(undefined, formData({ email: "t@test.com", password: "pw" }));
+		const result = await authenticate(undefined, formData({ email: "t@test.com", password: "pw" }));
 
 		expect(signIn).toHaveBeenCalledWith("credentials", {
 			email: "t@test.com",
 			password: "pw",
 			redirect: false,
 		});
-		expect(redirect).toHaveBeenCalledWith("/");
+		expect(result).toBeUndefined();
 	});
 
-	it("returns a friendly message on invalid credentials without redirecting", async () => {
+	it("returns a friendly message on invalid credentials", async () => {
 		vi.mocked(signIn).mockRejectedValue(new MockAuthError("CredentialsSignin"));
 
 		const result = await authenticate(undefined, formData({ email: "t@test.com", password: "wrong" }));
 
 		expect(result).toBe("Invalid credentials.");
-		expect(redirect).not.toHaveBeenCalled();
+	});
+
+	it("returns a generic message for other auth errors", async () => {
+		vi.mocked(signIn).mockRejectedValue(new MockAuthError("SomeOtherError"));
+
+		const result = await authenticate(undefined, formData({ email: "t@test.com", password: "pw" }));
+
+		expect(result).toBe("Something went wrong.");
 	});
 
 	it("rate-limits repeated attempts before ever calling signIn", async () => {
