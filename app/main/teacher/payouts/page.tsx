@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { getConnectStatus } from "@/app/lib/actions/payouts.actions";
+import { getConnectStatus, startConnectOnboarding } from "@/app/lib/actions/payouts.actions";
 import { fetchPaymentsByTeacherId } from "@/app/lib/actions/paymets.actions";
 import ConnectOnboardingButton from "@/app/ui/main/payouts/connect-onboarding-button";
 
@@ -26,13 +26,22 @@ export default async function TeacherPayoutsPage({
 	const session = await auth();
 	if (!session?.user?.email) redirect("/login");
 
-	const [status, payments, { return: justReturned }] = await Promise.all([
+	const [status, payments, { return: justReturned, refresh: needsRefresh }] = await Promise.all([
 		getConnectStatus(),
 		fetchPaymentsByTeacherId(session.user.email),
 		searchParams,
 	]);
 
 	if ("error" in status) redirect("/main/teacher/dashboard");
+
+	// Stripe sends the user here when their Account Link expired or the
+	// hosted onboarding session ended without confirming completion — Stripe's
+	// documented contract for refresh_url is to silently mint a fresh link and
+	// send them right back in, not make them click "Continue onboarding" again.
+	if (needsRefresh === "true" && status.connectStatus !== "active") {
+		const result = await startConnectOnboarding();
+		if (result.url) redirect(result.url);
+	}
 
 	return (
 		<div className="flex flex-col gap-6">
