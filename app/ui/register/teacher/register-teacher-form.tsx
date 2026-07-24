@@ -58,7 +58,7 @@ export default function RegisterTeacherForm({
 			{/* Phone Number */}
 			<div className="form-control">
 				<label htmlFor="phoneNumber" className="label">
-					<span className="label-text">Phone Number</span>
+					<span className="label-text">Phone Number (optional)</span>
 				</label>
 				<input
 					type="text"
@@ -96,8 +96,56 @@ export default function RegisterTeacherForm({
 				/>
 			</div>
 
+			{/* Confirm Password */}
+			<div className="form-control">
+				<label htmlFor="confirmPassword" className="label">
+					<span className="label-text">Confirm Password</span>
+				</label>
+				<input
+					type="password"
+					id="confirmPassword"
+					name="confirmPassword"
+					required
+					className="input input-bordered"
+				/>
+			</div>
+
 			{/* Subjects */}
 			<SubjectSelect subjects={subjects} />
+
+			{/* Terms & Conditions */}
+			<div className="form-control">
+				<label htmlFor="agreedToTerms" className="label cursor-pointer justify-start gap-3">
+					<input
+						type="checkbox"
+						id="agreedToTerms"
+						name="agreedToTerms"
+						required
+						className="checkbox checkbox-sm"
+					/>
+					<span className="label-text text-sm text-base-content/60">
+						I agree to the{" "}
+						<a
+							href="/terms-of-service"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="underline"
+						>
+							terms and conditions
+						</a>{" "}
+						and{" "}
+						<a
+							href="/privacy-policy"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="underline"
+						>
+							privacy policy
+						</a>
+						.
+					</span>
+				</label>
+			</div>
 
 			{/* Submit */}
 			<div className="mt-4">

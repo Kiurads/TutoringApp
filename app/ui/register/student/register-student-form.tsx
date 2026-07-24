@@ -64,7 +64,7 @@ export default function RegisterStudentForm() {
 
 			<div className="form-control">
 				<label htmlFor="PhoneNumber" className="label">
-					<span className="label-text">Phone Number</span>
+					<span className="label-text">Phone Number (optional)</span>
 				</label>
 
 				<input
@@ -104,18 +104,52 @@ export default function RegisterStudentForm() {
 				/>
 			</div>
 
-			<div className="col-span-6">
-				<p className="text-sm text-base-content/60">
-					By creating an account, you agree to our{" "}
-					<a href="#" className="text-base-content underline">
-						terms and conditions
-					</a>{" "}
-					and{" "}
-					<a href="#" className="text-base-content underline">
-						privacy policy
-					</a>
-					.
-				</p>
+			<div className="form-control">
+				<label htmlFor="ConfirmPassword" className="label">
+					<span className="label-text">Confirm Password</span>
+				</label>
+
+				<input
+					type="password"
+					id="ConfirmPassword"
+					name="confirmPassword"
+					placeholder="Confirm password"
+					required
+					className="input input-bordered validator"
+				/>
+			</div>
+
+			<div className="col-span-6 form-control">
+				<label htmlFor="AgreedToTerms" className="label cursor-pointer justify-start gap-3">
+					<input
+						type="checkbox"
+						id="AgreedToTerms"
+						name="agreedToTerms"
+						required
+						className="checkbox checkbox-sm"
+					/>
+					<span className="label-text text-sm text-base-content/60">
+						I agree to the{" "}
+						<a
+							href="/terms-of-service"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-base-content underline"
+						>
+							terms and conditions
+						</a>{" "}
+						and{" "}
+						<a
+							href="/privacy-policy"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-base-content underline"
+						>
+							privacy policy
+						</a>
+						.
+					</span>
+				</label>
 			</div>
 
 			<div className="col-span-6 sm:flex sm:items-center sm:gap-4">
