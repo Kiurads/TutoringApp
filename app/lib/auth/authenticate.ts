@@ -2,7 +2,6 @@
 
 import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
-import { redirect } from "next/navigation";
 import { getClientIp, rateLimit } from "@/app/lib/auth/rate-limit";
 
 // Deter credential stuffing: cap login attempts per email and per IP within
@@ -41,10 +40,9 @@ export async function authenticate(
 		// signIn(provider, formData) treats FormData as both the credentials
 		// payload AND its options object — with no `redirectTo`, it falls back
 		// to the request's Referer header (i.e. "/login" itself) and redirects
-		// there via its own internal `redirect()`, before the line below ever
-		// runs. Passing a plain object with `redirect: false` instead makes
-		// signIn return rather than redirect, so our own redirect("/") below
-		// (letting auth.config.ts's `authorized()` route onward) actually fires.
+		// there via its own internal `redirect()`. Passing a plain object with
+		// `redirect: false` instead makes signIn just set the session cookie
+		// and return, leaving navigation entirely to the caller.
 		await signIn("credentials", {
 			...Object.fromEntries(formData),
 			redirect: false,
@@ -61,8 +59,12 @@ export async function authenticate(
 		throw error;
 	}
 
-	// Redirect to "/" and let auth.config.ts's `authorized()` callback route
-	// the now-logged-in user to their role's dashboard. "/dashboard" isn't a
-	// real route in this app — don't duplicate the role→path mapping here.
-	redirect("/");
+	// Deliberately no redirect() here. A Server Action's redirect() drives
+	// Next.js's client-side router, which can serve "/" from its Router
+	// Cache/prefetch cache from before login — silently skipping middleware
+	// and stranding the user on a stale logged-out render. LoginForm instead
+	// does a full `window.location` navigation on success, guaranteeing a
+	// fresh request that carries the new session cookie through middleware
+	// (which then routes on to the role dashboard / teacher onboarding).
+	return undefined;
 }

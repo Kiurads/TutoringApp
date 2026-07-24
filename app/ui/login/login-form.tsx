@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { authenticate } from "@/app/lib/auth/authenticate";
 import Logo from "@/app/ui/logo";
 
@@ -10,6 +10,19 @@ export default function LoginForm() {
 		authenticate,
 		undefined
 	);
+	const wasPending = useRef(false);
+
+	useEffect(() => {
+		// A successful submission is "was pending, now isn't, no error" — the
+		// action itself doesn't redirect (see authenticate.ts for why), so a
+		// full navigation here is what actually carries the fresh session
+		// cookie through middleware instead of Next's client router serving a
+		// cached logged-out render of "/".
+		if (wasPending.current && !isPending && !errorMessage) {
+			window.location.href = "/";
+		}
+		wasPending.current = isPending;
+	}, [isPending, errorMessage]);
 
 	return (
 		<form action={formAction} className="card-body">
