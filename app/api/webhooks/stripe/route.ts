@@ -5,17 +5,37 @@ import prisma from "@/prisma";
 import Stripe from "stripe";
 import type { ConnectStatus } from "@prisma/client";
 
+// Stripe requires a separate webhook destination (and signing secret) for
+// "Events from: Connected accounts" vs "Your account" — account.updated for a
+// teacher's Express account arrives on a different secret than everything
+// else this endpoint already handles. STRIPE_WEBHOOK_SECRET_CONNECT can hold
+// one or more comma-separated secrets (one per Connect destination), so
+// adding another destination later never needs a code change.
+function getWebhookSecrets(): string[] {
+	return [process.env.STRIPE_WEBHOOK_SECRET, process.env.STRIPE_WEBHOOK_SECRET_CONNECT]
+		.flatMap((value) => value?.split(",") ?? [])
+		.map((secret) => secret.trim())
+		.filter(Boolean);
+}
+
 export async function POST(req: Request) {
 	const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 	const sig = req.headers.get("stripe-signature") ?? "";
-	const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
+	const rawBody = await req.text(); // Read raw body directly
 
-	let event: Stripe.Event;
-	try {
-		const rawBody = await req.text(); // Read raw body directly
-		event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
-	} catch (err) {
-		const message = err instanceof Error ? err.message : "Unknown error";
+	let event: Stripe.Event | null = null;
+	let lastError: unknown;
+	for (const secret of getWebhookSecrets()) {
+		try {
+			event = stripe.webhooks.constructEvent(rawBody, sig, secret);
+			break;
+		} catch (err) {
+			lastError = err;
+		}
+	}
+
+	if (!event) {
+		const message = lastError instanceof Error ? lastError.message : "Unknown error";
 		return new Response(
 			JSON.stringify({ error: `Webhook Error: ${message}` }),
 			{ status: 400 }
