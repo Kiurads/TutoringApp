@@ -78,51 +78,63 @@ export async function updateProfile(
 	const session = await auth();
 	if (!session?.user?.email) return { error: "Not authenticated." };
 
-	const user = await prisma.user.findUnique({
-		where: { email: session.user.email },
-		include: { teacherGameProfile: true },
-	});
-	if (!user) return { error: "User not found." };
+	try {
+		const user = await prisma.user.findUnique({
+			where: { email: session.user.email },
+			include: { teacherGameProfile: true },
+		});
+		if (!user) return { error: "User not found." };
 
-	await prisma.user.update({
-		where: { id: user.id },
-		data: {
-			// Only overwrite name fields when they're non-empty
-			...(data.firstName.trim() && { firstName: data.firstName.trim() }),
-			...(data.lastName.trim() && { lastName: data.lastName.trim() }),
-			...("bio" in data && { bio: data.bio?.trim() || null }),
-			...("learningStyle" in data && {
-				learningStyle: data.learningStyle?.trim() || null,
-			}),
-			...("learningGoal" in data && {
-				learningGoal: data.learningGoal?.trim() || null,
-			}),
-			...("teachingStyle" in data && {
-				teachingStyle: data.teachingStyle?.trim() || null,
-			}),
-			...(data.pricePerHour !== undefined && {
-				pricePerHour: data.pricePerHour,
-			}),
-		},
-	});
+		await prisma.user.update({
+			where: { id: user.id },
+			data: {
+				// Only overwrite name fields when they're non-empty
+				...(data.firstName.trim() && { firstName: data.firstName.trim() }),
+				...(data.lastName.trim() && { lastName: data.lastName.trim() }),
+				...("bio" in data && { bio: data.bio?.trim() || null }),
+				...("learningStyle" in data && {
+					learningStyle: data.learningStyle?.trim() || null,
+				}),
+				...("learningGoal" in data && {
+					learningGoal: data.learningGoal?.trim() || null,
+				}),
+				...("teachingStyle" in data && {
+					teachingStyle: data.teachingStyle?.trim() || null,
+				}),
+				...(data.pricePerHour !== undefined && {
+					pricePerHour: data.pricePerHour,
+				}),
+			},
+		});
 
-	// One-time spark reward when a teacher completes their profile for the first time
-	if (user.role === "teacher") {
-		const alreadyCompleted = user.teacherGameProfile?.profileCompleted ?? false;
-		if (!alreadyCompleted) {
-			await prisma.teacherGameProfile.upsert({
-				where: { userId: user.id },
-				create: { userId: user.id, profileCompleted: true },
-				update: { profileCompleted: true },
-			});
-			await awardSparks(user.id, 150);
+		// One-time spark reward when a teacher completes their profile for the
+		// first time. Best-effort: the profile fields above are already saved,
+		// so a hiccup here (e.g. a gamification race) must not turn into a
+		// hard failure that blocks the caller from redirecting onward.
+		if (user.role === "teacher") {
+			const alreadyCompleted = user.teacherGameProfile?.profileCompleted ?? false;
+			if (!alreadyCompleted) {
+				try {
+					await prisma.teacherGameProfile.upsert({
+						where: { userId: user.id },
+						create: { userId: user.id, profileCompleted: true },
+						update: { profileCompleted: true },
+					});
+					await awardSparks(user.id, 150);
+				} catch (error) {
+					console.error("[updateProfile] profile-completion reward failed", error);
+				}
+			}
 		}
-	}
 
-	revalidatePath(
-		user.role === "teacher"
-			? "/main/teacher/profile"
-			: "/main/student/profile",
-	);
-	return {};
+		revalidatePath(
+			user.role === "teacher"
+				? "/main/teacher/profile"
+				: "/main/student/profile",
+		);
+		return {};
+	} catch (error) {
+		console.error("[updateProfile]", error);
+		return { error: "Something went wrong. Please try again." };
+	}
 }
