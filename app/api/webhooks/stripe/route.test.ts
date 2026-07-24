@@ -46,10 +46,12 @@ function makeRequest(body: string) {
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	process.env.STRIPE_WEBHOOK_SECRET = "whsec_primary";
+	process.env.STRIPE_WEBHOOK_SECRET_CONNECT = "whsec_connect_a,whsec_connect_b";
 });
 
 describe("POST /api/webhooks/stripe", () => {
-	it("returns 400 when signature verification fails", async () => {
+	it("returns 400 when signature verification fails against every configured secret", async () => {
 		mockConstructEvent.mockImplementation(() => {
 			throw new Error("bad signature");
 		});
@@ -59,6 +61,31 @@ describe("POST /api/webhooks/stripe", () => {
 		expect(res.status).toBe(400);
 		const json = await res.json();
 		expect(json.error).toContain("bad signature");
+		// One attempt per configured secret (primary + 2 connect secrets)
+		expect(mockConstructEvent).toHaveBeenCalledTimes(3);
+	});
+
+	it("falls back to a Connect destination's secret when the primary (platform account) secret doesn't verify", async () => {
+		mockConstructEvent.mockImplementation((_body, _sig, secret) => {
+			if (secret !== "whsec_connect_a") throw new Error("no match");
+			return {
+				type: "account.updated",
+				data: {
+					object: {
+						id: "acct_1",
+						charges_enabled: true,
+						payouts_enabled: true,
+						details_submitted: true,
+					},
+				},
+			};
+		});
+		vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "u1" } as never);
+
+		const res = await POST(makeRequest("{}"));
+
+		expect(res.status).toBe(200);
+		expect(prisma.user.update).toHaveBeenCalled();
 	});
 
 	it("creates a Payment for payment_intent.succeeded when none exists yet", async () => {
