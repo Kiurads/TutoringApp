@@ -38,7 +38,17 @@ export async function authenticate(
 	}
 
 	try {
-		await signIn("credentials", formData);
+		// signIn(provider, formData) treats FormData as both the credentials
+		// payload AND its options object — with no `redirectTo`, it falls back
+		// to the request's Referer header (i.e. "/login" itself) and redirects
+		// there via its own internal `redirect()`, before the line below ever
+		// runs. Passing a plain object with `redirect: false` instead makes
+		// signIn return rather than redirect, so our own redirect("/") below
+		// (letting auth.config.ts's `authorized()` route onward) actually fires.
+		await signIn("credentials", {
+			...Object.fromEntries(formData),
+			redirect: false,
+		});
 	} catch (error) {
 		if (error instanceof AuthError) {
 			switch (error.type) {
