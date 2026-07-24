@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import DashboardHeader from "@/app/ui/main/dashboard/header";
 import UpcomingClasses from "@/app/ui/main/dashboard/upcoming-classes/upcoming-classes";
 import TeacherEarnings from "@/app/ui/main/dashboard/teacher-earnings";
@@ -25,6 +26,19 @@ export default async function DashboardTeacher() {
 		<div className="flex flex-col gap-6">
 			{user && !user.hasCompletedOnboarding && (
 				<WelcomeTourModal role="teacher" firstName={user.firstName} />
+			)}
+
+			{user && user.connectStatus !== "active" && (
+				<div role="alert" className="alert alert-warning shadow-sm">
+					<i className="fa-solid fa-triangle-exclamation" />
+					<span>
+						You haven&apos;t set up payouts yet — set up Stripe to get paid automatically for
+						your classes.
+					</span>
+					<Link href="/main/teacher/payouts" className="btn btn-sm btn-warning">
+						Set up payouts
+					</Link>
+				</div>
 			)}
 
 			<DashboardHeader userEmail={userEmail} />
