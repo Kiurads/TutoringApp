@@ -2,12 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import prisma from "@/prisma";
 import { redirect } from "next/navigation";
 import { createAndSendVerificationEmail } from "@/app/lib/auth/verification";
-import { registerTeacher } from "./register-teacher";
+import { registerStudent } from "./register-student";
 
 vi.mock("@/prisma", () => ({
 	default: {
 		user: { findUnique: vi.fn(), create: vi.fn() },
-		teacherSubject: { createMany: vi.fn() },
 	},
 }));
 
@@ -26,26 +25,19 @@ vi.mock("@/app/lib/auth/verification", () => ({
 	createAndSendVerificationEmail: vi.fn(),
 }));
 
-function formData(fields: Record<string, string | string[]>) {
+function formData(fields: Record<string, string>) {
 	const fd = new FormData();
-	for (const [key, value] of Object.entries(fields)) {
-		if (Array.isArray(value)) {
-			for (const v of value) fd.append(key, v);
-		} else {
-			fd.append(key, value);
-		}
-	}
+	for (const [key, value] of Object.entries(fields)) fd.append(key, value);
 	return fd;
 }
 
 const validFields = {
-	email: "teacher@test.com",
+	email: "student@test.com",
 	password: "password123",
 	confirmPassword: "password123",
-	firstName: "Ada",
-	lastName: "Lovelace",
+	firstName: "Grace",
+	lastName: "Hopper",
 	phoneNumber: "",
-	subjects: [] as string[],
 	agreedToTerms: "on",
 };
 
@@ -53,22 +45,22 @@ beforeEach(() => {
 	vi.clearAllMocks();
 });
 
-describe("registerTeacher", () => {
+describe("registerStudent", () => {
 	it("sends the verification email and redirects to login on success", async () => {
 		vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
-		vi.mocked(prisma.user.create).mockResolvedValue({ id: "t1", email: "teacher@test.com" } as never);
+		vi.mocked(prisma.user.create).mockResolvedValue({ id: "s1", email: "student@test.com" } as never);
 
-		await registerTeacher(undefined, formData(validFields));
+		await registerStudent(undefined, formData(validFields));
 
-		expect(createAndSendVerificationEmail).toHaveBeenCalledWith("teacher@test.com");
+		expect(createAndSendVerificationEmail).toHaveBeenCalledWith("student@test.com");
 		expect(redirect).toHaveBeenCalledWith("/login");
 	});
 
 	it("stores a null phoneNumber when left blank rather than an empty string", async () => {
 		vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
-		vi.mocked(prisma.user.create).mockResolvedValue({ id: "t1", email: "teacher@test.com" } as never);
+		vi.mocked(prisma.user.create).mockResolvedValue({ id: "s1", email: "student@test.com" } as never);
 
-		await registerTeacher(undefined, formData(validFields));
+		await registerStudent(undefined, formData(validFields));
 
 		expect(prisma.user.create).toHaveBeenCalledWith(
 			expect.objectContaining({ data: expect.objectContaining({ phoneNumber: null }) }),
@@ -78,14 +70,14 @@ describe("registerTeacher", () => {
 	it("does not create a user when the user already exists", async () => {
 		vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "existing" } as never);
 
-		const result = await registerTeacher(undefined, formData(validFields));
+		const result = await registerStudent(undefined, formData(validFields));
 
 		expect(result).toBe("User already exists");
 		expect(redirect).not.toHaveBeenCalled();
 	});
 
 	it("rejects mismatched passwords without touching the database", async () => {
-		const result = await registerTeacher(
+		const result = await registerStudent(
 			undefined,
 			formData({ ...validFields, confirmPassword: "somethingElse" }),
 		);
@@ -95,12 +87,22 @@ describe("registerTeacher", () => {
 	});
 
 	it("rejects registration when terms are not agreed to", async () => {
-		const result = await registerTeacher(
+		const result = await registerStudent(
 			undefined,
 			formData({ ...validFields, agreedToTerms: "" }),
 		);
 
 		expect(result).toBe("You must agree to the Terms of Service and Privacy Policy");
+		expect(prisma.user.findUnique).not.toHaveBeenCalled();
+	});
+
+	it("rejects an invalid phone number", async () => {
+		const result = await registerStudent(
+			undefined,
+			formData({ ...validFields, phoneNumber: "123" }),
+		);
+
+		expect(result).toBe("Please enter a valid phone number");
 		expect(prisma.user.findUnique).not.toHaveBeenCalled();
 	});
 });

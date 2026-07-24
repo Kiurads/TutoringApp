@@ -29,9 +29,11 @@ export async function registerStudent(
 
 	const email = formData.get("email") as string;
 	const password = formData.get("password") as string;
-	const phoneNumber = formData.get("phoneNumber") as string;
+	const confirmPassword = formData.get("confirmPassword") as string;
+	const phoneNumber = ((formData.get("phoneNumber") as string) || "").trim();
 	const firstName = formData.get("firstName") as string;
 	const lastName = formData.get("lastName") as string;
+	const agreedToTerms = formData.get("agreedToTerms") === "on";
 
 	if (!email) {
 		return "Please enter a valid email";
@@ -39,6 +41,10 @@ export async function registerStudent(
 
 	if (!password) {
 		return "Please enter a valid password";
+	}
+
+	if (password !== confirmPassword) {
+		return "Passwords do not match";
 	}
 
 	if (!firstName) {
@@ -50,7 +56,11 @@ export async function registerStudent(
 	}
 
 	if (phoneNumber && /^\d{9}$/.test(phoneNumber) == false) {
-		return "Please enter a valid email";
+		return "Please enter a valid phone number";
+	}
+
+	if (!agreedToTerms) {
+		return "You must agree to the Terms of Service and Privacy Policy";
 	}
 
 	try {
@@ -66,7 +76,7 @@ export async function registerStudent(
 			data: {
 				email,
 				password: hashedPassword,
-				phoneNumber,
+				phoneNumber: phoneNumber || null,
 				firstName,
 				lastName,
 			},
