@@ -3,12 +3,12 @@
 import prisma from "@/prisma";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { getClientIp, rateLimit } from "@/app/lib/auth/rate-limit";
 import { createAndSendVerificationEmail } from "@/app/lib/auth/verification";
 
 // Deter signup spam: cap registration attempts per IP within a rolling
-// ten-minute window. See rate-limit.ts for storage caveats. This route is
-// admin-only in practice, but still worth guarding defensively.
+// ten-minute window. See rate-limit.ts for storage caveats.
 const REGISTER_MAX_ATTEMPTS_PER_IP = 8;
 const REGISTER_WINDOW_MS = 10 * 60_000;
 
@@ -16,6 +16,16 @@ export async function registerTeacher(
 	prevState: string | undefined,
 	formData: FormData
 ) {
+	// This action is only ever reached via the admin-only /main/admin/teachers
+	// page, but server actions are independently callable regardless of which
+	// page rendered the form — same "self-check identity inside the action"
+	// convention used elsewhere (e.g. refund-requests.actions.ts), rather than
+	// relying solely on the page/middleware around it.
+	const session = await auth();
+	if (session?.user?.role !== "admin") {
+		return "You are not authorized to register a teacher account.";
+	}
+
 	const ip = await getClientIp();
 	const ipLimit = rateLimit(
 		`register:ip:${ip}`,

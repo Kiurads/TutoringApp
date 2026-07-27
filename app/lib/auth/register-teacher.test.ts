@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import prisma from "@/prisma";
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { createAndSendVerificationEmail } from "@/app/lib/auth/verification";
 import { registerTeacher } from "./register-teacher";
 
@@ -16,6 +17,8 @@ vi.mock("bcryptjs", () => ({
 }));
 
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
+
+vi.mock("@/auth", () => ({ auth: vi.fn() }));
 
 vi.mock("@/app/lib/auth/rate-limit", () => ({
 	getClientIp: vi.fn().mockResolvedValue("127.0.0.1"),
@@ -51,9 +54,29 @@ const validFields = {
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	vi.mocked(auth).mockResolvedValue({ user: { role: "admin" } } as never);
 });
 
 describe("registerTeacher", () => {
+	it("rejects the request when the caller is not an admin", async () => {
+		vi.mocked(auth).mockResolvedValue({ user: { role: "teacher" } } as never);
+
+		const result = await registerTeacher(undefined, formData(validFields));
+
+		expect(result).toBe("You are not authorized to register a teacher account.");
+		expect(prisma.user.findUnique).not.toHaveBeenCalled();
+		expect(prisma.user.create).not.toHaveBeenCalled();
+	});
+
+	it("rejects the request when there is no session", async () => {
+		vi.mocked(auth).mockResolvedValue(null as never);
+
+		const result = await registerTeacher(undefined, formData(validFields));
+
+		expect(result).toBe("You are not authorized to register a teacher account.");
+		expect(prisma.user.create).not.toHaveBeenCalled();
+	});
+
 	it("sends the verification email and redirects to login on success", async () => {
 		vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 		vi.mocked(prisma.user.create).mockResolvedValue({ id: "t1", email: "teacher@test.com" } as never);
