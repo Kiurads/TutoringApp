@@ -35,9 +35,10 @@ export async function resetPassword(
 
 	try {
 		// token isn't declared @unique on its own (only the [identifier, token]
-		// pair is), so look it up with findFirst.
+		// pair is), so look it up with findFirst. Scoped to PASSWORD_RESET so
+		// an email-verification token (same table) can never be redeemed here.
 		const verificationToken = await prisma.verificationToken.findFirst({
-			where: { token },
+			where: { token, purpose: "PASSWORD_RESET" },
 		});
 
 		if (!verificationToken) {

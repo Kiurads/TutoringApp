@@ -57,7 +57,7 @@ export async function requestPasswordReset(
 			const expires = new Date(Date.now() + RESET_TOKEN_TTL_MS);
 
 			await prisma.verificationToken.create({
-				data: { identifier: email, token, expires },
+				data: { identifier: email, token, expires, purpose: "PASSWORD_RESET" },
 			});
 
 			const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
