@@ -52,6 +52,7 @@ enum NotificationType {
   regular_class_accepted
   regular_class_refused
   regular_class_cancelled
+  regular_class_payment_failed
   payout_sent
 }
 
@@ -133,6 +134,13 @@ model User {
   learningGoal   String?
   avatarFrame    String?
   avatarOptions  String?   @db.Text // JSON: AvatarOptions (toon-head customization)
+
+  // Saved card for off-session charging of recurring class occurrences (see
+  // app/lib/regular-classes/materialize-occurrences.ts). Only ever populated
+  // for role: student, same convention as the teacher-only Connect fields
+  // above — no separate Student model exists either.
+  stripeCustomerId       String? @unique
+  defaultPaymentMethodId String?
 
   // Optional for WebAuthn support
   Authenticator Authenticator[]
