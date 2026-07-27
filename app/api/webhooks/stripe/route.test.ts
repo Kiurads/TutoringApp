@@ -19,7 +19,7 @@ vi.mock("stripe", () => ({
 
 vi.mock("@/prisma", () => ({
 	default: {
-		payment: { findFirst: vi.fn() },
+		payment: { findFirst: vi.fn(), update: vi.fn() },
 		user: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
 	},
 }));
@@ -34,6 +34,10 @@ vi.mock("@/app/lib/email", () => ({
 
 vi.mock("@/app/lib/payouts", () => ({
 	transferPendingPayoutsForTeacher: vi.fn(),
+}));
+
+vi.mock("@/app/lib/notifications", () => ({
+	createNotification: vi.fn(),
 }));
 
 function makeRequest(body: string) {
@@ -200,6 +204,65 @@ describe("POST /api/webhooks/stripe", () => {
 		expect(res.status).toBe(200);
 		expect(createPaymentForClass).not.toHaveBeenCalled();
 		expect(sendDisputeAlertEmail).not.toHaveBeenCalled();
+	});
+
+	describe("transfer.reversed", () => {
+		function transferReversedEvent(overrides: Record<string, unknown> = {}) {
+			return {
+				type: "transfer.reversed",
+				data: {
+					object: { id: "tr_1", amount_reversed: 4250, ...overrides },
+				},
+			};
+		}
+
+		it("is a safe no-op when no Payment matches the reversed transfer", async () => {
+			const { createNotification } = await import("@/app/lib/notifications");
+			mockConstructEvent.mockReturnValue(transferReversedEvent());
+			vi.mocked(prisma.payment.findFirst).mockResolvedValue(null);
+
+			const res = await POST(makeRequest("{}"));
+
+			expect(prisma.payment.update).not.toHaveBeenCalled();
+			expect(createNotification).not.toHaveBeenCalled();
+			expect(res.status).toBe(200);
+		});
+
+		// The bug this fix closes: only synchronous transfer.create errors were
+		// caught in payouts.ts — a transfer that succeeded and was marked
+		// "transferred" but got reversed later (e.g. the connected account was
+		// restricted) left that row stuck at "transferred" forever.
+		it("marks the matching Payment as failed and notifies the teacher", async () => {
+			const { createNotification } = await import("@/app/lib/notifications");
+			mockConstructEvent.mockReturnValue(transferReversedEvent());
+			vi.mocked(prisma.payment.findFirst).mockResolvedValue({
+				id: "pay_1",
+				classId: "class_1",
+				teacherId: "teacher_1",
+				teacherPayoutAmount: 42.5,
+			} as never);
+
+			const res = await POST(makeRequest("{}"));
+
+			expect(prisma.payment.findFirst).toHaveBeenCalledWith({
+				where: { transferId: "tr_1" },
+			});
+			expect(prisma.payment.update).toHaveBeenCalledWith({
+				where: { id: "pay_1" },
+				data: {
+					payoutStatus: "failed",
+					payoutError: expect.stringContaining("4250"),
+				},
+			});
+			expect(createNotification).toHaveBeenCalledWith(
+				"teacher_1",
+				"payout_reversed",
+				"Payout Reversed",
+				expect.stringContaining("42.50"),
+				"/main/teacher/payouts",
+			);
+			expect(res.status).toBe(200);
+		});
 	});
 
 	describe("account.updated", () => {
