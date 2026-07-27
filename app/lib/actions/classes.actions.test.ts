@@ -195,7 +195,7 @@ describe("cancelClassById", () => {
     const result = await cancelClassById("class1");
 
     expect(result).toBeNull();
-    expect(prisma.class.delete).not.toHaveBeenCalled();
+    expect(prisma.class.update).not.toHaveBeenCalled();
   });
 
   it("returns an error when caller is not a participant on the class", async () => {
@@ -218,10 +218,10 @@ describe("cancelClassById", () => {
     const result = await cancelClassById("class1");
 
     expect(result).toBe("You are not authorized to cancel this class.");
-    expect(prisma.class.delete).not.toHaveBeenCalled();
+    expect(prisma.class.update).not.toHaveBeenCalled();
   });
 
-  it("deletes the class and redirects to student path for student user", async () => {
+  it("rejects cancelling a class that has already completed", async () => {
     vi.mocked(auth).mockResolvedValue(mockSession as never);
     vi.mocked(fetchUserByEmail).mockResolvedValue({
       id: "student1",
@@ -229,6 +229,31 @@ describe("cancelClassById", () => {
     } as never);
     vi.mocked(prisma.class.findUnique).mockResolvedValue({
       id: "class1",
+      status: "completed",
+      paid: true,
+      payments: [{ intentId: "pi_test_123" }],
+      teacherId: "teacher1",
+      studentId: "student1",
+      student: { id: "student1", firstName: "Bob", lastName: "Jones" },
+      teacher: { id: "teacher1", firstName: "Alice", lastName: "Smith" },
+      subject: { name: "Math" },
+    } as never);
+
+    const result = await cancelClassById("class1");
+
+    expect(result).toBe("This class has already been completed and cannot be cancelled.");
+    expect(prisma.class.update).not.toHaveBeenCalled();
+  });
+
+  it("soft-cancels (not deletes) the class and redirects to student path for student user", async () => {
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(fetchUserByEmail).mockResolvedValue({
+      id: "student1",
+      role: "student",
+    } as never);
+    vi.mocked(prisma.class.findUnique).mockResolvedValue({
+      id: "class1",
+      status: "scheduled",
       paid: false,
       payments: [],
       teacherId: null,
@@ -237,14 +262,18 @@ describe("cancelClassById", () => {
       teacher: null,
       subject: { name: "Math" },
     } as never);
-    vi.mocked(prisma.class.delete).mockResolvedValue({} as never);
+    vi.mocked(prisma.class.update).mockResolvedValue({} as never);
 
     const { redirect } = await import("next/navigation");
     const { revalidatePath } = await import("next/cache");
 
     await cancelClassById("class1");
 
-    expect(prisma.class.delete).toHaveBeenCalledWith({ where: { id: "class1" } });
+    expect(prisma.class.update).toHaveBeenCalledWith({
+      where: { id: "class1" },
+      data: { status: "cancelled" },
+    });
+    expect(prisma.class.delete).not.toHaveBeenCalled();
     expect(revalidatePath).toHaveBeenCalledWith("/main/student/classes");
     expect(redirect).toHaveBeenCalledWith("/main/student/classes?toast=cancelled");
   });
@@ -257,6 +286,7 @@ describe("cancelClassById", () => {
     } as never);
     vi.mocked(prisma.class.findUnique).mockResolvedValue({
       id: "class1",
+      status: "scheduled",
       paid: false,
       payments: [],
       teacherId: "teacher1",
@@ -265,7 +295,7 @@ describe("cancelClassById", () => {
       teacher: { id: "teacher1", firstName: "Alice", lastName: "Smith" },
       subject: { name: "Math" },
     } as never);
-    vi.mocked(prisma.class.delete).mockResolvedValue({} as never);
+    vi.mocked(prisma.class.update).mockResolvedValue({} as never);
 
     const { redirect } = await import("next/navigation");
 
@@ -294,7 +324,7 @@ describe("cancelClassById", () => {
       subject: { name: "Math" },
     };
     vi.mocked(prisma.class.findUnique).mockResolvedValue(classRow as never);
-    vi.mocked(prisma.class.delete).mockResolvedValue({} as never);
+    vi.mocked(prisma.class.update).mockResolvedValue({} as never);
 
     await cancelClassById("class1");
 
@@ -321,7 +351,7 @@ describe("cancelClassById", () => {
       subject: { name: "Math" },
     };
     vi.mocked(prisma.class.findUnique).mockResolvedValue(classRow as never);
-    vi.mocked(prisma.class.delete).mockResolvedValue({} as never);
+    vi.mocked(prisma.class.update).mockResolvedValue({} as never);
 
     await cancelClassById("class1");
 
@@ -348,7 +378,7 @@ describe("cancelClassById", () => {
       teacher: { id: "teacher1", firstName: "Alice", lastName: "Smith" },
       subject: { name: "Math" },
     } as never);
-    vi.mocked(prisma.class.delete).mockResolvedValue({} as never);
+    vi.mocked(prisma.class.update).mockResolvedValue({} as never);
 
     await cancelClassById("class1");
 
@@ -373,7 +403,7 @@ describe("cancelClassById", () => {
       teacher: { id: "teacher1", firstName: "Alice", lastName: "Smith" },
       subject: { name: "Math" },
     } as never);
-    vi.mocked(prisma.class.delete).mockResolvedValue({} as never);
+    vi.mocked(prisma.class.update).mockResolvedValue({} as never);
 
     await cancelClassById("class1");
 

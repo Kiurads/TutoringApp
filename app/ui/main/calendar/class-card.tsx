@@ -7,6 +7,7 @@ const STATUS_STYLE: Record<string, { bg: string; border: string; text: string; s
 	scheduled: { bg: "bg-info/30",     border: "border-info",     text: "text-info",     sub: "text-info/70"     },
 	completed: { bg: "bg-success/30",  border: "border-success",  text: "text-success",  sub: "text-success/70"  },
 	refused:   { bg: "bg-error/30",    border: "border-error",    text: "text-error",    sub: "text-error/70"    },
+	cancelled: { bg: "bg-error/30",    border: "border-error",    text: "text-error",    sub: "text-error/70"    },
 };
 
 const FALLBACK = { bg: "bg-base-200", border: "border-base-300", text: "text-base-content", sub: "text-base-content/60" };

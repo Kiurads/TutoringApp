@@ -195,7 +195,7 @@ describe("cancelClassById — Stripe refund", () => {
       id: "student1",
       role: "student",
     } as never);
-    vi.mocked(prisma.class.delete).mockResolvedValue({} as never);
+    vi.mocked(prisma.class.update).mockResolvedValue({} as never);
   });
 
   it("does NOT call Stripe when the class has not been paid", async () => {
@@ -206,7 +206,7 @@ describe("cancelClassById — Stripe refund", () => {
     await cancelClassById("class1");
 
     expect(mockRefundsCreate).not.toHaveBeenCalled();
-    expect(prisma.class.delete).toHaveBeenCalledWith({ where: { id: "class1" } });
+    expect(prisma.class.update).toHaveBeenCalledWith({ where: { id: "class1" }, data: { status: "cancelled" } });
   });
 
   it("calls stripe.refunds.create with the correct payment_intent for a paid class", async () => {
@@ -236,7 +236,7 @@ describe("cancelClassById — Stripe refund", () => {
 
     await cancelClassById("class1");
 
-    expect(prisma.class.delete).toHaveBeenCalledWith({ where: { id: "class1" } });
+    expect(prisma.class.update).toHaveBeenCalledWith({ where: { id: "class1" }, data: { status: "cancelled" } });
   });
 
   it("returns an error string and does NOT delete when Stripe refund fails", async () => {
@@ -253,7 +253,7 @@ describe("cancelClassById — Stripe refund", () => {
     expect(result).toContain("Refund failed");
     expect(result).toContain("Card declined");
     expect(result).toContain("class was not cancelled");
-    expect(prisma.class.delete).not.toHaveBeenCalled();
+    expect(prisma.class.update).not.toHaveBeenCalled();
   });
 
   it("includes a refund mention in the student notification when the class was paid", async () => {
@@ -287,7 +287,7 @@ describe("cancelClassById — Stripe refund", () => {
     const result = await cancelClassById("class1");
 
     expect(result).toBe("Class not found.");
-    expect(prisma.class.delete).not.toHaveBeenCalled();
+    expect(prisma.class.update).not.toHaveBeenCalled();
     expect(mockRefundsCreate).not.toHaveBeenCalled();
   });
 });
