@@ -850,6 +850,17 @@ export async function completeClass(classId: string): Promise<{ error?: string }
 	const endTime = cls.startTime.getTime() + cls.durationInHours.toNumber() * 3_600_000;
 	if (Date.now() < endTime) return { error: "Class hasn't ended yet." };
 
+	// Compare-and-swap: claim the completion transition before doing anything
+	// side-effecting. Guards against this manual action and the worker's
+	// poller (markCompletedClasses) racing to complete the same class — only
+	// the caller that actually flips the status proceeds to capture payment,
+	// pay out, and award points. A count of 0 means someone else already did.
+	const claim = await prisma.class.updateMany({
+		where: { id: classId, status: "scheduled" },
+		data: { status: "completed" },
+	});
+	if (claim.count === 0) return {};
+
 	// Capture pre-auth if it was never collected (edge case: pre-auth but !paid)
 	if (cls.preAuthIntentId && !cls.paid && cls.teacherId) {
 		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -868,15 +879,10 @@ export async function completeClass(classId: string): Promise<{ error?: string }
 					platformFeeRateBps: split.platformFeeRateBps,
 				},
 			});
-			await prisma.class.update({
-				where: { id: classId },
-				data: { status: "completed", paid: true },
-			});
+			await prisma.class.update({ where: { id: classId }, data: { paid: true } });
 		} catch {
-			await prisma.class.update({ where: { id: classId }, data: { status: "completed" } });
+			// Capture failed — leave paid as-is, still proceed with completion
 		}
-	} else {
-		await prisma.class.update({ where: { id: classId }, data: { status: "completed" } });
 	}
 
 	// Teacher payout — no-ops gracefully if there's no Payment row (e.g. the
