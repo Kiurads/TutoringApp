@@ -114,6 +114,10 @@ const mockClassRow = (overrides: Record<string, unknown> = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: the compare-and-swap claim in claimClass/completeClass succeeds.
+  // Tests exercising the "someone else already claimed/completed it" race
+  // override this to return { count: 0 }.
+  vi.mocked(prisma.class.updateMany).mockResolvedValue({ count: 1 } as never);
 });
 
 describe("fetchClasses", () => {
@@ -738,6 +742,7 @@ describe("completeClass", () => {
   it("records the gems/sparks awarded on completion", async () => {
     vi.mocked(auth).mockResolvedValue(mockSession as never);
     vi.mocked(prisma.class.findUnique).mockResolvedValue(makeScheduledClass() as never);
+    vi.mocked(prisma.class.updateMany).mockResolvedValue({ count: 1 } as never);
     vi.mocked(prisma.class.update).mockResolvedValue({} as never);
 
     await completeClass("class1");
@@ -748,23 +753,40 @@ describe("completeClass", () => {
     });
   });
 
-  it("marks a paid scheduled class as completed", async () => {
+  it("marks a paid scheduled class as completed via a compare-and-swap update", async () => {
     vi.mocked(auth).mockResolvedValue(mockSession as never);
     vi.mocked(prisma.class.findUnique).mockResolvedValue(makeScheduledClass() as never);
+    vi.mocked(prisma.class.updateMany).mockResolvedValue({ count: 1 } as never);
     vi.mocked(prisma.class.update).mockResolvedValue({} as never);
 
     const result = await completeClass("class1");
 
     expect(result).toEqual({});
-    expect(prisma.class.update).toHaveBeenCalledWith({
-      where: { id: "class1" },
+    expect(prisma.class.updateMany).toHaveBeenCalledWith({
+      where: { id: "class1", status: "scheduled" },
       data: { status: "completed" },
     });
+  });
+
+  it("returns early without awarding anything when the worker already completed it first", async () => {
+    const { awardGems } = await import("@/app/lib/gamification");
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(prisma.class.findUnique).mockResolvedValue(makeScheduledClass() as never);
+    // Another caller (the worker's poller) already flipped this class to "completed"
+    vi.mocked(prisma.class.updateMany).mockResolvedValue({ count: 0 } as never);
+
+    const result = await completeClass("class1");
+
+    expect(result).toEqual({});
+    expect(transferPayoutForClass).not.toHaveBeenCalled();
+    expect(awardGems).not.toHaveBeenCalled();
+    expect(prisma.class.update).not.toHaveBeenCalled();
   });
 
   it("triggers the teacher payout after marking a class completed", async () => {
     vi.mocked(auth).mockResolvedValue(mockSession as never);
     vi.mocked(prisma.class.findUnique).mockResolvedValue(makeScheduledClass() as never);
+    vi.mocked(prisma.class.updateMany).mockResolvedValue({ count: 1 } as never);
     vi.mocked(prisma.class.update).mockResolvedValue({} as never);
 
     await completeClass("class1");
@@ -777,6 +799,7 @@ describe("completeClass", () => {
     vi.mocked(prisma.class.findUnique).mockResolvedValue(
       makeScheduledClass({ paid: false, preAuthIntentId: "pi_test123" }) as never
     );
+    vi.mocked(prisma.class.updateMany).mockResolvedValue({ count: 1 } as never);
     vi.mocked(prisma.class.update).mockResolvedValue({} as never);
     vi.mocked((prisma as never as { payment: { create: ReturnType<typeof vi.fn> } }).payment.create)
       .mockResolvedValue({} as never);
@@ -784,9 +807,10 @@ describe("completeClass", () => {
     const result = await completeClass("class1");
 
     expect(result).toEqual({});
-    expect(prisma.class.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ status: "completed", paid: true }) })
-    );
+    expect(prisma.class.update).toHaveBeenCalledWith({
+      where: { id: "class1" },
+      data: { paid: true },
+    });
   });
 
   it("still completes when Stripe capture fails", async () => {
@@ -796,15 +820,15 @@ describe("completeClass", () => {
     vi.mocked(prisma.class.findUnique).mockResolvedValue(
       makeScheduledClass({ paid: false, preAuthIntentId: "pi_fail" }) as never
     );
+    vi.mocked(prisma.class.updateMany).mockResolvedValue({ count: 1 } as never);
     vi.mocked(prisma.class.update).mockResolvedValue({} as never);
 
     const result = await completeClass("class1");
 
     expect(result).toEqual({});
-    expect(prisma.class.update).toHaveBeenCalledWith({
-      where: { id: "class1" },
-      data: { status: "completed" },
-    });
+    expect(prisma.class.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ paid: true }) })
+    );
   });
 
   it("awards gems to student and sparks to teacher on completion", async () => {

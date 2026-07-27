@@ -40,14 +40,20 @@ export async function markCompletedClasses(): Promise<void> {
 			cls.startTime.getTime() + cls.durationInHours.toNumber() * 3_600_000;
 		if (endTime > now) continue;
 
-		await prisma.class.update({
-			where: { id: cls.id },
+		// Compare-and-swap: claim the completion transition before awarding
+		// anything. Guards against this poller and the manual "Mark Complete"
+		// action (completeClass) racing to complete the same class — only the
+		// caller that actually flips the status proceeds. A count of 0 means
+		// the other caller already completed it.
+		const claim = await prisma.class.updateMany({
+			where: { id: cls.id, status: "scheduled" },
 			data: {
 				status: "completed",
 				gemsAwarded: { increment: 100 },
 				sparksAwarded: { increment: 20 },
 			},
 		});
+		if (claim.count === 0) continue;
 
 		// Teacher payout — no-ops gracefully if the teacher hasn't onboarded
 		// to Stripe Connect yet (accrues as "pending" for later).
