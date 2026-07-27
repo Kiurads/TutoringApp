@@ -791,28 +791,27 @@ export async function claimClass(classId: string) {
 	let claimedStudentId: string | null = null;
 	let claimedSubject: string | null = null;
 
-	try {
-		await prisma.$transaction(async (tx) => {
-			const cls = await tx.class.findFirst({
-				where: { id: classId, teacherId: null, status: "requested" },
-				include: { subject: true },
-			});
+	const cls = await prisma.class.findFirst({
+		where: { id: classId, teacherId: null, status: "requested" },
+		include: { subject: true },
+	});
 
-			if (!cls) throw new Error("Request no longer available.");
+	if (cls) {
+		const totalPrice =
+			Number(teacher.pricePerHour) * cls.durationInHours.toNumber();
 
-			const totalPrice =
-				Number(teacher.pricePerHour) * cls.durationInHours.toNumber();
+		// Compare-and-swap: only claim if it's still unclaimed at the moment of
+		// the write, not just at the read above. Guards against two teachers
+		// racing to claim the same open request — same pattern as payouts.ts.
+		const claim = await prisma.class.updateMany({
+			where: { id: classId, teacherId: null, status: "requested" },
+			data: { teacherId: teacher.id, status: "scheduled", totalPrice },
+		});
 
-			await tx.class.update({
-				where: { id: classId },
-				data: { teacherId: teacher.id, status: "scheduled", totalPrice },
-			});
-
+		if (claim.count > 0) {
 			claimedStudentId = cls.studentId;
 			claimedSubject = cls.subject.name;
-		});
-	} catch {
-		// Race condition: another teacher already claimed it
+		}
 	}
 
 	if (claimedStudentId && claimedSubject) {

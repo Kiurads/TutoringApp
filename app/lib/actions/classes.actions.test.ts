@@ -29,6 +29,7 @@ vi.mock("@/prisma", () => ({
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       delete: vi.fn(),
     },
     user: {
@@ -602,7 +603,7 @@ describe("claimClass", () => {
 
     await claimClass("class1");
 
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.class.updateMany).not.toHaveBeenCalled();
   });
 
   it("does nothing when teacher has no price set", async () => {
@@ -614,57 +615,69 @@ describe("claimClass", () => {
 
     await claimClass("class1");
 
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.class.updateMany).not.toHaveBeenCalled();
   });
 
-  it("assigns teacher and calculates total price in a transaction", async () => {
+  it("assigns teacher and calculates total price via a compare-and-swap update", async () => {
     vi.mocked(auth).mockResolvedValue(mockSession as never);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "t1",
       pricePerHour: dec(30),
     } as never);
 
-    // Make $transaction execute its callback with the prisma mock as the tx client
-    vi.mocked(prisma.$transaction).mockImplementation(
-      async (fn: (tx: typeof prisma) => Promise<unknown>) => fn(prisma)
-    );
-
     vi.mocked(prisma.class.findFirst).mockResolvedValue({
+      studentId: "student1",
       durationInHours: dec(2),
+      subject: { name: "Math" },
     } as never);
-    vi.mocked(prisma.class.update).mockResolvedValue({} as never);
+    vi.mocked(prisma.class.updateMany).mockResolvedValue({ count: 1 } as never);
 
     await claimClass("class1");
 
-    expect(prisma.class.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: "class1" },
-        data: expect.objectContaining({
-          teacherId: "t1",
-          status: "scheduled",
-          totalPrice: 60, // 30/hr * 2hr
-        }),
-      })
-    );
+    expect(prisma.class.updateMany).toHaveBeenCalledWith({
+      where: { id: "class1", teacherId: null, status: "requested" },
+      data: expect.objectContaining({
+        teacherId: "t1",
+        status: "scheduled",
+        totalPrice: 60, // 30/hr * 2hr
+      }),
+    });
   });
 
-  it("silently handles race condition when class is already claimed", async () => {
+  it("silently handles race condition when the class was already claimed before the read", async () => {
     vi.mocked(auth).mockResolvedValue(mockSession as never);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "t1",
       pricePerHour: dec(30),
     } as never);
-
-    vi.mocked(prisma.$transaction).mockImplementation(
-      async (fn: (tx: typeof prisma) => Promise<unknown>) => fn(prisma)
-    );
 
     // Class already claimed (findFirst returns null)
     vi.mocked(prisma.class.findFirst).mockResolvedValue(null);
 
     // Should not throw
     await expect(claimClass("class1")).resolves.not.toThrow();
-    expect(prisma.class.update).not.toHaveBeenCalled();
+    expect(prisma.class.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("does not notify the student when another teacher wins the race between read and write", async () => {
+    const { createNotification } = await import("@/app/lib/notifications");
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "t1",
+      pricePerHour: dec(30),
+    } as never);
+
+    vi.mocked(prisma.class.findFirst).mockResolvedValue({
+      studentId: "student1",
+      durationInHours: dec(2),
+      subject: { name: "Math" },
+    } as never);
+    // Another teacher claimed it between the read and this write
+    vi.mocked(prisma.class.updateMany).mockResolvedValue({ count: 0 } as never);
+
+    await claimClass("class1");
+
+    expect(createNotification).not.toHaveBeenCalled();
   });
 });
 
