@@ -352,10 +352,16 @@ model Session {
   @@index([userId])
 }
 
+enum VerificationTokenPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
 model VerificationToken {
   identifier String
   token      String
   expires    DateTime
+  purpose    VerificationTokenPurpose
 
   @@id([identifier, token])
 }

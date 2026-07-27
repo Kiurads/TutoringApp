@@ -20,7 +20,7 @@ export async function createAndSendVerificationEmail(email: string) {
 		const expires = new Date(Date.now() + VERIFICATION_TOKEN_TTL_MS);
 
 		await prisma.verificationToken.create({
-			data: { identifier: email, token, expires },
+			data: { identifier: email, token, expires, purpose: "EMAIL_VERIFICATION" },
 		});
 
 		const verifyUrl = `${getAppUrl()}/api/auth/verify?token=${token}`;

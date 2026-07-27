@@ -16,8 +16,10 @@ export async function GET(request: NextRequest) {
 
 	// token isn't declared @unique on its own in the schema (only the
 	// [identifier, token] pair is), so we look it up with findFirst.
+	// Scoped to EMAIL_VERIFICATION so a password-reset token (same table)
+	// can never be redeemed here.
 	const verificationToken = await prisma.verificationToken.findFirst({
-		where: { token },
+		where: { token, purpose: "EMAIL_VERIFICATION" },
 	});
 
 	if (!verificationToken) {
