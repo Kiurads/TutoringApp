@@ -131,7 +131,7 @@ export async function createReview(
 	// Award sparks to teacher if rating is 4+
 	if (rating >= 4) {
 		await awardSparks(teacherId, rating === 5 ? 100 : 75);
-		if (rating === 5) await awardBadge(teacherId, "top_reviewed");
+		if (rating === 5) await awardBadge(teacherId, "top_reviewed", "teacher");
 	}
 
 	revalidatePath(`/main/student/classes/${classId}`);
