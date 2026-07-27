@@ -123,13 +123,30 @@ describe("changePassword", () => {
 		expect(result.success).toBe(true);
 		expect(prisma.user.update).toHaveBeenCalledWith({
 			where: { id },
-			data: { password: expect.any(String) },
+			data: { password: expect.any(String), passwordChangedAt: expect.any(Date) },
 		});
 
 		// The stored hash should actually verify against the new password.
 		const updateCall = vi.mocked(prisma.user.update).mock.calls[0][0];
 		const newHash = (updateCall.data as { password: string }).password;
 		expect(await bcrypt.compare("brandnewpassword", newHash)).toBe(true);
+	});
+
+	// Stamping passwordChangedAt is what lets auth.ts's jwt callback detect
+	// and invalidate every session token issued before this moment — see
+	// app/lib/auth/session-staleness.ts.
+	it("stamps passwordChangedAt so existing sessions can be invalidated", async () => {
+		const id = nextUserId();
+		await mockSessionAndUser("g@test.com", await bcrypt.hash("oldpassword", 10), id);
+
+		await changePassword({
+			currentPassword: "oldpassword",
+			newPassword: "brandnewpassword",
+			confirmPassword: "brandnewpassword",
+		});
+
+		const updateCall = vi.mocked(prisma.user.update).mock.calls[0][0];
+		expect((updateCall.data as { passwordChangedAt: Date }).passwordChangedAt).toBeInstanceOf(Date);
 	});
 
 	it("rate-limits repeated attempts for the same user", async () => {

@@ -99,6 +99,13 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   password      String
+  // Set whenever the password changes (change-password, reset-password).
+  // JWT sessions have no server-side revocation on their own — the jwt
+  // callback in auth.config.ts/auth.ts compares this against the value
+  // stamped into a token at sign-in, and treats a mismatch as a stale
+  // session that must stop working immediately, not just at its natural
+  // JWT expiry.
+  passwordChangedAt DateTime?
   image         String?
   phoneNumber   String?
   accounts      Account[]

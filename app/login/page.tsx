@@ -1,7 +1,7 @@
 import LoginForm from "@/app/ui/login/login-form";
 
 interface LoginPageProps {
-	searchParams: Promise<{ verify?: string; reset?: string }>;
+	searchParams: Promise<{ verify?: string; reset?: string; passwordChanged?: string }>;
 }
 
 const VERIFY_MESSAGES: Record<string, string> = {
@@ -17,7 +17,7 @@ const VERIFY_MESSAGES: Record<string, string> = {
 // without needing a useSearchParams()/Suspense dance — LoginForm itself is
 // still a client component and works fine nested here.
 export default async function SignIn({ searchParams }: LoginPageProps) {
-	const { verify, reset } = await searchParams;
+	const { verify, reset, passwordChanged } = await searchParams;
 	const verifyMessage = verify ? VERIFY_MESSAGES[verify] : undefined;
 	const isVerifySuccess = verify === "success";
 
@@ -38,6 +38,13 @@ export default async function SignIn({ searchParams }: LoginPageProps) {
 						<div className="alert alert-success m-4 mb-0">
 							<span>
 								Your password has been reset. You can now log in.
+							</span>
+						</div>
+					)}
+					{passwordChanged === "true" && (
+						<div className="alert alert-success m-4 mb-0">
+							<span>
+								Your password was changed. Please log in again to continue.
 							</span>
 						</div>
 					)}

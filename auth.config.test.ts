@@ -75,6 +75,25 @@ describe("auth.config jwt callback", () => {
 		expect(token.teacherPreferencesSet).toBe(false);
 	});
 
+	it("stamps passwordChangedAt onto the token at login as an epoch number", async () => {
+		const changedAt = new Date("2026-01-01T00:00:00.000Z");
+		const token = await authConfig.callbacks.jwt({
+			token: {},
+			user: { role: "student", passwordChangedAt: changedAt },
+		} as never);
+
+		expect(token.passwordChangedAt).toBe(changedAt.getTime());
+	});
+
+	it("stamps passwordChangedAt as null when the password has never been changed", async () => {
+		const token = await authConfig.callbacks.jwt({
+			token: {},
+			user: { role: "student", passwordChangedAt: null },
+		} as never);
+
+		expect(token.passwordChangedAt).toBeNull();
+	});
+
 	it("updates teacherPreferencesSet when the client calls session.update()", async () => {
 		const token = await authConfig.callbacks.jwt({
 			token: { role: "teacher", teacherPreferencesSet: false },
@@ -107,5 +126,16 @@ describe("auth.config session callback", () => {
 
 		expect(session.user?.role).toBe("teacher");
 		expect(session.user?.teacherPreferencesSet).toBe(true);
+	});
+
+	// The bug this fix closes: a stale JWT (issued before a password change)
+	// kept presenting a valid, working user session indefinitely.
+	it("strips session.user when the token was marked invalidated", async () => {
+		const session = await authConfig.callbacks.session({
+			session: { user: { role: "teacher" }, expires: "2026-01-01T00:00:00.000Z" },
+			token: { role: "teacher", teacherPreferencesSet: true, invalidated: true },
+		} as never);
+
+		expect(session.user).toBeUndefined();
 	});
 });
