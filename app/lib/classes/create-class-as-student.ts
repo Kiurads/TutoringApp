@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import prisma from "@/prisma";
 import { createNotification } from "@/app/lib/notifications";
 import { isWithinAvailability } from "@/app/lib/availability/check-availability";
+import { teacherHasSchedulingConflict } from "./check-teacher-conflict";
 import { generateJitsiRoom } from "./generate-jitsi-room";
 
 export async function createClassAsStudent(
@@ -63,6 +64,10 @@ export async function createClassAsStudent(
 		});
 		if (!isWithinAvailability(availabilitySlots, classStartTime, durationInHours)) {
 			return "The teacher is not available at the selected time. Please choose a slot within their available hours.";
+		}
+
+		if (await teacherHasSchedulingConflict(teacherId, classStartTime, durationInHours)) {
+			return "The teacher already has a class scheduled at this time. Please choose another time.";
 		}
 
 		const totalPrice = Number(teacher.pricePerHour) * durationInHours;
