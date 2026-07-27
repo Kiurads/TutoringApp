@@ -18,6 +18,7 @@ vi.mock("@/prisma", () => ({
     },
     class: {
       create: vi.fn(),
+      findMany: vi.fn(),
     },
     subject: {
       findUnique: vi.fn(),
@@ -59,6 +60,10 @@ const makeFormData = (fields: Record<string, string>): FormData => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: no existing scheduled classes for the teacher, so
+  // teacherHasSchedulingConflict finds nothing. Tests exercising the
+  // conflict-rejection path override this.
+  vi.mocked(prisma.class.findMany).mockResolvedValue([]);
 });
 
 describe("createClassAsStudent — auth & validation", () => {
@@ -186,6 +191,36 @@ describe("createClassAsStudent — with specific teacher", () => {
       })
     );
     expect(redirect).toHaveBeenCalledWith("/main/student/classes?toast=created");
+  });
+
+  // The bug this fix closes: booking only checked the teacher's general
+  // weekly availability, never existing overlapping scheduled classes.
+  it("rejects booking when the teacher already has an overlapping scheduled class", async () => {
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(prisma.user.findUnique)
+      .mockResolvedValueOnce({ id: "s1" } as never)
+      .mockResolvedValueOnce({ pricePerHour: dec(30) } as never);
+    vi.mocked(prisma.teacherAvailability.findMany).mockResolvedValue([]);
+    const requestedStart = tomorrow();
+    // An existing scheduled class starting at the exact same time
+    vi.mocked(prisma.class.findMany).mockResolvedValue([
+      { startTime: new Date(requestedStart), durationInHours: dec(2) },
+    ] as never);
+
+    const result = await createClassAsStudent(
+      undefined,
+      makeFormData({
+        subject: "sub1",
+        teacher: "t1",
+        startTime: requestedStart,
+        duration: "2",
+      })
+    );
+
+    expect(result).toBe(
+      "The teacher already has a class scheduled at this time. Please choose another time."
+    );
+    expect(prisma.class.create).not.toHaveBeenCalled();
   });
 });
 

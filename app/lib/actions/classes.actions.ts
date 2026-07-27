@@ -24,6 +24,7 @@ import {
 } from "@/app/lib/gamification";
 import { computeCommissionSplit } from "@/app/lib/payouts-utils";
 import { transferPayoutForClass } from "@/app/lib/payouts";
+import { teacherHasSchedulingConflict } from "@/app/lib/classes/check-teacher-conflict";
 import Stripe from "stripe";
 
 export interface ClassDataCalendar {
@@ -574,6 +575,22 @@ export async function acceptClassById(classId: string) {
 
 	if (!cls) return null;
 
+	// Reject accepting into a slot the teacher is already booked for — e.g.
+	// two students requested overlapping times and the teacher already
+	// accepted one of them. Checked against `scheduled` classes only (other
+	// pending requests for the same slot are expected and not conflicts).
+	if (
+		cls.teacherId &&
+		(await teacherHasSchedulingConflict(
+			cls.teacherId,
+			cls.startTime,
+			cls.durationInHours.toNumber(),
+			classId,
+		))
+	) {
+		return null;
+	}
+
 	// Compare-and-swap: claim the accept transition before doing anything
 	// side-effecting. Guards against a double-click/retried accept re-running
 	// the Stripe capture, gem/spark awards, and notifications a second time —
@@ -797,6 +814,17 @@ export async function claimClass(classId: string) {
 		where: { id: classId, teacherId: null, status: "requested" },
 		include: { subject: true },
 	});
+
+	if (
+		cls &&
+		(await teacherHasSchedulingConflict(
+			teacher.id,
+			cls.startTime,
+			cls.durationInHours.toNumber(),
+		))
+	) {
+		return;
+	}
 
 	if (cls) {
 		const totalPrice =

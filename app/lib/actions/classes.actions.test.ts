@@ -118,6 +118,10 @@ beforeEach(() => {
   // Tests exercising the "someone else already claimed/completed it" race
   // override this to return { count: 0 }.
   vi.mocked(prisma.class.updateMany).mockResolvedValue({ count: 1 } as never);
+  // Default: no existing scheduled classes for the teacher, so
+  // teacherHasSchedulingConflict (used by acceptClassById/claimClass) finds
+  // nothing. Tests exercising the conflict-rejection path override this.
+  vi.mocked(prisma.class.findMany).mockResolvedValue([]);
 });
 
 describe("fetchClasses", () => {
@@ -485,6 +489,8 @@ describe("acceptClassById", () => {
       requesterId: "student1",
       preAuthIntentId: null,
       totalPrice: dec(37.5),
+      startTime: new Date("2026-05-01T10:00:00Z"),
+      durationInHours: dec(1.5),
       teacher: { firstName: "Alice", lastName: "Smith" },
       student: { firstName: "Bob", lastName: "Jones" },
       subject: { name: "Math" },
@@ -512,6 +518,8 @@ describe("acceptClassById", () => {
       requesterId: "student1",
       preAuthIntentId: "pi_test123",
       totalPrice: dec(50),
+      startTime: new Date("2026-05-01T10:00:00Z"),
+      durationInHours: dec(1.5),
       teacher: { firstName: "Alice", lastName: "Smith" },
       student: { firstName: "Bob", lastName: "Jones" },
       subject: { name: "Math" },
@@ -532,9 +540,10 @@ describe("acceptClassById", () => {
     });
   });
 
-  // The bug this fix closes: a double-click/retried accept used to re-run
-  // the Stripe capture (failing silently on an already-captured intent) but
-  // still award sparks and send notifications a second time.
+  // The bug this fix closes (idempotency): a double-click/retried accept
+  // used to re-run the Stripe capture (failing silently on an
+  // already-captured intent) but still award sparks and send notifications
+  // a second time.
   it("does not award or notify again when the class was already accepted (double-click/retry)", async () => {
     const { awardSparks } = await import("@/app/lib/gamification");
     const { createNotification } = await import("@/app/lib/notifications");
@@ -550,6 +559,8 @@ describe("acceptClassById", () => {
       requesterId: "student1",
       preAuthIntentId: "pi_test123",
       totalPrice: dec(50),
+      startTime: new Date("2026-05-01T10:00:00Z"),
+      durationInHours: dec(1.5),
       teacher: { firstName: "Alice", lastName: "Smith" },
       student: { firstName: "Bob", lastName: "Jones" },
       subject: { name: "Math" },
@@ -564,6 +575,39 @@ describe("acceptClassById", () => {
     expect(awardSparks).not.toHaveBeenCalled();
     expect(createNotification).not.toHaveBeenCalled();
     expect(prisma.class.update).not.toHaveBeenCalled();
+  });
+
+  // The bug this fix closes (double-booking): two students could request
+  // overlapping times with the same teacher, and the teacher could accept
+  // both — nothing checked for an existing scheduled conflict at accept time.
+  it("rejects accepting into a slot the teacher already has scheduled", async () => {
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(fetchUserByEmail).mockResolvedValue({
+      id: "teacher1",
+      role: "teacher",
+    } as never);
+    vi.mocked(prisma.class.findUnique).mockResolvedValue({
+      id: "class1",
+      teacherId: "teacher1",
+      studentId: "student1",
+      requesterId: "student1",
+      preAuthIntentId: null,
+      totalPrice: dec(37.5),
+      startTime: new Date("2026-05-01T10:00:00Z"),
+      durationInHours: dec(1.5),
+      teacher: { firstName: "Alice", lastName: "Smith" },
+      student: { firstName: "Bob", lastName: "Jones" },
+      subject: { name: "Math" },
+    } as never);
+    // Teacher already has another scheduled class overlapping this time
+    vi.mocked(prisma.class.findMany).mockResolvedValue([
+      { startTime: new Date("2026-05-01T10:00:00Z"), durationInHours: dec(1) },
+    ] as never);
+
+    const result = await acceptClassById("class1");
+
+    expect(result).toBeNull();
+    expect(prisma.class.updateMany).not.toHaveBeenCalled();
   });
 });
 
@@ -665,6 +709,7 @@ describe("claimClass", () => {
 
     vi.mocked(prisma.class.findFirst).mockResolvedValue({
       studentId: "student1",
+      startTime: new Date("2026-05-01T10:00:00Z"),
       durationInHours: dec(2),
       subject: { name: "Math" },
     } as never);
@@ -707,6 +752,7 @@ describe("claimClass", () => {
 
     vi.mocked(prisma.class.findFirst).mockResolvedValue({
       studentId: "student1",
+      startTime: new Date("2026-05-01T10:00:00Z"),
       durationInHours: dec(2),
       subject: { name: "Math" },
     } as never);
@@ -716,6 +762,30 @@ describe("claimClass", () => {
     await claimClass("class1");
 
     expect(createNotification).not.toHaveBeenCalled();
+  });
+
+  // The bug this fix closes (double-booking): a teacher could claim an open
+  // broadcast request even when they already have a scheduled class
+  // overlapping that time.
+  it("does not claim the request when the teacher already has an overlapping scheduled class", async () => {
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "t1",
+      pricePerHour: dec(30),
+    } as never);
+    vi.mocked(prisma.class.findFirst).mockResolvedValue({
+      studentId: "student1",
+      startTime: new Date("2026-05-01T10:00:00Z"),
+      durationInHours: dec(2),
+      subject: { name: "Math" },
+    } as never);
+    vi.mocked(prisma.class.findMany).mockResolvedValue([
+      { startTime: new Date("2026-05-01T10:00:00Z"), durationInHours: dec(1) },
+    ] as never);
+
+    await claimClass("class1");
+
+    expect(prisma.class.updateMany).not.toHaveBeenCalled();
   });
 });
 
