@@ -1,6 +1,7 @@
 import { createPaymentForClass } from "@/app/lib/actions/paymets.actions";
 import { sendDisputeAlertEmail } from "@/app/lib/email";
 import { transferPendingPayoutsForTeacher } from "@/app/lib/payouts";
+import { createNotification } from "@/app/lib/notifications";
 import prisma from "@/prisma";
 import Stripe from "stripe";
 import type { ConnectStatus } from "@prisma/client";
@@ -128,6 +129,41 @@ export async function POST(req: Request) {
 						amount: dispute.amount,
 					})
 				)
+			);
+			break;
+		}
+
+		case "transfer.reversed": {
+			// Only synchronous errors from stripe.transfers.create are caught in
+			// payouts.ts — a transfer that succeeded and was marked "transferred"
+			// can still be reversed later (e.g. the connected account gets
+			// restricted or its balance is insufficient to cover a later
+			// deduction). Without this, that row stays marked "transferred"
+			// forever even though the money came back to the platform.
+			const transfer = event.data.object;
+			const payment = await prisma.payment.findFirst({
+				where: { transferId: transfer.id },
+			});
+			if (!payment) break; // Not one of ours, or arrived before we recorded the transferId
+
+			await prisma.payment.update({
+				where: { id: payment.id },
+				data: {
+					payoutStatus: "failed",
+					payoutError: `Transfer reversed by Stripe (amount_reversed: ${transfer.amount_reversed}).`,
+				},
+			});
+
+			console.error(
+				`[stripe webhook] transfer.reversed: transfer ${transfer.id}, payment ${payment.id}, class ${payment.classId} — amount_reversed ${transfer.amount_reversed}. Needs manual review: the teacher's payout was clawed back but the student was not automatically refunded.`
+			);
+
+			await createNotification(
+				payment.teacherId,
+				"payout_reversed",
+				"Payout Reversed",
+				`A previous payout of €${Number(payment.teacherPayoutAmount).toFixed(2)} was reversed by Stripe. Contact support if this is unexpected.`,
+				"/main/teacher/payouts",
 			);
 			break;
 		}
