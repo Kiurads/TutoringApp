@@ -452,6 +452,13 @@ export async function cancelClassCore(
 		return "You are not authorized to cancel this class.";
 	}
 
+	// A completed class has already happened — its teacher payout may already
+	// be transferred (see transferPayoutForClass), so cancelling it now would
+	// let the platform refund the student while the teacher keeps the payout.
+	if (cls.status === "completed") {
+		return "This class has already been completed and cannot be cancelled.";
+	}
+
 	const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 	// Pre-auth not yet captured — just cancel the hold
@@ -490,7 +497,10 @@ export async function cancelClassCore(
 		}
 	}
 
-	await prisma.class.delete({ where: { id: classId } });
+	// Soft-cancel rather than delete: Payment.class cascades on delete, so a
+	// hard delete here would wipe out the refund's own paper trail along
+	// with the row that recorded it.
+	await prisma.class.update({ where: { id: classId }, data: { status: "cancelled" } });
 
 	const subject = cls.subject.name;
 	if (user?.role === "teacher" && cls.teacherId) {

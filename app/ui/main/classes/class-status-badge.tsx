@@ -8,7 +8,7 @@ export default function ClassStatusBadge(props: { status: string }) {
 					? "badge-success"
 					: status === "scheduled"
 					? "badge-info"
-					: status === "refused"
+					: status === "refused" || status === "cancelled"
 					? "badge-error"
 					: "badge-warning"
 			}`}
