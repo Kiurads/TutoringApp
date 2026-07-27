@@ -472,7 +472,7 @@ describe("acceptClassById", () => {
     expect(prisma.class.update).not.toHaveBeenCalled();
   });
 
-  it("updates class status to 'scheduled'", async () => {
+  it("claims the transition to 'scheduled' via a compare-and-swap update", async () => {
     vi.mocked(auth).mockResolvedValue(mockSession as never);
     vi.mocked(fetchUserByEmail).mockResolvedValue({
       id: "teacher1",
@@ -493,8 +493,8 @@ describe("acceptClassById", () => {
 
     await acceptClassById("class1");
 
-    expect(prisma.class.update).toHaveBeenCalledWith({
-      where: { id: "class1" },
+    expect(prisma.class.updateMany).toHaveBeenCalledWith({
+      where: { id: "class1", status: "requested" },
       data: { status: "scheduled" },
     });
   });
@@ -524,12 +524,46 @@ describe("acceptClassById", () => {
 
     expect(prisma.class.update).toHaveBeenCalledWith({
       where: { id: "class1" },
-      data: { status: "scheduled", paid: true, gemsAwarded: { increment: 50 } },
+      data: { paid: true, gemsAwarded: { increment: 50 } },
     });
     expect(prisma.class.update).toHaveBeenCalledWith({
       where: { id: "class1" },
       data: { sparksAwarded: { increment: 50 } },
     });
+  });
+
+  // The bug this fix closes: a double-click/retried accept used to re-run
+  // the Stripe capture (failing silently on an already-captured intent) but
+  // still award sparks and send notifications a second time.
+  it("does not award or notify again when the class was already accepted (double-click/retry)", async () => {
+    const { awardSparks } = await import("@/app/lib/gamification");
+    const { createNotification } = await import("@/app/lib/notifications");
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(fetchUserByEmail).mockResolvedValue({
+      id: "teacher1",
+      role: "teacher",
+    } as never);
+    vi.mocked(prisma.class.findUnique).mockResolvedValue({
+      id: "class1",
+      teacherId: "teacher1",
+      studentId: "student1",
+      requesterId: "student1",
+      preAuthIntentId: "pi_test123",
+      totalPrice: dec(50),
+      teacher: { firstName: "Alice", lastName: "Smith" },
+      student: { firstName: "Bob", lastName: "Jones" },
+      subject: { name: "Math" },
+    } as never);
+    // Already accepted by a concurrent/earlier call — status is no longer "requested"
+    vi.mocked(prisma.class.updateMany).mockResolvedValue({ count: 0 } as never);
+
+    const result = await acceptClassById("class1");
+
+    expect(result).toBeNull();
+    expect(stripeCapture).not.toHaveBeenCalled();
+    expect(awardSparks).not.toHaveBeenCalled();
+    expect(createNotification).not.toHaveBeenCalled();
+    expect(prisma.class.update).not.toHaveBeenCalled();
   });
 });
 

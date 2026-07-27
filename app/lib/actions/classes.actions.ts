@@ -572,8 +572,21 @@ export async function acceptClassById(classId: string) {
 		}
 	}
 
+	if (!cls) return null;
+
+	// Compare-and-swap: claim the accept transition before doing anything
+	// side-effecting. Guards against a double-click/retried accept re-running
+	// the Stripe capture, gem/spark awards, and notifications a second time —
+	// a retried capture on an already-captured intent fails silently, but
+	// without this guard the awards/notifications below it ran regardless.
+	const claim = await prisma.class.updateMany({
+		where: { id: classId, status: "requested" },
+		data: { status: "scheduled" },
+	});
+	if (claim.count === 0) return null;
+
 	// Capture pre-auth intent if present
-	if (cls?.preAuthIntentId && cls.teacherId) {
+	if (cls.preAuthIntentId && cls.teacherId) {
 		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 		try {
 			await stripe.paymentIntents.capture(cls.preAuthIntentId);
@@ -592,57 +605,46 @@ export async function acceptClassById(classId: string) {
 			});
 			await prisma.class.update({
 				where: { id: classId },
-				data: { status: "scheduled", paid: true, gemsAwarded: { increment: 50 } },
+				data: { paid: true, gemsAwarded: { increment: 50 } },
 			});
 			await awardGems(cls.studentId, 50);
 		} catch {
 			// Capture failed — accept the class but leave it unpaid
-			await prisma.class.update({
-				where: { id: classId },
-				data: { status: "scheduled" },
-			});
 		}
-	} else {
-		await prisma.class.update({
-			where: { id: classId },
-			data: { status: "scheduled" },
-		});
 	}
 
-	if (cls) {
-		const wasRequestedByTeacher = cls.requesterId === cls.teacherId;
-		if (wasRequestedByTeacher && cls.teacherId) {
-			// Teacher requested → notify teacher that student accepted
-			const studentName = `${cls.student.firstName} ${cls.student.lastName}`;
-			await createNotification(
-				cls.teacherId,
-				"class_accepted",
-				"Class Accepted",
-				`${studentName} accepted your ${cls.subject.name} class request.`,
-				`/main/teacher/classes/${classId}`,
-			);
-		} else {
-			// Student requested → notify student that teacher accepted
-			const teacherName = cls.teacher
-				? `${cls.teacher.firstName} ${cls.teacher.lastName}`
-				: "Your teacher";
-			await createNotification(
-				cls.studentId,
-				"class_accepted",
-				"Class Accepted",
-				`${teacherName} accepted your ${cls.subject.name} class.`,
-				`/main/student/classes/${classId}`,
-			);
-		}
+	const wasRequestedByTeacher = cls.requesterId === cls.teacherId;
+	if (wasRequestedByTeacher && cls.teacherId) {
+		// Teacher requested → notify teacher that student accepted
+		const studentName = `${cls.student.firstName} ${cls.student.lastName}`;
+		await createNotification(
+			cls.teacherId,
+			"class_accepted",
+			"Class Accepted",
+			`${studentName} accepted your ${cls.subject.name} class request.`,
+			`/main/teacher/classes/${classId}`,
+		);
+	} else {
+		// Student requested → notify student that teacher accepted
+		const teacherName = cls.teacher
+			? `${cls.teacher.firstName} ${cls.teacher.lastName}`
+			: "Your teacher";
+		await createNotification(
+			cls.studentId,
+			"class_accepted",
+			"Class Accepted",
+			`${teacherName} accepted your ${cls.subject.name} class.`,
+			`/main/student/classes/${classId}`,
+		);
+	}
 
-		// Award sparks to the teacher who accepted
-		if (cls.teacherId) {
-			await awardSparks(cls.teacherId, 50);
-			await prisma.class.update({
-				where: { id: classId },
-				data: { sparksAwarded: { increment: 50 } },
-			});
-		}
+	// Award sparks to the teacher who accepted
+	if (cls.teacherId) {
+		await awardSparks(cls.teacherId, 50);
+		await prisma.class.update({
+			where: { id: classId },
+			data: { sparksAwarded: { increment: 50 } },
+		});
 	}
 
 	if (user?.role === "teacher") {
