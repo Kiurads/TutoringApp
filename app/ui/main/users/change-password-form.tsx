@@ -39,6 +39,16 @@ export default function ChangePasswordForm() {
 				setCurrentPassword("");
 				setNewPassword("");
 				setConfirmPassword("");
+				// Changing the password invalidates every session token issued
+				// before this moment, including the current one — send the user
+				// back to log in with a fresh one rather than leaving them on a
+				// page that will start rejecting their session on its next
+				// server round-trip. Hard navigation (not next/navigation's
+				// redirect) so this doesn't get served from the client Router
+				// Cache — see login-form.tsx for the same reasoning.
+				setTimeout(() => {
+					window.location.href = "/login?passwordChanged=true";
+				}, 1500);
 			}
 		});
 	}

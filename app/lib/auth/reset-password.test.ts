@@ -51,9 +51,29 @@ describe("resetPassword", () => {
 		});
 		expect(prisma.user.update).toHaveBeenCalledWith({
 			where: { email: "user@test.com" },
-			data: { password: "hashed" },
+			data: { password: "hashed", passwordChangedAt: expect.any(Date) },
 		});
 		expect(redirect).toHaveBeenCalledWith("/login?reset=success");
+	});
+
+	// Stamping passwordChangedAt is what lets auth.ts's jwt callback detect
+	// and invalidate every session token issued before this moment — see
+	// app/lib/auth/session-staleness.ts.
+	it("stamps passwordChangedAt so existing sessions can be invalidated", async () => {
+		vi.mocked(prisma.verificationToken.findFirst).mockResolvedValue({
+			identifier: "user@test.com",
+			token: "tok123",
+			expires: new Date(Date.now() + 60_000),
+			purpose: "PASSWORD_RESET",
+		} as never);
+
+		await resetPassword(
+			undefined,
+			formData({ token: "tok123", password: "newpass123", confirmPassword: "newpass123" }),
+		);
+
+		const updateCall = vi.mocked(prisma.user.update).mock.calls[0][0];
+		expect((updateCall.data as { passwordChangedAt: Date }).passwordChangedAt).toBeInstanceOf(Date);
 	});
 
 	// The bug this fix closes: an email-verification token must never be

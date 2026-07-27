@@ -13,6 +13,9 @@ export const authConfig = {
 				token.teacherPreferencesSet = (
 					user as User & { teacherPreferencesSet?: boolean }
 				).teacherPreferencesSet;
+				token.passwordChangedAt =
+					(user as User & { passwordChangedAt?: Date | null }).passwordChangedAt?.getTime() ??
+					null;
 			}
 			// Fired by the client via useSession().update({ teacherPreferencesSet: true })
 			// right after a teacher submits their mandatory preferences form — without
@@ -24,6 +27,13 @@ export const authConfig = {
 			return token;
 		},
 		session: async ({ session, token }) => {
+			// A stale token (password changed since it was issued — see the
+			// Prisma-backed check layered on top of this jwt callback in
+			// auth.ts) must stop presenting a user at all, not just expire
+			// naturally on its own schedule.
+			if (token.invalidated) {
+				return { ...session, user: undefined } as typeof session;
+			}
 			// We add the role to the session object
 			if (session.user) {
 				session.user.role = token.role as string;

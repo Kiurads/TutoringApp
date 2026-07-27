@@ -63,7 +63,9 @@ export async function changePassword(data: {
 	const hashedPassword = await bcrypt.hash(data.newPassword, 10);
 	await prisma.user.update({
 		where: { id: user.id },
-		data: { password: hashedPassword },
+		// passwordChangedAt invalidates every session token issued before this
+		// moment (including this one) — see the jwt callback in auth.ts.
+		data: { password: hashedPassword, passwordChangedAt: new Date() },
 	});
 
 	return { success: true };

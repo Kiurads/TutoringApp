@@ -70,7 +70,9 @@ export async function resetPassword(
 
 		await prisma.user.update({
 			where: { email: verificationToken.identifier },
-			data: { password: hashedPassword },
+			// passwordChangedAt invalidates every session token issued before
+			// this moment — see the jwt callback in auth.ts.
+			data: { password: hashedPassword, passwordChangedAt: new Date() },
 		});
 	} catch (error) {
 		console.error("Failed to reset password:", error);
