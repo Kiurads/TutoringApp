@@ -649,6 +649,7 @@ describe("fetchOpenRequestsForTeacher", () => {
         id: "class1",
         startTime: new Date("2026-05-01T10:00:00Z"),
         durationInHours: dec(2),
+        priority: false,
         student: { firstName: "Ana", lastName: "Lima" },
         subject: { name: "Math" },
       } as never,
@@ -662,7 +663,26 @@ describe("fetchOpenRequestsForTeacher", () => {
       subject: "Math",
       studentName: "Ana Lima",
       durationInHours: "02H00M",
+      priority: false,
     });
+  });
+
+  // The bug this fix closes: Class.priority (set from a gem-store "Priority
+  // Match" purchase) was never read anywhere, so the perk had no effect.
+  it("orders priority requests first, ties broken by start time", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "t1",
+      teacherSubject: [{ subjectId: "sub1" }],
+    } as never);
+    vi.mocked(prisma.class.findMany).mockResolvedValue([]);
+
+    await fetchOpenRequestsForTeacher("teacher@test.com");
+
+    expect(prisma.class.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: [{ priority: "desc" }, { startTime: "asc" }],
+      }),
+    );
   });
 
   it("returns empty array when teacher has no matching subject requests", async () => {
