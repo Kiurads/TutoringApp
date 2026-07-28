@@ -244,4 +244,27 @@ describe("markCompletedClasses", () => {
 			expect.objectContaining({ where: { id: "class1", status: "scheduled" } }),
 		);
 	});
+
+	// The bug this fix closes: an unhandled throw for one class (e.g. a
+	// payout or notification failure) used to abort the whole run, leaving
+	// every later already-ended class in the batch unprocessed until the
+	// next poll.
+	it("still completes the remaining classes when one fails unexpectedly", async () => {
+		const second = {
+			...pastEndedClass,
+			id: "class2",
+			studentId: "student2",
+			teacherId: "teacher2",
+			subject: { name: "Physics" },
+		};
+		vi.mocked(prisma.class.findMany).mockResolvedValue([pastEndedClass, second] as never);
+		vi.mocked(transferPayoutForClass)
+			.mockRejectedValueOnce(new Error("Stripe hiccup"))
+			.mockResolvedValueOnce(undefined);
+
+		await expect(markCompletedClasses()).resolves.not.toThrow();
+
+		expect(prisma.class.updateMany).toHaveBeenCalledTimes(2);
+		expect(awardGems).toHaveBeenCalledWith("student2", 100);
+	});
 });

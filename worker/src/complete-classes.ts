@@ -40,60 +40,69 @@ export async function markCompletedClasses(): Promise<void> {
 			cls.startTime.getTime() + cls.durationInHours.toNumber() * 3_600_000;
 		if (endTime > now) continue;
 
-		// Compare-and-swap: claim the completion transition before awarding
-		// anything. Guards against this poller and the manual "Mark Complete"
-		// action (completeClass) racing to complete the same class — only the
-		// caller that actually flips the status proceeds. A count of 0 means
-		// the other caller already completed it.
-		const claim = await prisma.class.updateMany({
-			where: { id: cls.id, status: "scheduled" },
-			data: {
-				status: "completed",
-				gemsAwarded: { increment: 100 },
-				sparksAwarded: { increment: 20 },
-			},
-		});
-		if (claim.count === 0) continue;
-
-		// Teacher payout — no-ops gracefully if the teacher hasn't onboarded
-		// to Stripe Connect yet (accrues as "pending" for later).
-		await transferPayoutForClass(cls.id);
-
-		await awardGems(cls.studentId, 100);
-		await awardSparks(cls.teacherId, 20);
-
-		const studentBonus = await maybeAwardLuckyBonus(cls.studentId, "student");
-		const teacherBonus = await maybeAwardLuckyBonus(cls.teacherId, "teacher");
-		if (studentBonus > 0 || teacherBonus > 0) {
-			await prisma.class.update({
-				where: { id: cls.id },
+		// Isolate each class: an unhandled throw anywhere below (payout,
+		// gamification, notification) used to abort the whole batch, leaving
+		// every other already-ended class in this run unprocessed until the
+		// next poll — one stuck class could block completion/payout for
+		// everyone else indefinitely.
+		try {
+			// Compare-and-swap: claim the completion transition before awarding
+			// anything. Guards against this poller and the manual "Mark Complete"
+			// action (completeClass) racing to complete the same class — only the
+			// caller that actually flips the status proceeds. A count of 0 means
+			// the other caller already completed it.
+			const claim = await prisma.class.updateMany({
+				where: { id: cls.id, status: "scheduled" },
 				data: {
-					gemsAwarded: { increment: studentBonus },
-					sparksAwarded: { increment: teacherBonus },
+					status: "completed",
+					gemsAwarded: { increment: 100 },
+					sparksAwarded: { increment: 20 },
 				},
 			});
+			if (claim.count === 0) continue;
+
+			// Teacher payout — no-ops gracefully if the teacher hasn't onboarded
+			// to Stripe Connect yet (accrues as "pending" for later).
+			await transferPayoutForClass(cls.id);
+
+			await awardGems(cls.studentId, 100);
+			await awardSparks(cls.teacherId, 20);
+
+			const studentBonus = await maybeAwardLuckyBonus(cls.studentId, "student");
+			const teacherBonus = await maybeAwardLuckyBonus(cls.teacherId, "teacher");
+			if (studentBonus > 0 || teacherBonus > 0) {
+				await prisma.class.update({
+					where: { id: cls.id },
+					data: {
+						gemsAwarded: { increment: studentBonus },
+						sparksAwarded: { increment: teacherBonus },
+					},
+				});
+			}
+
+			await checkSessionBadges(cls.studentId, "student");
+			await checkSessionBadges(cls.teacherId, "teacher");
+			await updateActivityStreak(cls.studentId, "student");
+			await updateActivityStreak(cls.teacherId, "teacher");
+
+			await createNotification(
+				cls.studentId,
+				"class_completed",
+				"Class Completed",
+				`Your ${cls.subject.name} class is complete. Leave a review to help other students!`,
+				`/main/student/classes/${cls.id}`,
+			);
+			await createNotification(
+				cls.teacherId,
+				"class_completed",
+				"Class Completed",
+				`Your ${cls.subject.name} class is complete.`,
+				`/main/teacher/classes/${cls.id}`,
+			);
+
+			console.log(`[worker] Marked class ${cls.id} as completed.`);
+		} catch (err) {
+			console.error(`[worker] Failed to complete class ${cls.id}:`, err);
 		}
-
-		await checkSessionBadges(cls.studentId, "student");
-		await checkSessionBadges(cls.teacherId, "teacher");
-		await updateActivityStreak(cls.studentId, "student");
-		await updateActivityStreak(cls.teacherId, "teacher");
-
-		await createNotification(
-			cls.studentId,
-			"class_completed",
-			"Class Completed",
-			`Your ${cls.subject.name} class is complete. Leave a review to help other students!`,
-			`/main/student/classes/${cls.id}`,
-		);
-		await createNotification(
-			cls.teacherId,
-			"class_completed",
-			"Class Completed",
-			`Your ${cls.subject.name} class is complete.`,
-			`/main/teacher/classes/${cls.id}`,
-		);
-
-		console.log(`[worker] Marked class ${cls.id} as completed.`);
 	}
 }
