@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { fetchUserByEmail } from "./users.actions";
 import { createNotification } from "@/app/lib/notifications";
 import { reverseClassPoints } from "@/app/lib/gamification";
+import { expireIfNeeded } from "@/app/lib/refund-requests/expire-refund-request";
 import Stripe from "stripe";
 
 const EXPIRY_DAYS = 5;
@@ -62,41 +63,13 @@ const INCLUDE = {
 	teacher: { select: { firstName: true, lastName: true, email: true } },
 } as const;
 
-// ── Expiry helper ─────────────────────────────────────────────────────────────
-
-async function expireIfNeeded(requestId: string) {
-	const req = await prisma.refundRequest.findUnique({ where: { id: requestId } });
-	if (!req || req.status !== "pending") return;
-	if (new Date() < req.expiresAt) return;
-
-	const cls = await prisma.class.findUnique({
-		where: { id: req.classId },
-		include: { payments: { select: { intentId: true }, take: 1 } },
-	});
-
-	if (cls?.payments[0]) {
-		try {
-			const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
-			await stripe.refunds.create({ payment_intent: cls.payments[0].intentId });
-		} catch { /* already refunded or failed — mark resolved anyway */ }
-	}
-	// Reverses regardless of the try/catch outcome above, matching this
-	// function's existing "proceed as refunded either way" tolerance.
-	if (cls) await reverseClassPoints(cls);
-
-	await prisma.refundRequest.update({
-		where: { id: requestId },
-		data: { status: "expired" },
-	});
-
-	await createNotification(
-		req.studentId,
-		"refund_decided",
-		"Refund Approved (Expired)",
-		"Your no-show report was not disputed within 5 days. A refund has been issued.",
-		`/main/student/classes/${req.classId}`,
-	);
-}
+// expireIfNeeded lives in app/lib/refund-requests/expire-refund-request.ts
+// (no "use server"/auth import) so the worker's scheduled sweep
+// (worker/src/expire-refund-requests.ts) can reuse it without pulling in
+// the whole NextAuth chain — see that file for why. Re-imported above and
+// used by the fetch functions below, which still need it to run lazily too
+// (immediate feedback the moment someone views an overdue request, rather
+// than waiting for the next sweep).
 
 // ── Student actions ───────────────────────────────────────────────────────────
 
