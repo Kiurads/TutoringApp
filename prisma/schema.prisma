@@ -235,6 +235,10 @@ model Class {
   @@index([teacherId])
   @@index([status])
   @@index([regularClassId])
+  // Covers fetchOpenRequestsForTeacher's exact filter shape (teacherId: null,
+  // status: "requested", subjectId: { in: ... }) directly, rather than
+  // falling back to a subjectId-less index scan plus a full row filter.
+  @@index([teacherId, status, subjectId])
 }
 
 model RefundRequest {
