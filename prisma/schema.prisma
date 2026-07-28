@@ -55,6 +55,7 @@ enum NotificationType {
   regular_class_payment_failed
   payout_sent
   payout_reversed
+  connect_disconnected
 }
 
 enum BadgeCategory {

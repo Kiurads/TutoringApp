@@ -89,3 +89,34 @@ export async function sendDisputeAlertEmail(
 		`,
 	});
 }
+
+// A failed capture or an auto-expired pre-auth leaves a class stuck with no
+// payment and, until this, zero operator-facing signal — unlike disputes,
+// nothing in-app can act on these either, so email is the right channel.
+export async function sendPaymentIssueAlertEmail(
+	to: string,
+	details: {
+		kind: "payment_failed" | "pre_auth_canceled";
+		intentId: string;
+		classId?: string;
+		reason: string;
+	},
+) {
+	const subject =
+		details.kind === "payment_failed"
+			? "Stripe payment capture failed"
+			: "Stripe pre-authorization canceled or expired";
+	await sendEmail({
+		to,
+		subject,
+		html: `
+			<p>A Stripe payment intent linked to The Learning Nexus needs manual review.</p>
+			<ul>
+				<li>Payment intent: ${details.intentId}</li>
+				${details.classId ? `<li>Class: ${details.classId}</li>` : ""}
+				<li>Reason: ${details.reason}</li>
+			</ul>
+			<p>Check the <a href="https://dashboard.stripe.com/payments/${details.intentId}">Stripe dashboard</a> and the linked class for reconciliation.</p>
+		`,
+	});
+}

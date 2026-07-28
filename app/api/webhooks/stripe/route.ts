@@ -1,10 +1,18 @@
 import { createPaymentForClass } from "@/app/lib/actions/paymets.actions";
-import { sendDisputeAlertEmail } from "@/app/lib/email";
+import { sendDisputeAlertEmail, sendPaymentIssueAlertEmail } from "@/app/lib/email";
 import { transferPendingPayoutsForTeacher } from "@/app/lib/payouts";
 import { createNotification } from "@/app/lib/notifications";
 import prisma from "@/prisma";
 import Stripe from "stripe";
 import type { ConnectStatus } from "@prisma/client";
+
+async function getAdminEmails(): Promise<string[]> {
+	const admins = await prisma.user.findMany({
+		where: { role: "admin" },
+		select: { email: true },
+	});
+	return admins.map((admin) => admin.email);
+}
 
 // Stripe requires a separate webhook destination (and signing secret) for
 // "Events from: Connected accounts" vs "Your account" — account.updated for a
@@ -71,20 +79,46 @@ export async function POST(req: Request) {
 
 		case "payment_intent.payment_failed": {
 			const intent = event.data.object;
+			const reason = intent.last_payment_error?.message ?? "no error message";
 			console.error(
 				`[stripe webhook] payment_intent.payment_failed: intent ${intent.id}` +
 					(intent.metadata?.classId ? `, class ${intent.metadata.classId}` : "") +
-					` — ${intent.last_payment_error?.message ?? "no error message"}. Needs manual review.`
+					` — ${reason}. Needs manual review.`
+			);
+
+			const admins = await getAdminEmails();
+			await Promise.all(
+				admins.map((email) =>
+					sendPaymentIssueAlertEmail(email, {
+						kind: "payment_failed",
+						intentId: intent.id,
+						classId: intent.metadata?.classId,
+						reason,
+					})
+				)
 			);
 			break;
 		}
 
 		case "payment_intent.canceled": {
 			const intent = event.data.object;
+			const reason = `canceled — reason: ${intent.cancellation_reason ?? "unknown"}. If the linked class is still "scheduled", it may need manual reconciliation (Stripe auto-cancels an uncaptured pre-auth after ~7 days).`;
 			console.error(
 				`[stripe webhook] payment_intent.canceled: intent ${intent.id}` +
 					(intent.metadata?.classId ? `, class ${intent.metadata.classId}` : "") +
-					` — reason: ${intent.cancellation_reason ?? "unknown"}. If the linked class is still "scheduled", it may need manual reconciliation (Stripe auto-cancels an uncaptured pre-auth after ~7 days).`
+					` — ${reason}`
+			);
+
+			const admins = await getAdminEmails();
+			await Promise.all(
+				admins.map((email) =>
+					sendPaymentIssueAlertEmail(email, {
+						kind: "pre_auth_canceled",
+						intentId: intent.id,
+						classId: intent.metadata?.classId,
+						reason,
+					})
+				)
 			);
 			break;
 		}
@@ -116,13 +150,10 @@ export async function POST(req: Request) {
 			// Disputes aren't actionable from inside The Learning Nexus (they're resolved in
 			// the Stripe dashboard), so email is the right channel here rather
 			// than an in-app notification.
-			const admins = await prisma.user.findMany({
-				where: { role: "admin" },
-				select: { email: true },
-			});
+			const admins = await getAdminEmails();
 			await Promise.all(
-				admins.map((admin) =>
-					sendDisputeAlertEmail(admin.email, {
+				admins.map((email) =>
+					sendDisputeAlertEmail(email, {
 						disputeId: dispute.id,
 						paymentIntentId: paymentIntentId ?? "unknown",
 						reason: dispute.reason,
@@ -130,6 +161,47 @@ export async function POST(req: Request) {
 					})
 				)
 			);
+			break;
+		}
+
+		case "charge.dispute.closed": {
+			const dispute = event.data.object;
+			const paymentIntentId =
+				typeof dispute.payment_intent === "string"
+					? dispute.payment_intent
+					: dispute.payment_intent?.id;
+
+			console.error(
+				`[stripe webhook] charge.dispute.closed: dispute ${dispute.id}, payment intent ${paymentIntentId}, status ${dispute.status}, amount ${dispute.amount}.`
+			);
+
+			// A won dispute (or one lost before any payout went out) needs no
+			// further reconciliation on our side. A lost dispute after the
+			// teacher was already paid out is the same shape of problem as a
+			// transfer reversal above — the platform no longer has the funds
+			// it already sent out — so it's surfaced the same way: mark the
+			// payout failed (visible to the teacher/admin) and notify.
+			if (paymentIntentId && dispute.status === "lost") {
+				const payment = await prisma.payment.findFirst({
+					where: { intentId: paymentIntentId },
+				});
+				if (payment && payment.payoutStatus === "transferred") {
+					await prisma.payment.update({
+						where: { id: payment.id },
+						data: {
+							payoutStatus: "failed",
+							payoutError: `Dispute ${dispute.id} lost — funds returned to the customer after the teacher was already paid out.`,
+						},
+					});
+					await createNotification(
+						payment.teacherId,
+						"payout_reversed",
+						"Payout Disputed",
+						`A class you were paid €${Number(payment.teacherPayoutAmount).toFixed(2)} for is now under a lost payment dispute. Contact support.`,
+						"/main/teacher/payouts",
+					);
+				}
+			}
 			break;
 		}
 
@@ -202,6 +274,53 @@ export async function POST(req: Request) {
 			if (newStatus === "active") {
 				await transferPendingPayoutsForTeacher(user.id);
 			}
+			break;
+		}
+
+		case "account.application.deauthorized": {
+			// Fires when a teacher disconnects the platform's access to their
+			// Connect account (or Stripe revokes it). Without this, future
+			// completed classes for them keep silently failing to pay out —
+			// transferPayoutForClass would try to transfer to an account we no
+			// longer have access to — with no reason surfaced anywhere. The
+			// connected account id lives on the event itself (Connect-scoped
+			// events aren't otherwise tied to a specific object we can look up).
+			const accountId = event.account;
+			if (!accountId) break;
+
+			const user = await prisma.user.findUnique({
+				where: { stripeConnectAccountId: accountId },
+				select: { id: true },
+			});
+			if (!user) break;
+
+			// Clear the account id (not just the status): a stale id here would
+			// make startConnectOnboarding try to reuse an account the platform
+			// no longer has access to. Clearing it means the teacher's next
+			// onboarding attempt creates a fresh Express account instead.
+			await prisma.user.update({
+				where: { id: user.id },
+				data: {
+					stripeConnectAccountId: null,
+					connectStatus: "not_started",
+					connectChargesEnabled: false,
+					connectPayoutsEnabled: false,
+					connectDetailsSubmitted: false,
+					connectUpdatedAt: new Date(),
+				},
+			});
+
+			console.error(
+				`[stripe webhook] account.application.deauthorized: account ${accountId}, user ${user.id} — teacher disconnected Stripe Connect. Future completed classes for them will accrue as pending payouts until they reconnect.`
+			);
+
+			await createNotification(
+				user.id,
+				"connect_disconnected",
+				"Stripe Account Disconnected",
+				"Your Stripe account was disconnected, so future class payouts can't be sent. Reconnect it from Payouts to keep getting paid.",
+				"/main/teacher/payouts",
+			);
 			break;
 		}
 
