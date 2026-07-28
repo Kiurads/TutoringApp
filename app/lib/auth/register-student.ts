@@ -43,6 +43,10 @@ export async function registerStudent(
 		return "Please enter a valid password";
 	}
 
+	if (password.length < 8) {
+		return "Password must be at least 8 characters.";
+	}
+
 	if (password !== confirmPassword) {
 		return "Passwords do not match";
 	}

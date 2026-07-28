@@ -86,6 +86,16 @@ describe("registerStudent", () => {
 		expect(prisma.user.findUnique).not.toHaveBeenCalled();
 	});
 
+	it("rejects a password shorter than 8 characters", async () => {
+		const result = await registerStudent(
+			undefined,
+			formData({ ...validFields, password: "short1", confirmPassword: "short1" }),
+		);
+
+		expect(result).toBe("Password must be at least 8 characters.");
+		expect(prisma.user.findUnique).not.toHaveBeenCalled();
+	});
+
 	it("rejects registration when terms are not agreed to", async () => {
 		const result = await registerStudent(
 			undefined,

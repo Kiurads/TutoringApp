@@ -19,6 +19,7 @@ export async function resetPassword(
 
 	if (!token) return "This password reset link is invalid or has expired.";
 	if (!password) return "Please enter a new password";
+	if (password.length < 8) return "Password must be at least 8 characters.";
 	if (password !== confirmPassword) return "Passwords do not match";
 
 	const ip = await getClientIp();
