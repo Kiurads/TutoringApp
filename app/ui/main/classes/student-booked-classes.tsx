@@ -7,6 +7,7 @@ import ClassesTableButtons from "./student-table-buttons";
 import ClassStatusBadge from "./class-status-badge";
 import ClassPaidIcon from "./paid-icon";
 import { BookedClass } from "@/app/lib/types/classes.types";
+import { canPayForClass } from "@/app/lib/classes/can-pay-for-class";
 
 type Filter = "all" | "pending" | "unpaid";
 
@@ -14,9 +15,7 @@ function isPending(c: BookedClass) {
 	return c.status === "requested";
 }
 
-function isUnpaid(c: BookedClass) {
-	return !c.paid && (c.status === "scheduled" || c.status === "completed");
-}
+const isUnpaid = canPayForClass;
 
 function firstCellBorder(c: BookedClass, filter: Filter) {
 	if (filter !== "all") return "border-l-4 border-transparent";

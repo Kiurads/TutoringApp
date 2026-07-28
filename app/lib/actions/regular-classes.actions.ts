@@ -8,6 +8,7 @@ import { createNotification } from "@/app/lib/notifications";
 import { fetchUserByEmail } from "./users.actions";
 import { cancelClassCore } from "./classes.actions";
 import { materializeOccurrences } from "@/app/lib/regular-classes/materialize-occurrences";
+import { computeClassPrice } from "@/app/lib/classes/compute-class-price";
 import { formatUser } from "../types/user.types";
 import { RegularClassData } from "../types/regular-classes.types";
 
@@ -93,7 +94,7 @@ export async function requestRegularClass(
 		select: { name: true },
 	});
 
-	const totalPrice = Number(teacher.pricePerHour) * durationInHours;
+	const totalPrice = computeClassPrice(Number(teacher.pricePerHour), durationInHours);
 
 	const startTime = new Date();
 	startTime.setHours(hour, minute, 0, 0);
