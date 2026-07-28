@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import prisma from "@/prisma";
 import Stripe from "stripe";
 import { isWithinAvailability } from "@/app/lib/availability/check-availability";
+import { computeClassPrice } from "@/app/lib/classes/compute-class-price";
 
 export async function POST(req: Request) {
 	const session = await auth();
@@ -45,10 +46,11 @@ export async function POST(req: Request) {
 	});
 	const studyBoostActive = student?.studentGameProfile?.studyBoostActive ?? false;
 
-	const basePrice = Number(teacher.pricePerHour) * Number(durationInHours);
-	const totalPrice = studyBoostActive
-		? Math.round(basePrice * 0.95 * 100) / 100
-		: basePrice;
+	const totalPrice = computeClassPrice(
+		Number(teacher.pricePerHour),
+		Number(durationInHours),
+		studyBoostActive,
+	);
 	const amountCents = Math.round(totalPrice * 100);
 
 	const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);

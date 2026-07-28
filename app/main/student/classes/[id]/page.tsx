@@ -3,6 +3,7 @@ import { fetchClassById } from "@/app/lib/actions/classes.actions";
 import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
 import { fetchReviewByClassId } from "@/app/lib/actions/ratings.actions";
 import { fetchRefundRequestByClassId } from "@/app/lib/actions/refund-requests.actions";
+import { canPayForClass } from "@/app/lib/classes/can-pay-for-class";
 import ClassInfoCard from "@/app/ui/main/classes/details/class-info-card";
 import ClassActionModals from "@/app/ui/main/classes/details/class-action-modals";
 import JoinClassCard from "@/app/ui/main/classes/details/join-class-card";
@@ -60,7 +61,7 @@ export default async function StudentClassDetailsPage(props: {
 		(status === "requested" && requestedBySelf) ||
 		status === "scheduled";
 	// Pre-auth classes are auto-paid on teacher acceptance — no manual pay needed
-	const canPay = !paid && !hasPreAuth && (status === "scheduled" || status === "completed");
+	const canPay = canPayForClass({ paid, status, hasPreAuth });
 
 	const hasCounterOffer = !!classData.counterOfferTime && status === "requested";
 	const hasActions = canAccept || canRefuse || canCancel || canPay || hasCounterOffer;

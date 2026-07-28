@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import prisma from "@/prisma";
 import { createNotification } from "@/app/lib/notifications";
+import { computeClassPrice } from "./compute-class-price";
 import { generateJitsiRoom } from "./generate-jitsi-room";
 
 export async function createClassAsTeacher(
@@ -43,7 +44,7 @@ export async function createClassAsTeacher(
 	if (!teacher.pricePerHour) return "You must set your hourly rate before creating classes.";
 
 	const durationInHours = parseFloat(duration);
-	const totalPrice = Number(teacher.pricePerHour) * durationInHours;
+	const totalPrice = computeClassPrice(Number(teacher.pricePerHour), durationInHours);
 
 	const [subject] = await Promise.all([
 		prisma.subject.findUnique({ where: { id: subjectId }, select: { name: true } }),

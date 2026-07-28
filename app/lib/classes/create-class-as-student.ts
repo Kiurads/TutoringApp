@@ -6,6 +6,7 @@ import prisma from "@/prisma";
 import { createNotification } from "@/app/lib/notifications";
 import { isWithinAvailability } from "@/app/lib/availability/check-availability";
 import { teacherHasSchedulingConflict } from "./check-teacher-conflict";
+import { computeClassPrice } from "./compute-class-price";
 import { generateJitsiRoom } from "./generate-jitsi-room";
 
 export async function createClassAsStudent(
@@ -70,7 +71,7 @@ export async function createClassAsStudent(
 			return "The teacher already has a class scheduled at this time. Please choose another time.";
 		}
 
-		const totalPrice = Number(teacher.pricePerHour) * durationInHours;
+		const totalPrice = computeClassPrice(Number(teacher.pricePerHour), durationInHours);
 
 		const subject = await prisma.subject.findUnique({
 			where: { id: subjectId },

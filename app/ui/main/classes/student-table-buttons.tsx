@@ -1,6 +1,7 @@
 "use client";
 
 import { BookedClass } from "@/app/lib/types/classes.types";
+import { canPayForClass } from "@/app/lib/classes/can-pay-for-class";
 import ClassActionModals from "@/app/ui/main/classes/details/class-action-modals";
 
 export default function ClassesTableButtons({
@@ -14,7 +15,7 @@ export default function ClassesTableButtons({
 	const canRefuse = status === "requested" && !requestedBySelf;
 	const canCancel =
 		(status === "requested" && requestedBySelf) || status === "scheduled";
-	const canPay = !paid && (status === "scheduled" || status === "completed");
+	const canPay = canPayForClass(bookedClass);
 
 	if (!canAccept && !canRefuse && !canCancel && !canPay) return null;
 
