@@ -86,8 +86,16 @@ export async function transferPendingPayoutsForTeacher(teacherId: string): Promi
 		select: { classId: true },
 	});
 
+	// Isolate each class: transferPayoutForClass already swallows its own
+	// Stripe errors, but an unhandled throw elsewhere in it (e.g. a Prisma
+	// error) would otherwise abort the sweep partway through, leaving later
+	// classes in this teacher's backlog unprocessed until the next trigger.
 	for (const p of pending) {
-		await transferPayoutForClass(p.classId);
+		try {
+			await transferPayoutForClass(p.classId);
+		} catch (err) {
+			console.error(`Failed to sweep payout for class ${p.classId}:`, err);
+		}
 	}
 }
 

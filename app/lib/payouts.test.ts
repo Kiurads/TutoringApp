@@ -175,6 +175,23 @@ describe("transferPendingPayoutsForTeacher", () => {
 		});
 		expect(prisma.payment.findFirst).toHaveBeenCalledTimes(2);
 	});
+
+	// The bug this fix closes: an unhandled throw for one class used to abort
+	// the whole sweep, leaving every later class in the teacher's backlog
+	// unprocessed until the next trigger.
+	it("still attempts the remaining classes when one fails unexpectedly", async () => {
+		vi.mocked(prisma.payment.findMany).mockResolvedValue([
+			{ classId: "class_1" },
+			{ classId: "class_2" },
+		] as never);
+		vi.mocked(prisma.payment.findFirst)
+			.mockRejectedValueOnce(new Error("DB hiccup"))
+			.mockResolvedValueOnce(null);
+
+		await expect(transferPendingPayoutsForTeacher("teacher_1")).resolves.not.toThrow();
+
+		expect(prisma.payment.findFirst).toHaveBeenCalledTimes(2);
+	});
 });
 
 describe("ensureConnectAccount", () => {

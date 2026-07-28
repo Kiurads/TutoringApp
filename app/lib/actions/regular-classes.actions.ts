@@ -198,8 +198,16 @@ export async function cancelRegularClass(id: string): Promise<void> {
 		select: { id: true },
 	});
 
+	// Isolate each occurrence: an unhandled throw for one used to abort the
+	// whole batch, leaving every later occurrence (and the notification
+	// below) unprocessed even though the series itself was already marked
+	// inactive above.
 	for (const occurrence of futureOccurrences) {
-		await cancelClassCore(occurrence.id, user);
+		try {
+			await cancelClassCore(occurrence.id, user);
+		} catch (err) {
+			console.error(`Failed to cancel occurrence ${occurrence.id}:`, err);
+		}
 	}
 
 	const isTeacher = user?.id === rc.teacherId;

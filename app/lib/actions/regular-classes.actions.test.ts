@@ -271,6 +271,34 @@ describe("cancelRegularClass", () => {
 		expect(cancelClassCore).toHaveBeenCalledWith("occ1", { id: "student1", role: "student" });
 		expect(cancelClassCore).toHaveBeenCalledWith("occ2", { id: "student1", role: "student" });
 	});
+
+	// The bug this fix closes: an unhandled throw for one occurrence used to
+	// abort the whole batch, leaving every later occurrence uncancelled even
+	// though the series itself was already marked inactive.
+	it("still cancels the remaining occurrences when one fails unexpectedly", async () => {
+		vi.mocked(auth).mockResolvedValue(mockSession as never);
+		vi.mocked(fetchUserByEmail).mockResolvedValue({ id: "student1", role: "student" } as never);
+		vi.mocked(prisma.regularClass.findUnique).mockResolvedValue({
+			id: "rc1",
+			teacherId: "teacher1",
+			studentId: "student1",
+			status: "active",
+			dayOfWeek: 2,
+		} as never);
+		vi.mocked(prisma.regularClass.update).mockResolvedValue({} as never);
+		vi.mocked(prisma.class.findMany).mockResolvedValue([
+			{ id: "occ1" },
+			{ id: "occ2" },
+		] as never);
+		vi.mocked(cancelClassCore)
+			.mockRejectedValueOnce(new Error("Stripe hiccup"))
+			.mockResolvedValueOnce(null);
+
+		await expect(cancelRegularClass("rc1")).resolves.not.toThrow();
+
+		expect(cancelClassCore).toHaveBeenCalledTimes(2);
+		expect(cancelClassCore).toHaveBeenCalledWith("occ2", { id: "student1", role: "student" });
+	});
 });
 
 describe("fetchRegularClassesByStudent", () => {
