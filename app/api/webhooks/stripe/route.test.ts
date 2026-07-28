@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import prisma from "@/prisma";
 import { createPaymentForClass } from "@/app/lib/actions/paymets.actions";
-import { sendDisputeAlertEmail } from "@/app/lib/email";
+import { sendDisputeAlertEmail, sendPaymentIssueAlertEmail } from "@/app/lib/email";
 import { transferPendingPayoutsForTeacher } from "@/app/lib/payouts";
 import { POST } from "./route";
 
@@ -30,6 +30,7 @@ vi.mock("@/app/lib/actions/paymets.actions", () => ({
 
 vi.mock("@/app/lib/email", () => ({
 	sendDisputeAlertEmail: vi.fn(),
+	sendPaymentIssueAlertEmail: vi.fn(),
 }));
 
 vi.mock("@/app/lib/payouts", () => ({
@@ -117,7 +118,7 @@ describe("POST /api/webhooks/stripe", () => {
 		expect(createPaymentForClass).not.toHaveBeenCalled();
 	});
 
-	it("logs payment_intent.payment_failed without throwing", async () => {
+	it("emails every admin on payment_intent.payment_failed", async () => {
 		mockConstructEvent.mockReturnValue({
 			type: "payment_intent.payment_failed",
 			data: {
@@ -128,22 +129,40 @@ describe("POST /api/webhooks/stripe", () => {
 				},
 			},
 		});
+		vi.mocked(prisma.user.findMany).mockResolvedValue([
+			{ email: "admin1@test.com" },
+		] as never);
 
 		const res = await POST(makeRequest("{}"));
 
+		expect(sendPaymentIssueAlertEmail).toHaveBeenCalledWith("admin1@test.com", {
+			kind: "payment_failed",
+			intentId: "pi_2",
+			classId: "class_2",
+			reason: expect.stringContaining("card declined"),
+		});
 		expect(res.status).toBe(200);
 	});
 
-	it("logs payment_intent.canceled without throwing", async () => {
+	it("emails every admin on payment_intent.canceled", async () => {
 		mockConstructEvent.mockReturnValue({
 			type: "payment_intent.canceled",
 			data: {
 				object: { id: "pi_3", metadata: {}, cancellation_reason: "expired" },
 			},
 		});
+		vi.mocked(prisma.user.findMany).mockResolvedValue([
+			{ email: "admin1@test.com" },
+		] as never);
 
 		const res = await POST(makeRequest("{}"));
 
+		expect(sendPaymentIssueAlertEmail).toHaveBeenCalledWith("admin1@test.com", {
+			kind: "pre_auth_canceled",
+			intentId: "pi_3",
+			classId: undefined,
+			reason: expect.stringContaining("expired"),
+		});
 		expect(res.status).toBe(200);
 	});
 
@@ -259,6 +278,140 @@ describe("POST /api/webhooks/stripe", () => {
 				"payout_reversed",
 				"Payout Reversed",
 				expect.stringContaining("42.50"),
+				"/main/teacher/payouts",
+			);
+			expect(res.status).toBe(200);
+		});
+	});
+
+	describe("charge.dispute.closed", () => {
+		function disputeClosedEvent(overrides: Record<string, unknown> = {}) {
+			return {
+				type: "charge.dispute.closed",
+				data: {
+					object: {
+						id: "dp_1",
+						payment_intent: "pi_5",
+						status: "lost",
+						amount: 10000,
+						...overrides,
+					},
+				},
+			};
+		}
+
+		it("does nothing for a won dispute", async () => {
+			mockConstructEvent.mockReturnValue(disputeClosedEvent({ status: "won" }));
+
+			const res = await POST(makeRequest("{}"));
+
+			expect(prisma.payment.findFirst).not.toHaveBeenCalled();
+			expect(res.status).toBe(200);
+		});
+
+		it("does nothing for a lost dispute when the payout was never transferred", async () => {
+			mockConstructEvent.mockReturnValue(disputeClosedEvent());
+			vi.mocked(prisma.payment.findFirst).mockResolvedValue({
+				id: "pay_1",
+				payoutStatus: "not_applicable",
+			} as never);
+
+			const res = await POST(makeRequest("{}"));
+
+			expect(prisma.payment.update).not.toHaveBeenCalled();
+			expect(res.status).toBe(200);
+		});
+
+		// The bug this fix closes: only charge.dispute.created was handled — a
+		// chargeback that's later lost left the payment looking untouched
+		// forever, even after the teacher had already been paid out for it.
+		it("marks an already-transferred payout as failed and notifies the teacher on a lost dispute", async () => {
+			const { createNotification } = await import("@/app/lib/notifications");
+			mockConstructEvent.mockReturnValue(disputeClosedEvent());
+			vi.mocked(prisma.payment.findFirst).mockResolvedValue({
+				id: "pay_1",
+				teacherId: "teacher_1",
+				teacherPayoutAmount: 42.5,
+				payoutStatus: "transferred",
+			} as never);
+
+			const res = await POST(makeRequest("{}"));
+
+			expect(prisma.payment.update).toHaveBeenCalledWith({
+				where: { id: "pay_1" },
+				data: {
+					payoutStatus: "failed",
+					payoutError: expect.stringContaining("dp_1"),
+				},
+			});
+			expect(createNotification).toHaveBeenCalledWith(
+				"teacher_1",
+				"payout_reversed",
+				"Payout Disputed",
+				expect.stringContaining("42.50"),
+				"/main/teacher/payouts",
+			);
+			expect(res.status).toBe(200);
+		});
+	});
+
+	describe("account.application.deauthorized", () => {
+		function deauthorizedEvent(account = "acct_1") {
+			return {
+				type: "account.application.deauthorized",
+				account,
+				data: { object: {} },
+			};
+		}
+
+		it("is a safe no-op when there is no account id on the event", async () => {
+			mockConstructEvent.mockReturnValue({
+				type: "account.application.deauthorized",
+				data: { object: {} },
+			});
+
+			const res = await POST(makeRequest("{}"));
+
+			expect(prisma.user.findUnique).not.toHaveBeenCalled();
+			expect(res.status).toBe(200);
+		});
+
+		it("is a safe no-op when the account id doesn't match any User", async () => {
+			mockConstructEvent.mockReturnValue(deauthorizedEvent());
+			vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
+			const res = await POST(makeRequest("{}"));
+
+			expect(prisma.user.update).not.toHaveBeenCalled();
+			expect(res.status).toBe(200);
+		});
+
+		// The bug this fix closes: nothing handled a teacher disconnecting
+		// Stripe — future completed classes for them would keep silently
+		// failing to pay out with no reason surfaced anywhere.
+		it("clears the Connect account and notifies the teacher", async () => {
+			const { createNotification } = await import("@/app/lib/notifications");
+			mockConstructEvent.mockReturnValue(deauthorizedEvent());
+			vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "u1" } as never);
+
+			const res = await POST(makeRequest("{}"));
+
+			expect(prisma.user.update).toHaveBeenCalledWith({
+				where: { id: "u1" },
+				data: {
+					stripeConnectAccountId: null,
+					connectStatus: "not_started",
+					connectChargesEnabled: false,
+					connectPayoutsEnabled: false,
+					connectDetailsSubmitted: false,
+					connectUpdatedAt: expect.any(Date),
+				},
+			});
+			expect(createNotification).toHaveBeenCalledWith(
+				"u1",
+				"connect_disconnected",
+				"Stripe Account Disconnected",
+				expect.any(String),
 				"/main/teacher/payouts",
 			);
 			expect(res.status).toBe(200);
