@@ -122,4 +122,14 @@ describe("resetPassword", () => {
 		expect(result).toBe("Passwords do not match");
 		expect(prisma.verificationToken.findFirst).not.toHaveBeenCalled();
 	});
+
+	it("rejects a new password shorter than 8 characters", async () => {
+		const result = await resetPassword(
+			undefined,
+			formData({ token: "tok123", password: "short1", confirmPassword: "short1" }),
+		);
+
+		expect(result).toBe("Password must be at least 8 characters.");
+		expect(prisma.verificationToken.findFirst).not.toHaveBeenCalled();
+	});
 });

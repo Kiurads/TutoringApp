@@ -1,10 +1,10 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
 import prisma from "./prisma";
 import { authConfig } from "./auth.config";
 import { applyPasswordStalenessCheck } from "@/app/lib/auth/session-staleness";
+import { verifyCredentials } from "@/app/lib/auth/verify-credentials";
 
 export const {
 	handlers: { GET, POST },
@@ -38,29 +38,11 @@ export const {
 				}
 
 				const email = credentials.email as string;
+				const password = credentials.password as string;
 
-				const user = await prisma.user.findUnique({
-					where: { email },
-					select: {
-						id: true,
-						email: true,
-						password: true,
-						role: true,
-						teachingStyle: true,
-						passwordChangedAt: true,
-					},
-				});
-
+				const user = await verifyCredentials(email, password);
 				if (!user) {
-					return null;
-				} else {
-					const isMatch = bcrypt.compareSync(
-						credentials.password as string,
-						user.password
-					);
-					if (!isMatch) {
-						throw new Error("Incorrect password.");
-					}
+					throw new Error("Incorrect password.");
 				}
 
 				// Set teachers online on login
@@ -71,15 +53,7 @@ export const {
 					});
 				}
 
-				return {
-					id: user.id,
-					email: user.email,
-					role: user.role,
-					// Non-teachers are never gated on this, so `true` is a safe default.
-					teacherPreferencesSet:
-						user.role === "teacher" ? user.teachingStyle !== null : true,
-					passwordChangedAt: user.passwordChangedAt,
-				};
+				return user;
 			},
 		}),
 	],

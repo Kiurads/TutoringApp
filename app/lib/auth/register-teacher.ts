@@ -49,6 +49,7 @@ export async function registerTeacher(
 
 	if (!email) return "Please enter a valid email";
 	if (!password) return "Please enter a valid password";
+	if (password.length < 8) return "Password must be at least 8 characters.";
 	if (password !== confirmPassword) return "Passwords do not match";
 	if (!firstName) return "Please enter a valid first name";
 	if (!lastName) return "Please enter a valid last name";
