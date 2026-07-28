@@ -131,6 +131,9 @@ export default async function TeacherPayoutsPage({
 											<span className={`badge badge-sm ${PAYOUT_STATUS_BADGE[payment.payoutStatus]}`}>
 												{PAYOUT_STATUS_LABEL[payment.payoutStatus]}
 											</span>
+											{payment.payoutStatus === "failed" && payment.payoutError && (
+												<p className="text-xs text-error/70 mt-1 max-w-xs">{payment.payoutError}</p>
+											)}
 										</td>
 										<td className="px-4 py-3 text-base-content text-xs whitespace-nowrap">
 											{new Date(payment.date).toLocaleDateString("en-US", {

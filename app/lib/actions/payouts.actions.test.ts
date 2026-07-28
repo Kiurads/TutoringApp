@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { auth } from "@/auth";
 import prisma from "@/prisma";
 import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
-import { startConnectOnboarding, getConnectStatus } from "./payouts.actions";
+import { startConnectOnboarding, getConnectStatus, retryFailedPayout } from "./payouts.actions";
 
 const { mockAccountsCreate, mockAccountLinksCreate } = vi.hoisted(() => ({
 	mockAccountsCreate: vi.fn(),
@@ -20,12 +20,32 @@ vi.mock("stripe", () => ({
 vi.mock("@/auth", () => ({ auth: vi.fn() }));
 
 vi.mock("@/prisma", () => ({
-	default: { user: { update: vi.fn() } },
+	default: {
+		user: { update: vi.fn() },
+		payment: { findUnique: vi.fn() },
+	},
 }));
 
 vi.mock("@/app/lib/actions/users.actions", () => ({
 	fetchUserByEmail: vi.fn(),
 }));
+
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+
+// ensureConnectAccount is deliberately left real here (it runs against the
+// already-mocked Stripe/prisma above) — only transferPayoutForClass is
+// swapped out, since retryFailedPayout's tests just need to assert it was
+// called, not exercise its own internals (covered in payouts.test.ts).
+const { mockTransferPayoutForClass } = vi.hoisted(() => ({
+	mockTransferPayoutForClass: vi.fn(),
+}));
+vi.mock("@/app/lib/payouts", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@/app/lib/payouts")>();
+	return {
+		...actual,
+		transferPayoutForClass: mockTransferPayoutForClass,
+	};
+});
 
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -145,5 +165,67 @@ describe("getConnectStatus", () => {
 			connectPayoutsEnabled: true,
 			connectDetailsSubmitted: true,
 		});
+	});
+});
+
+describe("retryFailedPayout", () => {
+	it("rejects unauthenticated requests", async () => {
+		vi.mocked(auth).mockResolvedValue(null as never);
+
+		const result = await retryFailedPayout("pay1");
+
+		expect(result).toEqual({ error: "Not authenticated." });
+		expect(mockTransferPayoutForClass).not.toHaveBeenCalled();
+	});
+
+	it("rejects non-admins", async () => {
+		vi.mocked(auth).mockResolvedValue({ user: { email: "teacher@test.com" } } as never);
+		vi.mocked(fetchUserByEmail).mockResolvedValue({ id: "t1", role: "teacher" } as never);
+
+		const result = await retryFailedPayout("pay1");
+
+		expect(result).toEqual({ error: "Not authorized." });
+		expect(mockTransferPayoutForClass).not.toHaveBeenCalled();
+	});
+
+	it("returns an error when the payment doesn't exist", async () => {
+		vi.mocked(auth).mockResolvedValue({ user: { email: "admin@test.com" } } as never);
+		vi.mocked(fetchUserByEmail).mockResolvedValue({ id: "a1", role: "admin" } as never);
+		vi.mocked(prisma.payment.findUnique).mockResolvedValue(null);
+
+		const result = await retryFailedPayout("pay1");
+
+		expect(result).toEqual({ error: "Payment not found." });
+		expect(mockTransferPayoutForClass).not.toHaveBeenCalled();
+	});
+
+	it("rejects retrying a payout that isn't currently failed", async () => {
+		vi.mocked(auth).mockResolvedValue({ user: { email: "admin@test.com" } } as never);
+		vi.mocked(fetchUserByEmail).mockResolvedValue({ id: "a1", role: "admin" } as never);
+		vi.mocked(prisma.payment.findUnique).mockResolvedValue({
+			classId: "class1",
+			payoutStatus: "transferred",
+		} as never);
+
+		const result = await retryFailedPayout("pay1");
+
+		expect(result).toEqual({ error: "Only failed payouts can be retried." });
+		expect(mockTransferPayoutForClass).not.toHaveBeenCalled();
+	});
+
+	it("retries the transfer and revalidates the admin payments page", async () => {
+		const { revalidatePath } = await import("next/cache");
+		vi.mocked(auth).mockResolvedValue({ user: { email: "admin@test.com" } } as never);
+		vi.mocked(fetchUserByEmail).mockResolvedValue({ id: "a1", role: "admin" } as never);
+		vi.mocked(prisma.payment.findUnique).mockResolvedValue({
+			classId: "class1",
+			payoutStatus: "failed",
+		} as never);
+
+		const result = await retryFailedPayout("pay1");
+
+		expect(mockTransferPayoutForClass).toHaveBeenCalledWith("class1");
+		expect(revalidatePath).toHaveBeenCalledWith("/main/admin/payments");
+		expect(result).toEqual({});
 	});
 });

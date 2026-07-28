@@ -1,4 +1,5 @@
 import prisma from "@/prisma";
+import RetryPayoutButton from "@/app/ui/main/payments/retry-payout-button";
 
 const PAYOUT_STATUS_BADGE: Record<string, string> = {
 	transferred: "badge-success",
@@ -19,10 +20,12 @@ async function getPayments() {
 		orderBy: { createdAt: "desc" },
 		select: {
 			id: true,
+			classId: true,
 			amount: true,
 			platformFeeAmount: true,
 			teacherPayoutAmount: true,
 			payoutStatus: true,
+			payoutError: true,
 			createdAt: true,
 			student: { select: { firstName: true, lastName: true } },
 			teacher: { select: { firstName: true, lastName: true } },
@@ -99,6 +102,14 @@ export default async function PaymentsPage() {
 												<span className={`badge badge-sm ${PAYOUT_STATUS_BADGE[p.payoutStatus]}`}>
 													{PAYOUT_STATUS_LABEL[p.payoutStatus]}
 												</span>
+												{p.payoutStatus === "failed" && (
+													<div className="flex flex-col gap-1 mt-1 max-w-xs">
+														{p.payoutError && (
+															<p className="text-xs text-error/70">{p.payoutError}</p>
+														)}
+														<RetryPayoutButton paymentId={p.id} />
+													</div>
+												)}
 											</td>
 											<td className="text-xs text-base-content/50 whitespace-nowrap">
 												{new Date(p.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
