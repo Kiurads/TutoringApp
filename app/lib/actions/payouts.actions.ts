@@ -2,9 +2,11 @@
 
 import { auth } from "@/auth";
 import Stripe from "stripe";
+import { revalidatePath } from "next/cache";
 import type { ConnectStatus } from "@prisma/client";
+import prisma from "@/prisma";
 import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
-import { ensureConnectAccount } from "@/app/lib/payouts";
+import { ensureConnectAccount, transferPayoutForClass } from "@/app/lib/payouts";
 
 function getAppUrl() {
 	return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -70,4 +72,31 @@ export async function getConnectStatus(): Promise<ConnectStatusInfo | { error: s
 		connectPayoutsEnabled: user.connectPayoutsEnabled,
 		connectDetailsSubmitted: user.connectDetailsSubmitted,
 	};
+}
+
+// Admin-triggered retry for a payout that previously failed — the failure
+// reason (Payment.payoutError) was already captured in the database, just
+// never actionable from anywhere in the app. transferPayoutForClass's own
+// compare-and-swap claim already accepts a "failed" payoutStatus, so this
+// is just re-invoking the same path a completed class goes through, not a
+// separate retry mechanism.
+export async function retryFailedPayout(paymentId: string): Promise<{ error?: string }> {
+	const session = await auth();
+	if (!session?.user?.email) return { error: "Not authenticated." };
+
+	const user = await fetchUserByEmail(session.user.email);
+	if (!user || user.role !== "admin") return { error: "Not authorized." };
+
+	const payment = await prisma.payment.findUnique({
+		where: { id: paymentId },
+		select: { classId: true, payoutStatus: true },
+	});
+	if (!payment) return { error: "Payment not found." };
+	if (payment.payoutStatus !== "failed") {
+		return { error: "Only failed payouts can be retried." };
+	}
+
+	await transferPayoutForClass(payment.classId);
+	revalidatePath("/main/admin/payments");
+	return {};
 }

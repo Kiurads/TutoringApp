@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import prisma from "@/prisma";
 import { auth } from "@/auth";
 import { fetchUserByEmail } from "./users.actions";
-import { createPaymentForClass } from "./paymets.actions";
+import { createPaymentForClass, fetchPaymentsByTeacherId } from "./paymets.actions";
 import { cancelClassById } from "./classes.actions";
 import { createNotification } from "@/app/lib/notifications";
 
@@ -30,6 +30,7 @@ vi.mock("@/prisma", () => ({
     },
     payment: {
       create: vi.fn(),
+      findMany: vi.fn(),
     },
     user: {
       findUnique: vi.fn(),
@@ -289,5 +290,47 @@ describe("cancelClassById — Stripe refund", () => {
     expect(result).toBe("Class not found.");
     expect(prisma.class.update).not.toHaveBeenCalled();
     expect(mockRefundsCreate).not.toHaveBeenCalled();
+  });
+});
+
+describe("fetchPaymentsByTeacherId", () => {
+  it("returns an empty array when the teacher is not found", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
+    const result = await fetchPaymentsByTeacherId("nobody@test.com");
+
+    expect(result).toEqual([]);
+  });
+
+  it("includes the payout error reason for a failed payout", async () => {
+    const amount = dec(50);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "t1" } as never);
+    vi.mocked(prisma.payment.findMany).mockResolvedValue([
+      {
+        id: "pay1",
+        amount,
+        teacherPayoutAmount: dec(42.5),
+        platformFeeAmount: dec(7.5),
+        payoutStatus: "failed",
+        payoutError: "Destination account is currently restricted.",
+        student: { firstName: "Ana", lastName: "Lima" },
+        createdAt: new Date("2026-01-01"),
+      },
+    ] as never);
+
+    const result = await fetchPaymentsByTeacherId("teacher@test.com");
+
+    expect(result).toEqual([
+      {
+        id: "pay1",
+        amount,
+        teacherPayoutAmount: 42.5,
+        platformFeeAmount: 7.5,
+        payoutStatus: "failed",
+        payoutError: "Destination account is currently restricted.",
+        studentName: "Ana Lima",
+        date: new Date("2026-01-01"),
+      },
+    ]);
   });
 });

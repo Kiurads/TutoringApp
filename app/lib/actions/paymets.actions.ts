@@ -61,6 +61,7 @@ export async function fetchPaymentsByTeacherId(email: string) {
 			teacherPayoutAmount: true,
 			platformFeeAmount: true,
 			payoutStatus: true,
+			payoutError: true,
 			student: {
 				select: {
 					firstName: true,
@@ -83,6 +84,7 @@ export async function fetchPaymentsByTeacherId(email: string) {
 		teacherPayoutAmount: (p.teacherPayoutAmount ?? p.amount).toNumber(),
 		platformFeeAmount: p.platformFeeAmount ? p.platformFeeAmount.toNumber() : 0,
 		payoutStatus: p.payoutStatus,
+		payoutError: p.payoutError,
 		studentName: `${p.student.firstName} ${p.student.lastName}`,
 		date: p.createdAt,
 	}));
