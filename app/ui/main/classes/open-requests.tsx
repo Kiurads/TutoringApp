@@ -47,7 +47,19 @@ export default function OpenRequests({ requests }: { requests: OpenRequest[] }) 
 					<tbody className="divide-y divide-base-300">
 						{requests.map((r) => (
 							<tr key={r.id} className="hover:bg-base-200/60 transition-colors">
-								<td className="px-4 py-2 font-semibold capitalize">{r.subject}</td>
+								<td className="px-4 py-2 font-semibold capitalize">
+									<span className="flex items-center gap-1.5">
+										{r.subject}
+										{r.priority && (
+											<span
+												className="badge badge-primary badge-xs gap-1"
+												title="Priority Match — this student purchased priority booking"
+											>
+												<i className="fa-solid fa-bolt"></i> Priority
+											</span>
+										)}
+									</span>
+								</td>
 								<td className="px-4 py-2 capitalize">{r.studentName}</td>
 								<td className="px-4 py-2 text-xs whitespace-nowrap">
 									<span className="block">

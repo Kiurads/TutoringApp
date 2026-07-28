@@ -754,6 +754,7 @@ export interface OpenRequest {
 	studentName: string;
 	startTime: Date;
 	durationInHours: string;
+	priority: boolean;
 }
 
 export async function fetchOpenRequestsForTeacher(
@@ -781,10 +782,16 @@ export async function fetchOpenRequestsForTeacher(
 			id: true,
 			startTime: true,
 			durationInHours: true,
+			priority: true,
 			student: { select: { firstName: true, lastName: true } },
 			subject: { select: { name: true } },
 		},
-		orderBy: { startTime: "asc" },
+		// Priority Match (a gem-store perk) is set on the class at broadcast
+		// time but was never actually read anywhere — this is the only place
+		// it can matter, since it's purely about which teacher sees an
+		// open request first. Priority requests surface first; ties within
+		// each group still order by start time.
+		orderBy: [{ priority: "desc" }, { startTime: "asc" }],
 	});
 
 	return openRequests.map((r) => ({
@@ -793,6 +800,7 @@ export async function fetchOpenRequestsForTeacher(
 		studentName: `${r.student.firstName} ${r.student.lastName}`,
 		startTime: r.startTime,
 		durationInHours: decimalToHours(r.durationInHours.toNumber()),
+		priority: r.priority,
 	}));
 }
 
