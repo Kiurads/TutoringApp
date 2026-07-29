@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { signIn } from "@/auth";
-import { rateLimit, getClientIp } from "@/app/lib/auth/rate-limit";
+import { rateLimit, getClientIp, escalatingLockout, clearLockout } from "@/app/lib/auth/rate-limit";
 import { authenticate } from "./authenticate";
 
 const { MockAuthError } = vi.hoisted(() => ({
@@ -18,6 +18,8 @@ vi.mock("next-auth", () => ({ AuthError: MockAuthError }));
 vi.mock("@/app/lib/auth/rate-limit", () => ({
 	getClientIp: vi.fn().mockResolvedValue("127.0.0.1"),
 	rateLimit: vi.fn().mockReturnValue({ allowed: true, retryAfterSeconds: 0 }),
+	escalatingLockout: vi.fn().mockReturnValue({ allowed: true, retryAfterSeconds: 0, lockoutLevel: 0 }),
+	clearLockout: vi.fn(),
 }));
 
 function formData(fields: Record<string, string>) {
@@ -29,6 +31,7 @@ function formData(fields: Record<string, string>) {
 beforeEach(() => {
 	vi.clearAllMocks();
 	vi.mocked(rateLimit).mockReturnValue({ allowed: true, retryAfterSeconds: 0 });
+	vi.mocked(escalatingLockout).mockReturnValue({ allowed: true, retryAfterSeconds: 0, lockoutLevel: 0 });
 	vi.mocked(getClientIp).mockResolvedValue("127.0.0.1");
 });
 
@@ -44,6 +47,22 @@ describe("authenticate", () => {
 			redirect: false,
 		});
 		expect(result).toBeUndefined();
+	});
+
+	it("clears the email's lockout state on a successful login", async () => {
+		vi.mocked(signIn).mockResolvedValue(undefined as never);
+
+		await authenticate(undefined, formData({ email: "T@Test.com", password: "pw" }));
+
+		expect(clearLockout).toHaveBeenCalledWith("login:email:t@test.com");
+	});
+
+	it("does not clear the lockout state when signIn fails", async () => {
+		vi.mocked(signIn).mockRejectedValue(new MockAuthError("CredentialsSignin"));
+
+		await authenticate(undefined, formData({ email: "t@test.com", password: "wrong" }));
+
+		expect(clearLockout).not.toHaveBeenCalled();
 	});
 
 	it("returns a friendly message on invalid credentials", async () => {
@@ -62,12 +81,29 @@ describe("authenticate", () => {
 		expect(result).toBe("Something went wrong.");
 	});
 
-	it("rate-limits repeated attempts before ever calling signIn", async () => {
+	it("rate-limits repeated attempts from the same IP before ever calling signIn", async () => {
 		vi.mocked(rateLimit).mockReturnValue({ allowed: false, retryAfterSeconds: 30 });
 
 		const result = await authenticate(undefined, formData({ email: "t@test.com", password: "pw" }));
 
 		expect(result).toBe("Too many login attempts. Please try again in 30 second(s).");
+		expect(signIn).not.toHaveBeenCalled();
+	});
+
+	// The bug this fix closes: the flat per-IP limiter alone is trivially
+	// bypassed by rotating source IPs — the escalating per-email lockout
+	// can't be sidestepped that way, since it's keyed on the account itself.
+	it("locks out repeated attempts against the same account before ever calling signIn", async () => {
+		vi.mocked(escalatingLockout).mockReturnValue({
+			allowed: false,
+			retryAfterSeconds: 120,
+			lockoutLevel: 1,
+		});
+
+		const result = await authenticate(undefined, formData({ email: "t@test.com", password: "pw" }));
+
+		expect(escalatingLockout).toHaveBeenCalledWith("login:email:t@test.com", 5, 60_000);
+		expect(result).toBe("Too many login attempts. Please try again in 120 second(s).");
 		expect(signIn).not.toHaveBeenCalled();
 	});
 });

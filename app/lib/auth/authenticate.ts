@@ -2,10 +2,16 @@
 
 import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
-import { getClientIp, rateLimit } from "@/app/lib/auth/rate-limit";
+import { getClientIp, rateLimit, escalatingLockout, clearLockout } from "@/app/lib/auth/rate-limit";
 
 // Deter credential stuffing: cap login attempts per email and per IP within
 // a rolling one-minute window. See rate-limit.ts for storage caveats.
+//
+// The email bucket uses escalatingLockout rather than the flat rateLimit
+// the IP bucket uses — it's the one that actually represents "this account
+// is under attack" (unlike the IP bucket, it can't be sidestepped by
+// rotating source IPs), so repeated exhaustion backs off progressively
+// instead of resetting to the same fixed wait every time.
 const LOGIN_MAX_ATTEMPTS_PER_EMAIL = 5;
 const LOGIN_MAX_ATTEMPTS_PER_IP = 15;
 const LOGIN_WINDOW_MS = 60_000;
@@ -16,9 +22,10 @@ export async function authenticate(
 ) {
 	const email = (formData.get("email") as string | null)?.trim().toLowerCase();
 	const ip = await getClientIp();
+	const emailKey = `login:email:${email || "unknown"}`;
 
-	const emailLimit = rateLimit(
-		`login:email:${email || "unknown"}`,
+	const emailLimit = escalatingLockout(
+		emailKey,
 		LOGIN_MAX_ATTEMPTS_PER_EMAIL,
 		LOGIN_WINDOW_MS
 	);
@@ -58,6 +65,10 @@ export async function authenticate(
 		}
 		throw error;
 	}
+
+	// A successful login means this wasn't an attacker guessing — don't let
+	// this account's own past failed attempts count against its next login.
+	clearLockout(emailKey);
 
 	// Deliberately no redirect() here. A Server Action's redirect() drives
 	// Next.js's client-side router, which can serve "/" from its Router

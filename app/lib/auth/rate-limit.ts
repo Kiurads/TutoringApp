@@ -70,6 +70,108 @@ export function rateLimit(
 	return { allowed: true, retryAfterSeconds: 0 };
 }
 
+// ── Escalating account lockout ──────────────────────────────────────────────
+//
+// rateLimit() above is a flat fixed window: exhaust it and you wait exactly
+// windowMs, then get a fresh full allotment — the same wait every time, so
+// sustained automated guessing against one account is only slowed, never
+// discouraged, and per-IP limiting alone is trivially bypassed by rotating
+// IPs. This tracks lockouts *per account* (keyed by email, not IP — rotating
+// source IPs doesn't help an attacker against this), and each time the
+// window is exhausted, the next lockout period roughly doubles.
+
+interface LockoutState {
+	attempts: number;
+	windowResetAt: number;
+	/** How many consecutive times this key has exhausted its window. */
+	lockoutLevel: number;
+	/** 0 when not currently locked. */
+	lockedUntil: number;
+	lastActivityAt: number;
+}
+
+const lockouts = new Map<string, LockoutState>();
+
+const LOCKOUT_LEVEL_CAP = 6; // caps backoff at windowMs * 2^6 = 64x
+// A key that's gone quiet for a day is treated as fresh — an old, resolved
+// incident shouldn't permanently escalate a legitimate user's next typo.
+const LOCKOUT_DECAY_MS = 24 * 3_600_000;
+
+export interface LockoutResult {
+	allowed: boolean;
+	/** Seconds until the caller may retry. 0 when `allowed` is true. */
+	retryAfterSeconds: number;
+	lockoutLevel: number;
+}
+
+/**
+ * Escalating-backoff counterpart to rateLimit(). Same fixed-window attempt
+ * counting, but exhausting the window locks the key out for
+ * `windowMs * 2^lockoutLevel` (capped), with the level incrementing on each
+ * subsequent exhaustion instead of resetting — call clearLockout() on a
+ * successful login so a legitimate user isn't penalized by their own past
+ * failed attempts once they do get in.
+ */
+export function escalatingLockout(
+	key: string,
+	limit: number,
+	windowMs: number
+): LockoutResult {
+	const now = Date.now();
+	let state = lockouts.get(key);
+
+	if (state && now - state.lastActivityAt > LOCKOUT_DECAY_MS) {
+		state = undefined;
+	}
+
+	if (!state) {
+		state = { attempts: 0, windowResetAt: now + windowMs, lockoutLevel: 0, lockedUntil: 0, lastActivityAt: now };
+		lockouts.set(key, state);
+	}
+
+	state.lastActivityAt = now;
+
+	if (state.lockedUntil > now) {
+		return {
+			allowed: false,
+			retryAfterSeconds: Math.max(1, Math.ceil((state.lockedUntil - now) / 1000)),
+			lockoutLevel: state.lockoutLevel,
+		};
+	}
+
+	if (state.windowResetAt <= now) {
+		// Window elapsed without ever being exhausted — reset the attempt
+		// count, but the escalation level only ever clears via clearLockout()
+		// (a successful login), not just the passage of time.
+		state.attempts = 0;
+		state.windowResetAt = now + windowMs;
+	}
+
+	state.attempts += 1;
+
+	if (state.attempts > limit) {
+		const level = Math.min(state.lockoutLevel + 1, LOCKOUT_LEVEL_CAP);
+		state.lockoutLevel = level;
+		const lockoutMs = windowMs * 2 ** level;
+		state.lockedUntil = now + lockoutMs;
+		return {
+			allowed: false,
+			retryAfterSeconds: Math.max(1, Math.ceil(lockoutMs / 1000)),
+			lockoutLevel: level,
+		};
+	}
+
+	return { allowed: true, retryAfterSeconds: 0, lockoutLevel: state.lockoutLevel };
+}
+
+/**
+ * Clears a key's lockout state entirely — call on a successful login so a
+ * legitimate user isn't penalized by their own earlier failed attempts.
+ */
+export function clearLockout(key: string): void {
+	lockouts.delete(key);
+}
+
 /**
  * Best-effort client IP lookup from forwarding headers set by a reverse
  * proxy/load balancer. Falls back to "unknown" (which still rate-limits,
