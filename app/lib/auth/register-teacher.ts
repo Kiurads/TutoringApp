@@ -88,9 +88,7 @@ export async function registerTeacher(
 		console.log("Teacher created with ID:", teacher.id);
 	} catch (error) {
 		console.error(error);
-		return error instanceof Error
-			? error.message
-			: "Something went wrong, please try again.";
+		return "Something went wrong. Please try again.";
 	}
 
 	// Best-effort — a failure here (e.g. Resend outage) must not prevent

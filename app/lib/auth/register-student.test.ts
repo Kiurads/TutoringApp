@@ -76,6 +76,21 @@ describe("registerStudent", () => {
 		expect(redirect).not.toHaveBeenCalled();
 	});
 
+	// The bug this fix closes: a database failure's raw Error was returned
+	// directly to the client (cast as a string, so it would render literally
+	// as "[object Error]") instead of a generic message — risking internal
+	// details leaking into the UI.
+	it("returns a generic error instead of the raw failure on a database error", async () => {
+		vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+		vi.mocked(prisma.user.create).mockRejectedValue(
+			new Error("connect ECONNREFUSED 10.0.0.5:3306"),
+		);
+
+		const result = await registerStudent(undefined, formData(validFields));
+
+		expect(result).toBe("Something went wrong. Please try again.");
+	});
+
 	it("rejects mismatched passwords without touching the database", async () => {
 		const result = await registerStudent(
 			undefined,
