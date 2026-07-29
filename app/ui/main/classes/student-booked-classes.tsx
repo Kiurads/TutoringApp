@@ -6,6 +6,7 @@ import AddClassButton from "./add-class-button";
 import ClassesTableButtons from "./student-table-buttons";
 import ClassStatusBadge from "./class-status-badge";
 import ClassPaidIcon from "./paid-icon";
+import RowStatusIcon from "./row-status-icon";
 import { BookedClass } from "@/app/lib/types/classes.types";
 import { canPayForClass } from "@/app/lib/classes/can-pay-for-class";
 
@@ -101,6 +102,7 @@ export default function BookedClasses(props: { bookedClasses: BookedClass[] }) {
 									>
 										<td className={`px-3 py-2 font-medium text-base-content capitalize ${firstCellBorder(classData, filter)}`}>
 											{classData.subject.name}
+											<RowStatusIcon isPending={isPending(classData)} isUnpaid={isUnpaid(classData)} />
 										</td>
 										<td className="px-3 py-2 text-base-content hidden sm:table-cell">
 											{classData.teacher?.name ?? (
