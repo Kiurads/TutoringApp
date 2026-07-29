@@ -86,9 +86,9 @@ export async function registerStudent(
 			},
 		});
 	} catch (error) {
-		console.log(error);
+		console.error(error);
 
-		return error as string;
+		return "Something went wrong. Please try again.";
 	}
 
 	// Best-effort — a failure here (e.g. Resend outage) must not prevent
