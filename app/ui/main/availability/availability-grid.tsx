@@ -195,6 +195,13 @@ export default function AvailabilityGrid({
 				</div>
 			)}
 
+			{/* Mobile scroll hint — the grid below scrolls horizontally but gives
+			    no visual cue on its own that more days continue off-screen */}
+			<p className="sm:hidden text-xs text-base-content/40 flex items-center gap-1.5 -mb-1">
+				<i className="fa-solid fa-arrows-left-right"></i>
+				Scroll sideways to see the full week
+			</p>
+
 			{/* Grid */}
 			<div className="overflow-x-auto rounded-xl border border-base-300">
 				<div

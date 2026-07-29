@@ -228,6 +228,13 @@ export default function WeeklySchedule({ classes, basePath }: Props) {
 					</div>
 				</div>
 
+				{/* Mobile scroll hint — the grid below scrolls horizontally but gives
+				    no visual cue on its own that more days continue off-screen */}
+				<p className="sm:hidden text-xs text-base-content/40 flex items-center gap-1.5 px-4 pt-2">
+					<i className="fa-solid fa-arrows-left-right"></i>
+					Scroll sideways to see the full week
+				</p>
+
 				<div className="overflow-x-auto">
 					<div className="min-w-[640px]">
 						{/* Day headers */}
