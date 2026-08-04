@@ -53,10 +53,13 @@ export default function SubjectSelect({
 				</label>
 				<ul
 					tabIndex={0}
+					role="listbox"
+					aria-multiselectable="true"
+					aria-label="Select subjects you teach"
 					className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-64 max-h-60 overflow-y-auto"
 				>
 					{subjects.map((subject) => (
-						<li key={subject.id}>
+						<li key={subject.id} role="option" aria-selected={selected.includes(subject.id)}>
 							<label className="label cursor-pointer justify-start gap-2">
 								<input
 									type="checkbox"
