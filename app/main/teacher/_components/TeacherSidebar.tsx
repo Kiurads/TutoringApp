@@ -77,13 +77,13 @@ export default function TeacherSidebar({
 				<label
 					htmlFor="my-drawer-2"
 					aria-label="Open menu"
-					className="btn btn-primary drawer-button lg:hidden fixed bottom-4 left-4 shadow-lg"
+					className="btn btn-primary drawer-button lg:hidden fixed bottom-4 left-4 shadow-lg print:hidden"
 				>
 					<i className="fa-solid fa-bars"></i>
 				</label>
 			</div>
 
-			<div className="drawer-side overflow-hidden lg:!top-16 lg:!h-[calc(100dvh-4rem)]">
+			<div className="drawer-side overflow-hidden lg:!top-16 lg:!h-[calc(100dvh-4rem)] print:hidden">
 				<label
 					htmlFor="my-drawer-2"
 					aria-label="close sidebar"

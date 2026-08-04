@@ -140,6 +140,7 @@ export default async function TeacherEarningsPage() {
 									<th className="px-4 py-3 font-medium text-base-content text-left">Payout</th>
 									<th className="px-4 py-3 font-medium text-base-content text-left">Date</th>
 									<th className="px-4 py-3 font-medium text-base-content text-left">Transaction ID</th>
+									<th className="px-4 py-3 font-medium text-base-content text-left">Receipt</th>
 								</tr>
 							</thead>
 							<tbody className="divide-y divide-base-300">
@@ -170,6 +171,14 @@ export default async function TeacherEarningsPage() {
 										</td>
 										<td className="px-4 py-3 text-base-content/50 font-mono text-xs">
 											{payment.id.slice(0, 8)}…
+										</td>
+										<td className="px-4 py-3">
+											<Link
+												href={`/main/teacher/payments/${payment.id}/receipt`}
+												className="link link-primary text-xs whitespace-nowrap"
+											>
+												<i className="fa-solid fa-receipt" /> View
+											</Link>
 										</td>
 									</tr>
 								))}

@@ -90,6 +90,78 @@ export async function fetchPaymentsByTeacherId(email: string) {
 	}));
 }
 
+export interface PaymentReceipt {
+	id: string;
+	amount: number;
+	platformFeeAmount: number;
+	teacherPayoutAmount: number;
+	createdAt: Date;
+	intentId: string;
+	student: { name: string; email: string };
+	teacher: { name: string; email: string };
+	subjectName: string;
+	classStartTime: Date;
+	durationInHours: number;
+}
+
+/**
+ * Fetches everything needed to render a receipt for a single payment, scoped
+ * to whichever side of the transaction is asking — a student can only pull
+ * up their own receipts, a teacher only theirs. Returns null on a missing
+ * payment or a mismatched viewer rather than throwing, since both cases
+ * should render as "not found" to the caller.
+ */
+export async function fetchPaymentReceipt(
+	paymentId: string,
+	viewerEmail: string,
+): Promise<PaymentReceipt | null> {
+	const payment = await prisma.payment.findUnique({
+		where: { id: paymentId },
+		select: {
+			id: true,
+			amount: true,
+			platformFeeAmount: true,
+			teacherPayoutAmount: true,
+			createdAt: true,
+			intentId: true,
+			student: { select: { firstName: true, lastName: true, email: true } },
+			teacher: { select: { firstName: true, lastName: true, email: true } },
+			class: {
+				select: {
+					startTime: true,
+					durationInHours: true,
+					subject: { select: { name: true } },
+				},
+			},
+		},
+	});
+
+	if (!payment) return null;
+	if (payment.student.email !== viewerEmail && payment.teacher.email !== viewerEmail) {
+		return null;
+	}
+
+	return {
+		id: payment.id,
+		amount: payment.amount.toNumber(),
+		platformFeeAmount: payment.platformFeeAmount?.toNumber() ?? 0,
+		teacherPayoutAmount: (payment.teacherPayoutAmount ?? payment.amount).toNumber(),
+		createdAt: payment.createdAt,
+		intentId: payment.intentId,
+		student: {
+			name: `${payment.student.firstName} ${payment.student.lastName}`,
+			email: payment.student.email,
+		},
+		teacher: {
+			name: `${payment.teacher.firstName} ${payment.teacher.lastName}`,
+			email: payment.teacher.email,
+		},
+		subjectName: payment.class.subject.name,
+		classStartTime: payment.class.startTime,
+		durationInHours: payment.class.durationInHours.toNumber(),
+	};
+}
+
 export async function createPaymentForClass(
 	classId: string,
 	paymentIntentId: string

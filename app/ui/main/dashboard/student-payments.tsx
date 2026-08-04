@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 interface Payment {
 	id: string;
 	amount: number;
@@ -36,6 +38,7 @@ export default function StudentPayments({ payments }: { payments: Payment[] }) {
 								<th className="px-4 py-2 font-medium text-base-content text-left">Teacher</th>
 								<th className="px-4 py-2 font-medium text-base-content text-left">Amount</th>
 								<th className="px-4 py-2 font-medium text-base-content text-left">Date</th>
+								<th className="px-4 py-2 font-medium text-base-content text-left">Receipt</th>
 							</tr>
 						</thead>
 						<tbody className="divide-y divide-base-300">
@@ -49,6 +52,14 @@ export default function StudentPayments({ payments }: { payments: Payment[] }) {
 									</td>
 									<td className="px-4 py-2 text-base-content text-xs whitespace-nowrap">
 										{payment.date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+									</td>
+									<td className="px-4 py-2">
+										<Link
+											href={`/main/student/payments/${payment.id}/receipt`}
+											className="link link-primary text-xs whitespace-nowrap"
+										>
+											<i className="fa-solid fa-receipt" /> View
+										</Link>
 									</td>
 								</tr>
 							))}
