@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { purchaseStoreItem } from "@/app/lib/actions/store.actions";
 import type { StoreItemKey } from "@/app/lib/store-catalog";
 
@@ -19,9 +20,9 @@ export default function PurchaseButton({
 	alreadyOwned,
 	label,
 }: Props) {
+	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
 	const [error, setError] = useState<string | null>(null);
-	const [success, setSuccess] = useState(false);
 
 	const canAfford = currentGems >= cost;
 
@@ -35,13 +36,16 @@ export default function PurchaseButton({
 
 	function handleBuy() {
 		setError(null);
-		setSuccess(false);
 		startTransition(async () => {
 			const result = await purchaseStoreItem(itemKey);
 			if (result.error) {
 				setError(result.error);
 			} else {
-				setSuccess(true);
+				// purchaseStoreItem already revalidates this path server-side, so
+				// navigating back to it (with a toast marker) picks up the fresh
+				// gem balance / ownership state along with the confirmation —
+				// matching how the class/refund flows already confirm actions.
+				router.push("/main/student/store?toast=purchased");
 			}
 		});
 	}
@@ -69,9 +73,6 @@ export default function PurchaseButton({
 			)}
 			{error && (
 				<span className="text-[10px] text-error">{error}</span>
-			)}
-			{success && (
-				<span className="text-[10px] text-success">Purchased!</span>
 			)}
 		</div>
 	);

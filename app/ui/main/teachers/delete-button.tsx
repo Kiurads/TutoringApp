@@ -14,7 +14,7 @@ export default function DeleteTeacherButton(props: { id: string }) {
 		startTransition(async () => {
 			try {
 				await deleteTeacherById(props.id);
-				router.push("/main/admin/teachers");
+				router.push("/main/admin/teachers?toast=deleted");
 			} catch (err) {
 				setError(
 					err instanceof Error ? err.message : "Failed to delete teacher. Please try again."

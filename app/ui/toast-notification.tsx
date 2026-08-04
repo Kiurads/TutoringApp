@@ -34,6 +34,21 @@ const TOASTS: Record<string, { message: string; alertClass: string; icon: string
 		alertClass: "alert-success",
 		icon: "fa-sack-dollar",
 	},
+	purchased: {
+		message: "Purchase successful!",
+		alertClass: "alert-success",
+		icon: "fa-gem",
+	},
+	deleted: {
+		message: "Teacher deleted successfully.",
+		alertClass: "alert-success",
+		icon: "fa-circle-check",
+	},
+	resolved: {
+		message: "Dispute resolved successfully.",
+		alertClass: "alert-success",
+		icon: "fa-circle-check",
+	},
 };
 
 export default function ToastNotification({ toast }: { toast?: string }) {
