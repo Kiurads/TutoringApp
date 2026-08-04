@@ -32,9 +32,13 @@ export interface ClassDataCalendar {
 	subject: string;
 	teacherName: string;
 	studentName: string;
-	/** ISO date string, e.g. "2026-04-07" */
-	date: string;
-	/** "HH:MM" in local time */
+	/**
+	 * Full ISO 8601 instant (UTC). Deliberately NOT pre-split into a
+	 * server-local date/"HH:MM" pair — a student and teacher in different
+	 * timezones need to each see this converted to their own local time, and
+	 * only the browser (not this server action) knows the viewer's timezone.
+	 * Format this on the client via `new Date(startTime)` + local getters.
+	 */
 	startTime: string;
 	duration: number;
 	status: string;
@@ -401,24 +405,15 @@ export async function fetchClassBySelfCalendar(): Promise<
 		orderBy: { startTime: "asc" },
 	});
 
-	return classes.map((c) => {
-		// Format date and time in local ISO-like strings without timezone shift
-		const d = c.startTime;
-		const pad = (n: number) => String(n).padStart(2, "0");
-		const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-		const startTime = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-
-		return {
-			id: c.id,
-			subject: c.subject.name,
-			teacherName: c.teacher ? `${c.teacher.firstName} ${c.teacher.lastName}` : "TBD",
-			studentName: `${c.student.firstName} ${c.student.lastName}`,
-			date,
-			startTime,
-			duration: c.durationInHours.toNumber(),
-			status: c.status,
-		};
-	});
+	return classes.map((c) => ({
+		id: c.id,
+		subject: c.subject.name,
+		teacherName: c.teacher ? `${c.teacher.firstName} ${c.teacher.lastName}` : "TBD",
+		studentName: `${c.student.firstName} ${c.student.lastName}`,
+		startTime: c.startTime.toISOString(),
+		duration: c.durationInHours.toNumber(),
+		status: c.status,
+	}));
 }
 
 /**
