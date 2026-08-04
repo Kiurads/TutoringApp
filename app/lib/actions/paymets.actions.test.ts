@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import prisma from "@/prisma";
 import { auth } from "@/auth";
 import { fetchUserByEmail } from "./users.actions";
-import { createPaymentForClass, fetchPaymentsByTeacherId } from "./paymets.actions";
+import { createPaymentForClass, fetchPaymentsByTeacherId, fetchPaymentReceipt } from "./paymets.actions";
 import { cancelClassById } from "./classes.actions";
 import { createNotification } from "@/app/lib/notifications";
 
@@ -38,6 +38,7 @@ vi.mock("@/prisma", () => ({
     payment: {
       create: vi.fn(),
       findMany: vi.fn(),
+      findUnique: vi.fn(),
     },
     user: {
       findUnique: vi.fn(),
@@ -339,5 +340,81 @@ describe("fetchPaymentsByTeacherId", () => {
         date: new Date("2026-01-01"),
       },
     ]);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// fetchPaymentReceipt
+// ═══════════════════════════════════════════════════════════════════════════════
+describe("fetchPaymentReceipt", () => {
+  const makePaymentRow = (overrides: Record<string, unknown> = {}) => ({
+    id: "pay1",
+    amount: dec(50),
+    platformFeeAmount: dec(7.5),
+    teacherPayoutAmount: dec(42.5),
+    createdAt: new Date("2026-01-01T10:00:00Z"),
+    intentId: "pi_test_123",
+    student: { firstName: "Ana", lastName: "Lima", email: "ana@test.com" },
+    teacher: { firstName: "Alice", lastName: "Smith", email: "alice@test.com" },
+    class: {
+      startTime: new Date("2026-01-01T09:00:00Z"),
+      durationInHours: dec(1.5),
+      subject: { name: "Math" },
+    },
+    ...overrides,
+  });
+
+  it("returns null when the payment does not exist", async () => {
+    vi.mocked(prisma.payment.findUnique).mockResolvedValue(null);
+
+    const result = await fetchPaymentReceipt("pay1", "ana@test.com");
+
+    expect(result).toBeNull();
+  });
+
+  it("returns null when the viewer is neither the student nor the teacher on the payment", async () => {
+    vi.mocked(prisma.payment.findUnique).mockResolvedValue(makePaymentRow() as never);
+
+    const result = await fetchPaymentReceipt("pay1", "stranger@test.com");
+
+    expect(result).toBeNull();
+  });
+
+  it("returns the receipt when the viewer is the student", async () => {
+    vi.mocked(prisma.payment.findUnique).mockResolvedValue(makePaymentRow() as never);
+
+    const result = await fetchPaymentReceipt("pay1", "ana@test.com");
+
+    expect(result).toMatchObject({
+      id: "pay1",
+      amount: 50,
+      platformFeeAmount: 7.5,
+      teacherPayoutAmount: 42.5,
+      intentId: "pi_test_123",
+      student: { name: "Ana Lima", email: "ana@test.com" },
+      teacher: { name: "Alice Smith", email: "alice@test.com" },
+      subjectName: "Math",
+      durationInHours: 1.5,
+    });
+  });
+
+  it("returns the receipt when the viewer is the teacher", async () => {
+    vi.mocked(prisma.payment.findUnique).mockResolvedValue(makePaymentRow() as never);
+
+    const result = await fetchPaymentReceipt("pay1", "alice@test.com");
+
+    expect(result).not.toBeNull();
+    expect(result?.teacher.email).toBe("alice@test.com");
+  });
+
+  it("falls back to the gross amount for teacherPayoutAmount when it is null (pre-backfill rows)", async () => {
+    vi.mocked(prisma.payment.findUnique).mockResolvedValue(
+      makePaymentRow({ teacherPayoutAmount: null, platformFeeAmount: null }) as never,
+    );
+
+    const result = await fetchPaymentReceipt("pay1", "ana@test.com");
+
+    expect(result?.teacherPayoutAmount).toBe(50);
+    expect(result?.platformFeeAmount).toBe(0);
   });
 });
