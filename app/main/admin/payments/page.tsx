@@ -1,19 +1,5 @@
 import prisma from "@/prisma";
-import RetryPayoutButton from "@/app/ui/main/payments/retry-payout-button";
-
-const PAYOUT_STATUS_BADGE: Record<string, string> = {
-	transferred: "badge-success",
-	pending: "badge-warning",
-	failed: "badge-error",
-	not_applicable: "badge-ghost",
-};
-
-const PAYOUT_STATUS_LABEL: Record<string, string> = {
-	transferred: "Paid out",
-	pending: "Pending",
-	failed: "Failed",
-	not_applicable: "—",
-};
+import PaymentsTable from "@/app/ui/main/payments/payments-table";
 
 async function getPayments() {
 	return prisma.payment.findMany({
@@ -35,10 +21,20 @@ async function getPayments() {
 }
 
 export default async function PaymentsPage() {
-	const payments = await getPayments();
-	const grossVolume = payments.reduce((s, p) => s + p.amount.toNumber(), 0);
-	const platformRevenue = payments.reduce((s, p) => s + (p.platformFeeAmount?.toNumber() ?? 0), 0);
-	const teacherPayouts = payments.reduce((s, p) => s + (p.teacherPayoutAmount?.toNumber() ?? p.amount.toNumber()), 0);
+	const rawPayments = await getPayments();
+	const grossVolume = rawPayments.reduce((s, p) => s + p.amount.toNumber(), 0);
+	const platformRevenue = rawPayments.reduce((s, p) => s + (p.platformFeeAmount?.toNumber() ?? 0), 0);
+	const teacherPayouts = rawPayments.reduce((s, p) => s + (p.teacherPayoutAmount?.toNumber() ?? p.amount.toNumber()), 0);
+
+	// Prisma Decimal instances don't survive the server→client props boundary
+	// (their methods are stripped during serialization) — convert to plain
+	// numbers before handing off to the client PaymentsTable.
+	const payments = rawPayments.map((p) => ({
+		...p,
+		amount: p.amount.toNumber(),
+		platformFeeAmount: p.platformFeeAmount?.toNumber() ?? null,
+		teacherPayoutAmount: p.teacherPayoutAmount?.toNumber() ?? null,
+	}));
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -73,56 +69,7 @@ export default async function PaymentsPage() {
 				</div>
 			</div>
 
-			<div className="card bg-base-200 shadow">
-				<div className="card-body p-0">
-					{payments.length === 0 ? (
-						<p className="text-center text-base-content/40 text-sm py-12">No payments recorded yet.</p>
-					) : (
-						<div className="overflow-x-auto">
-							<table className="table">
-								<thead>
-									<tr>
-										<th>Student</th>
-										<th>Teacher</th>
-										<th>Subject</th>
-										<th>Amount</th>
-										<th>Payout</th>
-										<th>Date</th>
-										<th>ID</th>
-									</tr>
-								</thead>
-								<tbody>
-									{payments.map((p) => (
-										<tr key={p.id} className="hover">
-											<td className="capitalize">{p.student.firstName} {p.student.lastName}</td>
-											<td className="capitalize">{p.teacher.firstName} {p.teacher.lastName}</td>
-											<td className="capitalize text-sm">{p.class.subject.name}</td>
-											<td className="font-semibold text-success">€{p.amount.toNumber().toFixed(2)}</td>
-											<td>
-												<span className={`badge badge-sm ${PAYOUT_STATUS_BADGE[p.payoutStatus]}`}>
-													{PAYOUT_STATUS_LABEL[p.payoutStatus]}
-												</span>
-												{p.payoutStatus === "failed" && (
-													<div className="flex flex-col gap-1 mt-1 max-w-xs">
-														{p.payoutError && (
-															<p className="text-xs text-error/70">{p.payoutError}</p>
-														)}
-														<RetryPayoutButton paymentId={p.id} />
-													</div>
-												)}
-											</td>
-											<td className="text-xs text-base-content/50 whitespace-nowrap">
-												{new Date(p.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-											</td>
-											<td className="font-mono text-xs text-base-content/40">{p.id.slice(0, 8)}…</td>
-										</tr>
-									))}
-								</tbody>
-							</table>
-						</div>
-					)}
-				</div>
-			</div>
+			<PaymentsTable initialPayments={payments} />
 		</div>
 	);
 }
