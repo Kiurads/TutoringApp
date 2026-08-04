@@ -1,12 +1,19 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
+	fetchNotificationsForUser,
 	markNotificationRead,
 	markAllNotificationsRead,
 	type NotificationData,
 } from "@/app/lib/actions/notifications.actions";
+
+// A new notification previously only appeared after a full page navigation
+// (initialNotifications is seeded once at mount). Poll instead — cheap,
+// works everywhere this dropdown is mounted, and doesn't need a websocket
+// server this app doesn't otherwise have.
+const POLL_INTERVAL_MS = 20_000;
 
 const TYPE_CONFIG: Record<string, { icon: string; bg: string; fg: string }> = {
 	class_requested: { icon: "fa-bell",                bg: "bg-primary",  fg: "text-primary-content"  },
@@ -47,6 +54,17 @@ export default function NotificationDropdown({
 	const [loadingId, setLoadingId] = useState<string | null>(null);
 
 	const unreadCount = notifications.filter((n) => !n.read).length;
+
+	useEffect(() => {
+		const interval = setInterval(() => {
+			// Skip while backgrounded — no point polling a tab the user isn't
+			// looking at, and it resumes immediately on the next tick once
+			// they switch back.
+			if (document.visibilityState !== "visible") return;
+			fetchNotificationsForUser(userEmail).then(setNotifications);
+		}, POLL_INTERVAL_MS);
+		return () => clearInterval(interval);
+	}, [userEmail]);
 
 	function openModal() {
 		(document.getElementById(MODAL_ID) as HTMLDialogElement)?.showModal();
