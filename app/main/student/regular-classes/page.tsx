@@ -2,7 +2,7 @@
 
 import { fetchRegularClassesByStudent } from "@/app/lib/actions/regular-classes.actions";
 import RegularClassesTable from "@/app/ui/main/regular-classes/regular-classes-table";
-import ToastNotification from "@/app/ui/main/classes/toast-notification";
+import ToastNotification from "@/app/ui/toast-notification";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";

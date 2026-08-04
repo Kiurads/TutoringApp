@@ -3,7 +3,7 @@
 import { fetchBookedClassesByUser } from "@/app/lib/actions/classes.actions";
 import BookedClasses from "@/app/ui/main/classes/student-booked-classes";
 import FirstVisitWarning from "@/app/ui/main/classes/first-visit-warning";
-import ToastNotification from "@/app/ui/main/classes/toast-notification";
+import ToastNotification from "@/app/ui/toast-notification";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 

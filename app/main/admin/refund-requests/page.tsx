@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import RefundRequestActions from "@/app/ui/main/refund-requests/refund-request-actions";
+import ToastNotification from "@/app/ui/toast-notification";
 
 const STATUS_BADGE: Record<string, string> = {
 	pending:      "badge-warning",
@@ -45,12 +46,7 @@ export default async function AdminRefundRequestsPage({
 				</p>
 			</div>
 
-			{toast === "resolved" && (
-				<div role="alert" className="alert alert-success animate-fade-in">
-					<i className="fa-solid fa-circle-check"></i>
-					<span>Dispute resolved successfully.</span>
-				</div>
-			)}
+			<ToastNotification toast={toast} />
 
 			{/* Escalated requests requiring action */}
 			{needsReview.length > 0 && (

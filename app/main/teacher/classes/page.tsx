@@ -8,7 +8,7 @@ import {
 } from "@/app/lib/actions/classes.actions";
 import BookedClasses from "@/app/ui/main/classes/teacher-booked-classes";
 import OpenRequests from "@/app/ui/main/classes/open-requests";
-import ToastNotification from "@/app/ui/main/classes/toast-notification";
+import ToastNotification from "@/app/ui/toast-notification";
 
 export default async function TeacherClassesPage(props: {
 	searchParams: Promise<{ toast?: string }>;

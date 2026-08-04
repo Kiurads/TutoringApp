@@ -5,15 +5,20 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import PurchaseButton from "@/app/ui/main/store/purchase-button";
 import EquipFrameButton from "@/app/ui/main/store/equip-frame-button";
+import ToastNotification from "@/app/ui/toast-notification";
 import Image from "next/image";
 import getAvatar from "@/utils/get-avatar";
 
-export default async function StorePage() {
+export default async function StorePage({
+	searchParams,
+}: {
+	searchParams: Promise<{ toast?: string }>;
+}) {
 	const session = await auth();
 	if (!session?.user?.email) redirect("/login");
 
-	const { gems, ownedFrames, activeFrame, studyBoostActive, priorityBooking, streakFreezes, avatarOptions } =
-		await fetchStudentStoreState();
+	const [{ gems, ownedFrames, activeFrame, studyBoostActive, priorityBooking, streakFreezes, avatarOptions }, { toast }] =
+		await Promise.all([fetchStudentStoreState(), searchParams]);
 
 	const cosmetics = STORE_ITEMS.filter((i) => i.category === "cosmetic");
 	const boosts = STORE_ITEMS.filter((i) => i.category === "boost");
@@ -37,6 +42,7 @@ export default async function StorePage() {
 
 	return (
 		<div className="flex justify-center">
+			<ToastNotification toast={toast} />
 			<div className="flex flex-col gap-8 w-full max-w-2xl animate-fade-in">
 
 				{/* Header + balance */}
