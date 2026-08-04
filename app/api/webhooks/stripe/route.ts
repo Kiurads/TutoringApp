@@ -3,7 +3,8 @@ import { sendDisputeAlertEmail, sendPaymentIssueAlertEmail } from "@/app/lib/ema
 import { transferPendingPayoutsForTeacher } from "@/app/lib/payouts";
 import { createNotification } from "@/app/lib/notifications";
 import prisma from "@/prisma";
-import Stripe from "stripe";
+import { getStripe } from "@/app/lib/stripe";
+import type Stripe from "stripe";
 import type { ConnectStatus } from "@prisma/client";
 
 async function getAdminEmails(): Promise<string[]> {
@@ -28,7 +29,7 @@ function getWebhookSecrets(): string[] {
 }
 
 export async function POST(req: Request) {
-	const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+	const stripe = getStripe();
 	const sig = req.headers.get("stripe-signature") ?? "";
 	const rawBody = await req.text(); // Read raw body directly
 

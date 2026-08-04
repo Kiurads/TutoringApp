@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import prisma from "@/prisma";
-import Stripe from "stripe";
+import { getStripe } from "@/app/lib/stripe";
 
 // Creates (or reuses) a Stripe Customer for the current student and issues a
 // SetupIntent so their card can be saved for later off-session charges — see
@@ -20,7 +20,7 @@ export async function POST() {
 		return Response.json({ error: "User not found." }, { status: 404 });
 	}
 
-	const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+	const stripe = getStripe();
 
 	let customerId = user.stripeCustomerId;
 	if (!customerId) {

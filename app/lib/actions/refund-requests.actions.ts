@@ -8,7 +8,7 @@ import { fetchUserByEmail } from "./users.actions";
 import { createNotification } from "@/app/lib/notifications";
 import { reverseClassPoints } from "@/app/lib/gamification";
 import { expireIfNeeded } from "@/app/lib/refund-requests/expire-refund-request";
-import Stripe from "stripe";
+import { getStripe } from "@/app/lib/stripe";
 
 const EXPIRY_DAYS = 5;
 
@@ -195,7 +195,7 @@ export async function acceptRefundRequest(requestId: string): Promise<{ error?: 
 
 	if (req.class.payments[0]) {
 		try {
-			const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+			const stripe = getStripe();
 			await stripe.refunds.create({ payment_intent: req.class.payments[0].intentId });
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : "Unknown error";
@@ -338,7 +338,7 @@ export async function adminResolveRefundRequest(
 
 	if (action === "refund" && req.class.payments[0]) {
 		try {
-			const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+			const stripe = getStripe();
 			await stripe.refunds.create({ payment_intent: req.class.payments[0].intentId });
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : "Unknown error";

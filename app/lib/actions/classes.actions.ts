@@ -25,7 +25,7 @@ import {
 import { computeCommissionSplit } from "@/app/lib/payouts-utils";
 import { transferPayoutForClass } from "@/app/lib/payouts";
 import { teacherHasSchedulingConflict } from "@/app/lib/classes/check-teacher-conflict";
-import Stripe from "stripe";
+import { getStripe } from "@/app/lib/stripe";
 
 export interface ClassDataCalendar {
 	id: string;
@@ -460,7 +460,7 @@ export async function cancelClassCore(
 		return "This class has already been completed and cannot be cancelled.";
 	}
 
-	const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+	const stripe = getStripe();
 
 	// Pre-auth not yet captured — just cancel the hold
 	if (!cls.paid && cls.preAuthIntentId) {
@@ -604,7 +604,7 @@ export async function acceptClassById(classId: string) {
 
 	// Capture pre-auth intent if present
 	if (cls.preAuthIntentId && cls.teacherId) {
-		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+		const stripe = getStripe();
 		try {
 			await stripe.paymentIntents.capture(cls.preAuthIntentId);
 			const split = computeCommissionSplit(Number(cls.totalPrice));
@@ -699,7 +699,7 @@ export async function refuseClassById(classId: string) {
 
 	// Cancel pre-auth hold so the card is released immediately
 	if (cls?.preAuthIntentId) {
-		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+		const stripe = getStripe();
 		try {
 			await stripe.paymentIntents.cancel(cls.preAuthIntentId);
 		} catch {
@@ -901,7 +901,7 @@ export async function completeClass(classId: string): Promise<{ error?: string }
 
 	// Capture pre-auth if it was never collected (edge case: pre-auth but !paid)
 	if (cls.preAuthIntentId && !cls.paid && cls.teacherId) {
-		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+		const stripe = getStripe();
 		try {
 			await stripe.paymentIntents.capture(cls.preAuthIntentId);
 			const split = computeCommissionSplit(Number(cls.totalPrice));

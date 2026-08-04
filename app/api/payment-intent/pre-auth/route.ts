@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import prisma from "@/prisma";
-import Stripe from "stripe";
+import { getStripe } from "@/app/lib/stripe";
 import { isWithinAvailability } from "@/app/lib/availability/check-availability";
 import { computeClassPrice } from "@/app/lib/classes/compute-class-price";
 
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 	);
 	const amountCents = Math.round(totalPrice * 100);
 
-	const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+	const stripe = getStripe();
 
 	const intent = await stripe.paymentIntents.create({
 		amount: amountCents,

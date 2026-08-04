@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import prisma from "@/prisma";
-import Stripe from "stripe";
+import { getStripe } from "@/app/lib/stripe";
 
 /**
  * Persists the payment method confirmed by a SetupIntent (see
@@ -23,7 +23,7 @@ export async function saveDefaultPaymentMethod(
 	});
 	if (!user?.stripeCustomerId) return { error: "No payment profile found." };
 
-	const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+	const stripe = getStripe();
 	const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
 
 	if (setupIntent.customer !== user.stripeCustomerId) {
