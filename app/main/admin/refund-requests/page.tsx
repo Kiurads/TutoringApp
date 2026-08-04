@@ -123,6 +123,7 @@ export default async function AdminRefundRequestsPage({
 											<Link
 												href={`/main/teacher/refund-requests/${r.id}`}
 												className="btn btn-ghost btn-xs gap-1"
+												aria-label="View refund request"
 											>
 												<i className="fa-solid fa-eye"></i>
 											</Link>
