@@ -20,8 +20,13 @@ interface Props {
 }
 
 export default function CalendarClassCard({ classData, hourPx, gridStart, onClick }: Props) {
-	const [hourStr, minStr] = classData.startTime.split(":");
-	const startHour = parseInt(hourStr, 10) + parseInt(minStr, 10) / 60;
+	// startTime is a UTC instant — read it with local getters (not UTC
+	// getters) so this renders in the viewer's own timezone, same as every
+	// other "now"/local-time computation in the parent WeeklySchedule.
+	const start = new Date(classData.startTime);
+	const pad = (n: number) => String(n).padStart(2, "0");
+	const startTimeStr = `${pad(start.getHours())}:${pad(start.getMinutes())}`;
+	const startHour = start.getHours() + start.getMinutes() / 60;
 	const top = (startHour - gridStart) * hourPx;
 	const height = Math.max(classData.duration * hourPx, hourPx * 0.5);
 
@@ -45,14 +50,14 @@ export default function CalendarClassCard({ classData, hourPx, gridStart, onClic
 				focus:outline-none focus:ring-2 focus:ring-primary
 				${s.bg} ${s.border}
 			`}
-			title={`${classData.subject} — ${classData.startTime}`}
+			title={`${classData.subject} — ${startTimeStr}`}
 		>
 			<p className={`text-xs font-semibold leading-tight truncate capitalize ${s.text}`}>
 				{classData.subject}
 			</p>
 			{height >= hourPx * 0.5 && (
 				<p className={`text-[0.65rem] leading-tight truncate mt-0.5 ${s.sub}`}>
-					{classData.startTime}–{endTime}
+					{startTimeStr}–{endTime}
 					{classData.teacherName !== "TBD" ? ` · ${classData.teacherName}` : ""}
 				</p>
 			)}

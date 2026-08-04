@@ -111,10 +111,14 @@ export default function WeeklySchedule({ classes, basePath }: Props) {
 	const weekDates = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 	const weekDateStrings = weekDates.map(toDateStr);
 
+	// Bucketed by the viewer's own local calendar day — cls.startTime is a UTC
+	// instant, so this (correctly) puts a class at 11pm PT / 7am UTC under
+	// "today" for a PT viewer even though it's already "tomorrow" in UTC.
 	const byDate: Record<string, ClassDataCalendar[]> = {};
 	for (const cls of classes) {
-		if (!byDate[cls.date]) byDate[cls.date] = [];
-		byDate[cls.date].push(cls);
+		const dateStr = toDateStr(new Date(cls.startTime));
+		if (!byDate[dateStr]) byDate[dateStr] = [];
+		byDate[dateStr].push(cls);
 	}
 
 	const weekEnd = weekDates[6];
