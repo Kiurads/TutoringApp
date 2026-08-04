@@ -61,11 +61,11 @@ vi.mock("@/app/lib/notifications", () => ({ createNotification: vi.fn() }));
 // cancelClassById / completeClass instantiate Stripe and call gamification helpers;
 // mock both so these tests stay focused on class state transitions.
 const stripeCapture = vi.hoisted(() => vi.fn().mockResolvedValue({ id: "pi_test" }));
-vi.mock("stripe", () => ({
-  default: class MockStripe {
-    refunds        = { create: vi.fn().mockResolvedValue({ id: "re_test" }) };
-    paymentIntents = { capture: stripeCapture };
-  },
+vi.mock("@/app/lib/stripe", () => ({
+  getStripe: vi.fn(() => ({
+    refunds:        { create: vi.fn().mockResolvedValue({ id: "re_test" }) },
+    paymentIntents: { capture: stripeCapture, cancel: vi.fn().mockResolvedValue({ id: "pi_test" }) },
+  })),
 }));
 vi.mock("@/app/lib/gamification", () => ({
   awardGems:            vi.fn(),

@@ -7,10 +7,10 @@ const { mockSetupIntentsRetrieve } = vi.hoisted(() => ({
 	mockSetupIntentsRetrieve: vi.fn(),
 }));
 
-vi.mock("stripe", () => ({
-	default: class MockStripe {
-		setupIntents = { retrieve: mockSetupIntentsRetrieve };
-	},
+vi.mock("@/app/lib/stripe", () => ({
+	getStripe: vi.fn(() => ({
+		setupIntents: { retrieve: mockSetupIntentsRetrieve },
+	})),
 }));
 
 vi.mock("@/prisma", () => ({

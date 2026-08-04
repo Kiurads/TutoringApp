@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import Stripe from "stripe";
+import { getStripe } from "@/app/lib/stripe";
 import { revalidatePath } from "next/cache";
 import type { ConnectStatus } from "@prisma/client";
 import prisma from "@/prisma";
@@ -30,7 +30,7 @@ export async function startConnectOnboarding(): Promise<{ url?: string; error?: 
 	}
 
 	try {
-		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+		const stripe = getStripe();
 		const appUrl = getAppUrl();
 		const accountLink = await stripe.accountLinks.create({
 			account: accountId,

@@ -19,6 +19,13 @@ vi.mock("stripe", () => ({
   },
 }));
 
+vi.mock("@/app/lib/stripe", () => ({
+  getStripe: vi.fn(() => ({
+    refunds: { create: mockRefundsCreate },
+    paymentIntents: { capture: vi.fn(), cancel: vi.fn() },
+  })),
+}));
+
 // ─── Infrastructure mocks ─────────────────────────────────────────────────────
 vi.mock("@/prisma", () => ({
   default: {

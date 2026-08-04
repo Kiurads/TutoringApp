@@ -17,6 +17,13 @@ vi.mock("stripe", () => ({
 	},
 }));
 
+vi.mock("@/app/lib/stripe", () => ({
+	getStripe: vi.fn(() => ({
+		accounts: { create: mockAccountsCreate },
+		accountLinks: { create: mockAccountLinksCreate },
+	})),
+}));
+
 vi.mock("@/auth", () => ({ auth: vi.fn() }));
 
 vi.mock("@/prisma", () => ({

@@ -11,10 +11,10 @@ const { mockConstructEvent } = vi.hoisted(() => ({
 }));
 
 // Stripe must be mocked as a class (constructor) — arrow functions cannot be called with `new`
-vi.mock("stripe", () => ({
-	default: class MockStripe {
-		webhooks = { constructEvent: mockConstructEvent };
-	},
+vi.mock("@/app/lib/stripe", () => ({
+	getStripe: vi.fn(() => ({
+		webhooks: { constructEvent: mockConstructEvent },
+	})),
 }));
 
 vi.mock("@/prisma", () => ({

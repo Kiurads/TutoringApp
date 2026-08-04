@@ -8,11 +8,11 @@ const { mockCustomersCreate, mockSetupIntentsCreate } = vi.hoisted(() => ({
 	mockSetupIntentsCreate: vi.fn(),
 }));
 
-vi.mock("stripe", () => ({
-	default: class MockStripe {
-		customers = { create: mockCustomersCreate };
-		setupIntents = { create: mockSetupIntentsCreate };
-	},
+vi.mock("@/app/lib/stripe", () => ({
+	getStripe: vi.fn(() => ({
+		customers: { create: mockCustomersCreate },
+		setupIntents: { create: mockSetupIntentsCreate },
+	})),
 }));
 
 vi.mock("@/prisma", () => ({

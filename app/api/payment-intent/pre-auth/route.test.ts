@@ -8,10 +8,10 @@ const { mockPaymentIntentsCreate } = vi.hoisted(() => ({
 }));
 
 // Stripe must be mocked as a class (constructor) — arrow functions cannot be called with `new`
-vi.mock("stripe", () => ({
-	default: class MockStripe {
-		paymentIntents = { create: mockPaymentIntentsCreate };
-	},
+vi.mock("@/app/lib/stripe", () => ({
+	getStripe: vi.fn(() => ({
+		paymentIntents: { create: mockPaymentIntentsCreate },
+	})),
 }));
 
 vi.mock("@/auth", () => ({ auth: vi.fn() }));
