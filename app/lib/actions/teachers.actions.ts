@@ -32,6 +32,7 @@ export async function fetchTeachersForBooking(
 			teacherAvailability: {
 				select: { dayOfWeek: true, startHour: true, startMin: true },
 			},
+			timezone: true,
 		},
 	});
 
@@ -49,7 +50,7 @@ export async function fetchTeachersForBooking(
 			isOnline: t.isOnline,
 			rating: avg !== null ? avg.toFixed(2) : "No Reviews",
 			pricePerHour: t.pricePerHour ? t.pricePerHour.toFixed(2) : "0.00",
-			isAvailable: isWithinAvailability(t.teacherAvailability, start, durationInHours),
+			isAvailable: isWithinAvailability(t.teacherAvailability, start, durationInHours, t.timezone),
 		};
 	});
 

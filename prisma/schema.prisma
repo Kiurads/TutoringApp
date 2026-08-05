@@ -130,6 +130,15 @@ model User {
   teacherRating  TeacherRating[]  @relation("TeacherRatingStudent")
   teacherSubject TeacherSubject[]
 
+  // IANA timezone (e.g. "Europe/Lisbon") a teacher's TeacherAvailability
+  // slots are stored in — see app/lib/availability/check-availability.ts.
+  // Default backfills every pre-existing teacher to the app's primary
+  // market rather than leaving it unset/ambiguous; a wrong default is
+  // still strictly better than the old behavior (implicitly UTC,
+  // regardless of the server's actual location), and a teacher can correct
+  // it any time from the availability page.
+  timezone String @default("Europe/Lisbon")
+
   // Stripe Connect (teacher payouts) — see app/lib/payouts.ts. No separate
   // Teacher model exists, so like pricePerHour/teachingStyle this lives on
   // User even though it's only ever populated for role: teacher.

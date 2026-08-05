@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
 	const teacher = await prisma.user.findUnique({
 		where: { id: teacherId },
-		select: { pricePerHour: true, firstName: true, lastName: true },
+		select: { pricePerHour: true, firstName: true, lastName: true, timezone: true },
 	});
 
 	if (!teacher?.pricePerHour) {
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
 	});
 
 	const classStart = new Date(startTime);
-	if (!isWithinAvailability(availabilitySlots, classStart, Number(durationInHours))) {
+	if (!isWithinAvailability(availabilitySlots, classStart, Number(durationInHours), teacher.timezone)) {
 		return Response.json(
 			{ error: "The teacher is not available at the selected time. Please choose a slot within their available hours." },
 			{ status: 422 },

@@ -42,6 +42,22 @@ interface Props {
 	readOnly?: boolean;
 	onSlotClick?: (day: number, hour: number, min: number) => void;
 	bookedSlots?: { dayOfWeek: number; startHour: number; startMin: number }[];
+	// Only meaningful (and only editable) when !readOnly — this is what tells
+	// the server what a teacher's own "9:00" actually means when checking a
+	// booking against their slots (see app/lib/availability/README.md).
+	initialTimezone?: string;
+}
+
+// Falls back to a fixed, small list if the runtime somehow lacks this API
+// (very old Node/browsers) — Intl.supportedValuesOf has been available in
+// Node since v18 and all evergreen browsers since 2022, so this is a belt
+// only, not expected to actually trigger in practice.
+function getSupportedTimezones(): string[] {
+	try {
+		return Intl.supportedValuesOf("timeZone");
+	} catch {
+		return ["UTC", "Europe/Lisbon", "Europe/London", "America/New_York"];
+	}
 }
 
 export default function AvailabilityGrid({
@@ -49,12 +65,15 @@ export default function AvailabilityGrid({
 	readOnly = false,
 	onSlotClick,
 	bookedSlots = [],
+	initialTimezone = "UTC",
 }: Props) {
 	const initial = new Set(
 		initialSlots.map((s) => slotKey(s.dayOfWeek, s.startHour, s.startMin)),
 	);
 
 	const [active, setActive] = useState<Set<string>>(() => new Set(initial));
+	const [timezone, setTimezone] = useState(initialTimezone);
+	const [timezones] = useState<string[]>(getSupportedTimezones);
 	const [isPending, startTransition] = useTransition();
 	const [saved, setSaved] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -64,7 +83,7 @@ export default function AvailabilityGrid({
 	);
 
 	const hasUnsaved = !readOnly &&
-		[...active].sort().join() !== [...initial].sort().join();
+		([...active].sort().join() !== [...initial].sort().join() || timezone !== initialTimezone);
 
 	// ── Drag refs (no stale closures) ─────────────────────────────────────────
 	const isDraggingRef  = useRef(false);
@@ -141,7 +160,7 @@ export default function AvailabilityGrid({
 			});
 		}
 		startTransition(async () => {
-			const result = await setAvailability(slots);
+			const result = await setAvailability(slots, timezone);
 			if (result.error) setError(result.error);
 			else setSaved(true);
 		});
@@ -159,6 +178,24 @@ export default function AvailabilityGrid({
 						<i className="fa-solid fa-hand-pointer mr-1.5 opacity-60"></i>
 						Click or drag cells to mark when you&apos;re available each week.
 					</p>
+					<label className="flex flex-wrap items-center gap-2 text-sm">
+						<span className="text-base-content/60">
+							<i className="fa-solid fa-globe mr-1.5 opacity-60"></i>
+							Your timezone
+						</span>
+						<select
+							className="select select-bordered select-sm max-w-xs"
+							value={timezone}
+							onChange={(e) => { setTimezone(e.target.value); setSaved(false); }}
+						>
+							{timezones.map((tz) => (
+								<option key={tz} value={tz}>{tz.replace(/_/g, " ")}</option>
+							))}
+						</select>
+						<span className="text-xs text-base-content/40">
+							The hours below are in this timezone — students booking from elsewhere still see (and book) the right time.
+						</span>
+					</label>
 					<div className="flex flex-wrap gap-2 items-center">
 						<span className="text-xs font-semibold text-base-content/40 uppercase tracking-wide mr-1">
 							Quick add:

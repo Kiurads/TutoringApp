@@ -28,8 +28,18 @@ export async function fetchAvailability(
 	}));
 }
 
+function isValidTimezone(tz: string): boolean {
+	try {
+		Intl.DateTimeFormat(undefined, { timeZone: tz });
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 export async function setAvailability(
 	slots: AvailabilitySlot[],
+	timezone?: string,
 ): Promise<{ error?: string }> {
 	const session = await auth();
 	if (!session?.user?.email) return { error: "Not authenticated." };
@@ -41,11 +51,18 @@ export async function setAvailability(
 	if (!teacher || teacher.role !== "teacher")
 		return { error: "Not authorized." };
 
+	if (timezone !== undefined && !isValidTimezone(timezone)) {
+		return { error: "That doesn't look like a valid timezone." };
+	}
+
 	await prisma.$transaction([
 		prisma.teacherAvailability.deleteMany({ where: { teacherId: teacher.id } }),
 		prisma.teacherAvailability.createMany({
 			data: slots.map((s) => ({ teacherId: teacher.id, ...s })),
 		}),
+		...(timezone !== undefined
+			? [prisma.user.update({ where: { id: teacher.id }, data: { timezone } })]
+			: []),
 	]);
 
 	revalidatePath("/main/teacher/availability");

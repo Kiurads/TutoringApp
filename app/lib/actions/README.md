@@ -55,8 +55,8 @@ The largest, most important file in the codebase (~1090 lines). Owns everything 
 ## Availability — `availability.actions.ts`
 
 - `fetchAvailability(teacherId)` — reads a teacher's `TeacherAvailability` rows, sorted by day/hour/minute.
-- `setAvailability(slots)` — auth-gated to `role === "teacher"`. Does a **full delete-then-recreate inside one `prisma.$transaction`** (`deleteMany` then `createMany`) rather than diffing — simpler than reconciling adds/removes, and the transaction guarantees a teacher never has a half-updated schedule visible mid-write. Keep that atomicity if you touch it.
-- The actual enforcement of these slots against booking attempts happens in `app/lib/availability/check-availability.ts`'s `isWithinAvailability` (see that directory's README) — this file only manages the slot data, it doesn't enforce anything itself.
+- `setAvailability(slots, timezone?)` — auth-gated to `role === "teacher"`. Does a **full delete-then-recreate inside one `prisma.$transaction`** (`deleteMany` then `createMany`) rather than diffing — simpler than reconciling adds/removes, and the transaction guarantees a teacher never has a half-updated schedule visible mid-write. Keep that atomicity if you touch it. The optional `timezone` param (added alongside #128) is validated (`isValidTimezone`, a throwaway `Intl.DateTimeFormat` construction — throws on a bogus IANA string) and, if present, persisted to `User.timezone` in the same transaction; omit it entirely to update slots without touching the saved timezone.
+- The actual enforcement of these slots against booking attempts happens in `app/lib/availability/check-availability.ts`'s `isWithinAvailability` (see that directory's README) — this file only manages the slot data, it doesn't enforce anything itself. Since #128, that enforcement is timezone-aware — the slot integers here mean nothing without knowing which `User.timezone` they're relative to.
 
 ## Notifications — `notifications.actions.ts`
 

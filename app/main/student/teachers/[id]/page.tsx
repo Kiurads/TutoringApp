@@ -66,7 +66,7 @@ export default async function TeacherProfilePage(props: {
 			</div>
 
 			{/* Availability */}
-			<TeacherAvailabilityView teacherId={id} slots={availabilitySlots} />
+			<TeacherAvailabilityView teacherId={id} slots={availabilitySlots} timezone={userData?.timezone} />
 
 			{/* Seals & Milestones */}
 			{earnedBadges.length > 0 && (
