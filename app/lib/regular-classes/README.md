@@ -1,0 +1,29 @@
+# app/lib/regular-classes
+
+The occurrence-generation engine for recurring class series (`RegularClass`). A `RegularClass` is a template ("every Tuesday at 4pm") — this directory turns that template into real, bookable `Class` rows on a rolling schedule, charging the student's saved card per occurrence as it goes.
+
+## Key files
+
+- **`materialize-occurrences.ts`** — exports `materializeOccurrences(regularClassId): Promise<number>`, plus a private helper `createChargedOccurrence`.
+  - **The watermark mechanism**: `RegularClass.lastMaterializedThrough` is a monotonic cursor marking how far into the future occurrences have already been generated. Each run walks forward day-by-day from `max(lastMaterializedThrough, now)` through a rolling window of `WEEKS_AHEAD = 4` weeks, and for each date matching the series' `dayOfWeek`, creates a `Class` row at that day/time if one doesn't already exist (guarded by the `@@unique([regularClassId, startTime])` constraint via a `findUnique` pre-check). At the end, `lastMaterializedThrough` is bumped to `max(existing watermark, horizon)` — **it only ever moves forward, never backward**, even across concurrent/repeated runs.
+  - **Why the watermark must never move backward**: `cancelClassById`/`cancelClassCore` (in `app/lib/actions/classes.actions.ts`) *soft*-cancels a `RegularClass` occurrence (sets `status: "cancelled"`) rather than hard-deleting it the way a one-off class cancellation does — hard-deleting would leave a hole at a date that's already behind the watermark, and the very next materialization pass would see "no existing row for this date" and silently recreate the cancelled class. The watermark's forward-only property, combined with soft-cancel for regular-class occurrences specifically, is what prevents a student's cancellation from being undone by the next worker tick.
+  - **Payment**: `createChargedOccurrence` charges the student's saved Stripe payment method **off-session** (`stripe.paymentIntents.create({ off_session: true, confirm: true, ... })`) at occurrence-creation time — there is no per-occurrence accept step (the series-level `acceptRegularClass` already represents the ongoing agreement), so this off-session charge is what actually moves money for each occurrence. This deliberately reuses the plain immediate-capture flow only — no pre-auth, no new Stripe surface for recurring classes, by design.
+  - **Never throws on payment failure**: if the student has no `stripeCustomerId`/`defaultPaymentMethodId`, or the charge is declined, the `Class` row is still created (status `scheduled`, `paid` left `false`/undefined) because the tutoring session is still expected to happen — the student is just notified (`regular_class_payment_failed`) to fix their payment method. This "proceed unpaid, notify" pattern is intentional, not a swallowed error.
+  - Price and `jitsiRoom` are snapshotted per occurrence from the `RegularClass` template at creation time (via `generateJitsiRoom()` from `app/lib/classes/generate-jitsi-room.ts`) — a later change to the teacher's `pricePerHour` or the series doesn't retroactively affect already-materialized occurrences.
+  - Reuses `computeCommissionSplit` from `app/lib/payouts-utils.ts` to compute the platform-fee/teacher-payout split on the `Payment` row it creates, same as the immediate-capture flow in `paymets.actions.ts`.
+  - If the `RegularClass` isn't found or `status !== "active"`, returns `0` immediately — this is what makes `cancelRegularClass`/an `inactive` series stop generating new occurrences without needing separate guard logic at each call site.
+
+## How it fits together
+
+`materializeOccurrences` is called from **two** places, both relying on the exact same function so behavior never diverges between paths:
+1. **`acceptRegularClass`** (`app/lib/actions/regular-classes.actions.ts`) — an immediate first-pass materialization right after the teacher accepts a series, so the student doesn't have to wait for the next worker tick to see their first occurrence(s).
+2. **`worker/src/regular-classes.ts`** — runs periodically (6-hour interval per the worker's own scheduling, alongside the class-completion job) across all `active` series to keep the rolling 4-week window topped up as time passes and old occurrences age out of the window.
+
+Downstream, materialized occurrences are just ordinary `Class` rows (`regularClassId` set, `status: "scheduled"`) — they flow through the same fetch/display/cancel machinery as any other class (`fetchClasses`, the booked-classes tables, etc. in `classes.actions.ts`), distinguished only by having a non-null `regularClassId`. Cancellation of a whole series (`cancelRegularClass`) loops over its future non-terminal occurrences and calls `cancelClassCore` (the redirect-free extraction of `cancelClassById`) on each — see the `app/lib/actions` README for why the redirecting version can't be used in that loop.
+
+## Gotchas
+
+- Don't hard-delete a `RegularClass` occurrence in any new code path — it must go through the soft-cancel (`status: "cancelled"`) route via `cancelClassCore`, or the watermark/regeneration invariant above breaks.
+- `WEEKS_AHEAD = 4` is a module-level constant, not configurable per series — changing it affects every active `RegularClass` in one edit.
+- The date-walking loop compares `Date` objects at local-server-timezone midnight boundaries (`cursor.setHours(0,0,0,0)`) — be careful if the deployment environment's timezone ever changes, since `dayOfWeek` matching and the eventual `occurrenceStart` are both derived from local time.
+- Test file `materialize-occurrences.test.ts` covers: series not found, series not active, unpaid-occurrence-plus-notify when no payment method, successful charge + Payment record, unpaid-occurrence-plus-notify on charge failure, no duplicate recreation, and the forward-only watermark guarantee — extend it alongside any change here.

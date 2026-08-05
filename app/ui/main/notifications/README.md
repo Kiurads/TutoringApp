@@ -1,0 +1,21 @@
+# app/ui/main/notifications
+
+The notification bell/dropdown shown in the main layout header, backed by `app/lib/actions/notifications.actions.ts` and the `NotificationType` enum (`prisma/schema.prisma`).
+
+## Key file
+
+- **`notification-dropdown.tsx`** — `NotificationDropdown`, seeded from `initialNotifications` (server-rendered, passed down from the role layout) and rendered as a real `<dialog>` (`showModal()`) triggered by a bell button with an unread-count badge (`9+` cap).
+  - **This component now polls.** Every `POLL_INTERVAL_MS` (20 seconds), it re-fetches `fetchNotificationsForUser(userEmail)` and replaces local state — but only while `document.visibilityState === "visible"`, skipping the fetch entirely for a backgrounded tab and resuming immediately once it's foregrounded again (checked fresh on each tick, not via a `visibilitychange` listener). The inline comment frames this as a deliberate fix for a real gap: notifications previously only appeared after a full page navigation because `initialNotifications` is seeded once at mount, with no websocket/SSE server in this app to push updates. *(If you're working from older documentation describing this dropdown as strictly seed-once/no-live-updates, that's been superseded — verify against this file directly rather than trusting a prior summary, including this README once it too may age.)*
+  - **Optimistic read state**: clicking a notification immediately flips it to read locally (`setNotifications` before the `await`), then calls `markNotificationRead` in the background and only clears a per-item `loadingId` spinner state after it resolves — the UI doesn't wait for the server round-trip to reflect the read state, but does show a small spinner on that specific row while the call is in flight. "Mark all read" follows the same optimistic-then-confirm shape via `useTransition` instead of a manual loading state.
+  - Clicking a notification with a `link` closes the dialog and `router.push`es to it — this is why every `createNotification` call site threads a `link` param pointing at the relevant class/dispute/etc.
+  - **`TYPE_CONFIG`** maps a subset of `NotificationType` values to an icon/color: `class_requested`, `class_accepted`, `class_refused`, `class_cancelled`, `class_claimed`, `class_paid`, `class_completed`, and all four `refund_*` types. **Not covered** (falls back to a generic `fa-circle-info`/info-colored `FALLBACK`): `tier_up`, `rank_up`, `badge_earned`, `gem_received`, `sparks_received`, `streak_saved` (all gamification), `counter_offer_proposed`, `counter_offer_accepted`, `counter_offer_declined`, every `regular_class_*` value, and `payout_sent`/`payout_reversed`/`connect_disconnected`. This gap is exactly what the domain background for this app flags as a historical pattern — the map has repeatedly lagged behind new enum values — so treat it as still-incomplete today, not a one-time oversight that's already been fixed. **Check this map whenever a new `NotificationType` is added anywhere in the app.**
+  - `timeAgo` is a small relative-time formatter (`now` / `Xm` / `Xh` / `Xd`) with no upper bound beyond days — a month-old notification just shows as a large day count, no `w`/`mo`/`y` units.
+
+## How it fits together
+
+Reads exclusively through `notifications.actions.ts`'s three exports (`fetchNotificationsForUser`, `markNotificationRead`, `markAllNotificationsRead`) — it has no direct Prisma access. Every notification it can ever display was created by `createNotification` (`app/lib/notifications.ts`) from somewhere else in the app (`classes.actions.ts`, `regular-classes.actions.ts`, `refund-requests.actions.ts`, `paymets.actions.ts`, `payouts.actions.ts`, and the gamification hooks) — this component is purely a consumer, it never creates a notification itself.
+
+## Gotchas
+
+- The 20-second poll only runs while this component is mounted and the tab is visible — a user who never opens/keeps the layout mounted (or is on a tab that's always backgrounded) won't get any live update faster than their next real navigation/revalidation.
+- `TYPE_CONFIG` incompleteness (above) is cosmetic, not functional — an unmapped type still renders correctly with the fallback icon/color, it just looks generic. Still worth fixing opportunistically since it's a one-line addition per type.
