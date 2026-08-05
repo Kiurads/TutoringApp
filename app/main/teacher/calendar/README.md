@@ -1,0 +1,3 @@
+# app/main/teacher/calendar
+
+The teacher mirror of `app/main/student/calendar`: fetches `fetchClassBySelfCalendar()` and renders `WeeklySchedule` with `basePath="/main/teacher"`, routing the calendar's drag-to-schedule and class-click navigation into the teacher side of the app (`/main/teacher/classes/request`, `/main/teacher/classes/[id]`). No other page-level logic — see `app/ui/main/calendar`'s README for how the calendar itself works. `fetchClassBySelfCalendar` is session-derived and returns the same shape regardless of caller role, so this page and its student counterpart are otherwise identical aside from the `basePath` they pass down.

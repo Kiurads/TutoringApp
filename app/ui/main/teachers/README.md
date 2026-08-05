@@ -1,0 +1,20 @@
+# app/ui/main/teachers
+
+Student-facing teacher browsing UI (search/filter/sort/grid) plus one admin-facing table for teacher management. Two different audiences share this directory; don't assume everything here is student-only.
+
+## Files
+
+- **`teacher-browser.tsx`** (`"use client"`) — The interactive shell behind `/main/student/teachers`. Owns local state for a name search, a subject filter (chip toggle), and `sortBy` (a `SortOption` from `@/app/lib/teachers/sort-teachers`). Filtering pipeline is: filter by subject → filter by search text → `sortTeachers(bySearch, sortBy)`. Recently updated to import `SortOption`/`SORT_LABELS`/`sortTeachers` from `app/lib/teachers/sort-teachers.ts` and render a sort `<select>` — this is the only consumer of that helper. Also computes two summary stats purely for the results line: `onlineCount` (`t.isOnline`) and `topMatches` (`t.fitScore > 0`, only surfaced when the caller passes `hasHistory=true`, since a fit score is meaningless without class history — see `app/lib/teachers/fit-score.ts`).
+- **`teacher-card.tsx`** — Presentational grid tile: avatar (via `getAvatar`, `@/utils/get-avatar`), online/offline dot, optional `FitBadge` (only rendered when `showFitScore` is true *and* `teacher.fitScore != null` — a 0 score is treated as "no badge" by `FitBadge` itself via its `score === 0` early return, so a teacher with a computed-but-zero fit score shows nothing, same visual result as `fitScore == null`), bio (2-line clamp), subject badges, rating, and price/hr. Whole card is a `<Link>` to `/main/student/teachers/{id}`.
+- **`teachers-table.tsx`** — Admin teacher management table (`/main/admin/teachers`), *not* the student browse flow. Local search filters by name or email. Renders account `status` (Active/Pending/Inactive) and Stripe Connect `connectStatus` (not_started/pending/restricted/active) as separate badges, plus View/Delete row actions. Has its own `+ Add Teacher` link to `/main/admin/teachers/create`.
+- **`delete-button.tsx`** (`"use client"`) — Confirms and executes `deleteTeacherById(id)` from `@/app/lib/actions/teachers/delete-teacher`, used on the admin delete-confirmation page reached via `teachers-table.tsx`'s "Delete" link. Standard `useTransition` + inline error alert pattern.
+
+## How it fits together
+
+`app/main/student/teachers/page.tsx` is the only caller of `TeacherBrowser`. It does the *personalized* server-side work — `fetchTeachersExtended()`, `fetchStudentClassHistory()`, `computeFitScore()` per teacher, then an initial sort (fit score desc → online first → name) — and hands the already-scored `TeacherExtended[]` array down. `TeacherBrowser` then layers client-side search/filter/re-sort on top; picking a non-`"default"` sort option discards the server's fit-score ordering (see `app/lib/teachers/README.md` for the fit-score/sort-teachers relationship in detail). `TeachersTable` and `DeleteTeacherButton` belong to the separate admin teacher-management surface and share no components with the student browse flow other than the `TeacherExtended` type.
+
+## Gotchas
+
+- `TeacherCard`'s `FitBadge` color thresholds (`≥80` success, `≥50` warning, else ghost) are a separate, hardcoded scale from `computeFitScore`'s point breakdown (30/20/20/30) — if you rebalance the scoring weights in `fit-score.ts`, these display thresholds don't move automatically and may need reconsidering.
+- `teacher-browser.tsx`'s subject filter chips are built from a `subjects: string[]` prop computed by the page (`Array.from(new Set(scored.flatMap(t => t.subjects))).sort()`) — it's derived from whatever teachers were fetched, not a global subject catalog, so a subject with zero currently-listed teachers won't appear as a filter chip.
+- `teachers-table.tsx`'s search is client-side over `initialTeachers` (a prop, fetched once by the parent page) — there's no pagination or server-side search here, unlike the student browse flow's fit-score computation which also happens once per page load; both assume the teacher list is small enough to filter/sort entirely in the browser.

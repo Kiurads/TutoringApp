@@ -38,8 +38,8 @@ This agent (`nextjs-expert`) keeps only what's left over: App Router structure, 
 - `teacher` — has a full app under `/main/teacher/**` (dashboard, classes, availability, calendar, earnings, students, profile) — this did **not exist** on `master` and was built out entirely on a feature branch
 - `admin` — manages teachers/students/subjects/classes/payments under `/main/admin/**`, largely wired to real data (not mock, as an older snapshot of this memory used to claim)
 
-## Known platform-wide gap (relevant across nearly every domain)
-Nothing in the app ever sets `Class.status = "completed"` — no worker, cron, or admin action does it. This silently breaks the review/rating flow, several gamification badges, and the teacher-student "fit score" feature. If asked about any of these appearing broken, this is very likely why — see `class-lifecycle-engineer` and `gamification-economy-engineer` for the full blast radius before attempting a fix yourself.
+## Correction (2026-08-05): the "nothing completes classes" gap is fixed
+An earlier version of this memory claimed nothing ever sets `Class.status = "completed"`. That's no longer true — `worker/src/complete-classes.ts`'s `markCompletedClasses()` (polled every 5 minutes by `worker/src/index.ts`) does this: it finds overdue `scheduled` classes, does a compare-and-swap `updateMany` to `completed` (racing safely against the manual "Mark Complete" UI action), then triggers payout, gem/spark awards, badge checks, and notifications. This is the *only* place in the codebase that sets that status. See `worker/README.md` for the full mechanism. If something still looks broken in the review/rating flow or badges, it's not this gap anymore — look elsewhere first.
 
 ## Notes specific to this agent's narrowed scope
 - `next.config.ts` whitelists `api.dicebear.com`, `img.daisyui.com`, `images.unsplash.com` as remote image domains, with `dangerouslyAllowSVG` for DiceBear's SVG avatars.

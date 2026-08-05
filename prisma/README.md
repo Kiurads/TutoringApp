@@ -1,0 +1,73 @@
+# prisma/
+
+The Prisma ORM layer for eStudyou ("The Learning Nexus"): the MySQL data model (`schema.prisma`), the migration history that built it (`migrations/`), and the seed scripts that populate reference/content data. This is the single source of truth for the database shape — the app (`app/`) and the standalone `worker/` process both read/write through the client generated from `schema.prisma`.
+
+## Files
+
+- **`schema.prisma`** — the data model. See "The data model" below.
+- **`index.ts`** — the shared `PrismaClient` singleton: `const prisma = new PrismaClient(); export default prisma;`. Imported everywhere as `@/prisma` (path alias `@/* → ./*` in `tsconfig.json`), by both the Next.js app and `worker/` (see Gotchas — `worker/` has no Prisma dependency of its own and resolves this same file via Node's upward `node_modules` resolution).
+- **`seed-badges.ts`** — seeds the `Badge` table (gamification content that happens to live here; see below).
+- **`seed-subjects.ts`** — seeds the `Subject` table with 14 fixed subject names (Mathematics, Physics, Chemistry, Biology, Programming, English, Spanish, French, German, History, Music, Art & Design, Economics, Literature), mirroring the categories promised on the marketing landing page (`SubjectsSection` in `app/page.tsx`). Idempotent `upsert` on `name`.
+- **`migrations/`** — hand-authored SQL migration history. See `migrations/README.md` for the full workflow.
+
+There is **no general `prisma/seed.ts`** and no `seed` entry wired into `package.json` — both seed scripts are run directly (`npx tsx prisma/seed-badges.ts`, `npx tsx prisma/seed-subjects.ts`), not via `prisma db seed`.
+
+## The data model
+
+`schema.prisma` targets MySQL 8 via `DATABASE_URL`, generator `prisma-client-js`. Every model uses `@id @default(cuid())`; every mutable model carries `createdAt DateTime @default(now())` and `updatedAt DateTime @updatedAt`.
+
+**`User`** is a single flat table for all three `Role`s (`admin | student | teacher`) — there is no separate `Teacher`/`Student` model. Role-specific fields simply sit alongside each other and are left `null` for the roles that don't use them:
+- Teacher-only: `isOnline`, `pricePerHour` (`Decimal?`), `teachingStyle`, plus the Stripe Connect payout identity block (`stripeConnectAccountId`, `connectStatus`, `connectChargesEnabled`, `connectPayoutsEnabled`, `connectDetailsSubmitted`, `connectUpdatedAt`).
+- Student-only: `learningStyle`, `learningGoal`, `avatarFrame`, `avatarOptions` (`@db.Text`, a JSON-serialized `AvatarOptions` blob for the toon-head avatar customizer), plus the saved-card block for off-session recurring charges (`stripeCustomerId`, `defaultPaymentMethodId`).
+- `passwordChangedAt` — stamped on every password change; compared against the value baked into a JWT at sign-in so a session issued before a password change is treated as stale and rejected immediately, not just at natural JWT expiry (see `auth.ts`'s `jwt` callback).
+- `hasCompletedOnboarding` — gates the one-time welcome tour only; independent of whether `learningStyle`/`teachingStyle` are actually filled in.
+
+**`Class`** is the central transactional entity — one tutoring session.
+- `teacherId` is **nullable** (`User?`) to support "broadcast" requests any online teacher for the subject can claim; `requesterId` separately tracks who initiated the class (student-initiated vs. teacher-initiated flows use the same table).
+- `totalPrice` defaults to `0` because a broadcast request doesn't know the teacher's rate until claimed.
+- `status` (`Status` enum) is `requested → scheduled → completed | refused | cancelled`. `cancelled` was added later (`20260727122425_add_cancelled_class_status`) alongside the refund-tier cancellation flow; `completed` is set by `worker/src/complete-classes.ts`, a standalone polling process, not by any Next.js request handler.
+- `preAuthIntentId` — Stripe manual-capture PaymentIntent id.
+- `counterOfferTime` — proposed alternate start time, cleared on accept/decline.
+- `priority` — a `Boolean` set at creation from a purchased gem-store perk (`priorityBooking`, consumed at request time in `create-class-as-student.ts`). **Actively read**: `fetchOpenRequestsForTeacher` in `app/lib/actions/classes.actions.ts` orders open broadcast requests by `[{ priority: "desc" }, { startTime: "asc" }]`, so a priority-flagged request surfaces first to teachers browsing open requests, ties broken by start time. *(If you've seen this described elsewhere as a stored-but-inert/dead field, that's stale — it was wired up since.)*
+- `jitsiRoom` (`String? @unique`) — an unguessable video-room token generated at every class-creation site via `app/lib/classes/generate-jitsi-room.ts`; deliberately *not* derived from `Class.id`.
+- `gemsAwarded` / `sparksAwarded` / `pointsReversed` — running totals of gamification points actually granted for this specific class (an accept bonus and a completion bonus can both contribute), kept so a later refund/reversal can claw back exactly what was given rather than re-deriving it after the fact — the amounts differ between the worker's auto-complete path and the manual "Mark Complete" action.
+- `regularClassId` — nullable FK set on occurrences materialized from a `RegularClass` template; `onDelete: SetNull` so deactivating a recurring series never cascade-deletes historical occurrences. `@@unique([regularClassId, startTime])` prevents double-materializing the same week's occurrence.
+- Indexes include a composite `@@index([teacherId, status, subjectId])` added specifically to cover `fetchOpenRequestsForTeacher`'s exact filter shape without a fallback row scan (`20260728080712_add_class_teacher_claim_index`).
+
+**`RegularClass`** is a recurring weekly template, not itself bookable. `status` (`RegularClassStatus`: `requested | active | inactive`) gates a request → teacher-accept → `active` lifecycle; `active` is what starts occurrence generation. `lastMaterializedThrough` is a monotonic watermark (never moves backward — see `app/lib/regular-classes/materialize-occurrences.ts`) that stops a cancelled occurrence from silently reappearing on the next materialization pass — cancellation here **soft-cancels** (`status: "cancelled"` via `cancelClassCore`, the same shared core the one-off cancellation flow uses), it does not delete the row; the watermark is what prevents a re-scan, not the row's absence. `startTime` here only encodes a time-of-day via an arbitrary reference date — `dayOfWeek` (0=Sunday…6=Saturday, matching `TeacherAvailability`'s convention) is the actual recurrence key. `occurrences Class[]` is the back-relation.
+
+**`RefundRequest`** is a 1:1 extension of `Class` (`classId @unique`) for a student-initiated refund dispute, with its own status machine (`RefundRequestStatus`: `pending | accepted | refused | expired | admin_review | resolved`). Fully wired up on the application side — `app/lib/actions/refund-requests.actions.ts`, `app/lib/refund-requests/expire-refund-request.ts`, UI under `app/main/{student,teacher,admin}/.../refund-requests`, and a dedicated worker sweep (`worker/src/expire-refund-requests.ts`) that auto-expires past-due `pending` rows on a schedule rather than relying on someone viewing the request to trigger `expireIfNeeded`.
+
+**Money is always `Decimal`**, never `Float`/int cents: `pricePerHour`, `durationInHours`, `totalPrice`, `amount`, `platformFeeAmount`, `teacherPayoutAmount`, `rating`. MySQL stores these as `DECIMAL(65, 30)`. See `app/lib/types/README.md` for how these get converted to plain numbers/strings before reaching client components.
+
+**`Payment`** — one row per captured Stripe payment. `platformFeeAmount` / `teacherPayoutAmount` / `platformFeeRateBps` are the commission split, computed once via `computeCommissionSplit()` at charge/capture time and never recomputed later, so a future rate change never silently reprices a historical payment (nullable only so pre-migration rows stay valid — `20260723211343_add_stripe_connect_payouts` backfills them with a flat 15%). `payoutStatus` (`PayoutStatus`: `not_applicable | pending | transferred | failed`) / `transferId` / `payoutAttemptedAt` / `payoutError` track the separate Stripe Connect transfer to the teacher, mutated later at class-completion time by `app/lib/payouts.ts`. No refund/partial-refund modeling on this table — refunds go through Stripe directly, and the `Class` row itself is never deleted on cancellation: `cancelClassCore` (the shared core behind `cancelClassById`) soft-cancels via `status: "cancelled"` rather than a `prisma.class.delete`, specifically so the `Payment` row documenting the refund isn't cascade-deleted along with it (see `app/lib/actions/README.md`'s `classes.actions.ts` section for the full refund-tier logic).
+
+**Gamification**: `StudentGameProfile` / `TeacherGameProfile` (1:1 with `User`), `Badge` / `UserBadge` (`@@unique([userId, badgeId])`), `QuestClaim` (idempotency record for claiming one of the fixed weekly quests — quest *progress* is computed live from `Class`/`TeacherRating` rows, not tracked here; `@@unique([userId, questKey, weekStart])` is what makes claiming idempotent). Both game-profile models use a **weekly**, not daily, activity streak (`currentStreakWeeks`/`longestStreakWeeks`/`streakFreezes`) — tutoring's natural cadence is weekly/biweekly sessions, so a Duolingo-style daily streak would punish normal use; `streakFreezes` lets one missed week be covered instead of resetting to 0, earned for free at streak milestones rather than sold. This is live logic in `app/lib/gamification.ts` / `gamification-utils.ts` (the field was renamed from an earlier, never-incremented `streakDays` in `20260722214813_add_streaks_and_quests` — don't assume an old "dead column" note about it still applies).
+
+**Stripe Connect enums** (`ConnectStatus`, `PayoutStatus`) are documented inline in the schema with comments explaining exactly what each state means and how `ConnectStatus` (account-level) differs from a per-`Payment` `payoutStatus` (a teacher can be Connect-`active` while an individual payout still sits `pending` because the class hasn't completed, or `failed` from a transient Stripe error).
+
+**Availability**: `TeacherAvailability` — weekly recurring slots, half-hour granularity by convention (`startMin`/`endMin` are 0 or 30). A teacher with **zero rows** is treated as always-available by `app/lib/availability/check-availability.ts` — intentional for onboarding, not a bug, but it means availability isn't enforced until a teacher visits the availability page.
+
+**NextAuth tables** (`Account`, `Session`, `VerificationToken`, `Authenticator`) follow the standard `@auth/prisma-adapter` shape. `VerificationToken` gained a `purpose` column (`VerificationTokenPurpose`: `EMAIL_VERIFICATION | PASSWORD_RESET`) in `20260727122107_add_verification_token_purpose` — that migration `DELETE FROM VerificationToken` first, since the two token kinds were previously indistinguishable and tokens are short-lived (1–24h TTL) so clearing pending ones just forces a re-request.
+
+## Migration workflow
+
+See `migrations/README.md` for the full mechanics of authoring a migration in this repo.
+
+**Local/dev**: `pnpm prisma migrate dev --name <descriptive-name>` (there's also a "Prisma Migrate" task in `.vscode/tasks.json` running the same command). This requires an interactive terminal — it prompts for confirmation before applying a diff and for how to resolve drift — which isn't available in a headless/agent shell. In practice, most migrations after the initial project setup were **hand-authored** as `migration.sql` files matching Prisma's own DDL output style (see `migrations/README.md` for exactly how to tell which era a given migration file is from).
+
+**Production**: DigitalOcean App Platform (`.do/app.yaml`) does **not** run migrations automatically on deploy — there's no `release_command`/build-time migrate step in the spec, `web`'s envs only carry `DATABASE_URL` plus app secrets, and the `estudyou-mysql` cluster is referenced by `cluster_name` rather than provisioned inline. Applying a migration to production is a **manual step**, run against the DO cluster's `DATABASE_URL` directly, e.g.:
+```
+DATABASE_URL=<do-cluster-url> npx prisma migrate deploy
+DATABASE_URL=<do-cluster-url> npx prisma migrate status   # verify
+```
+Do this right after merging any schema-touching PR — nothing else will do it for you.
+
+## Gotchas
+
+- **`worker/` has no `@prisma/client`/`prisma` dependency of its own.** It resolves the root project's already-generated client via `@/prisma` → `prisma/index.ts` → `@prisma/client`, relying on Node's upward `node_modules` resolution. **Never run `prisma generate` (or `pnpm install`, which can trigger it) from inside `worker/`** — pnpm's content-addressable store means `worker/`'s own install can regenerate into the *same physical* client location the root app uses and leave it in a broken/partial state. Always run `pnpm prisma generate` from the repo root.
+- **`prisma/index.ts` does not use the standard Next.js global-singleton-caching pattern** (`globalThis.prisma ??= new PrismaClient()`) that most Next.js + Prisma guides recommend to survive hot-module-reload in dev. It's a plain `new PrismaClient()` at module scope. Worth watching if dev-mode connection exhaustion ever shows up.
+- **`schema.old.prisma`** at the repo root is a stale pre-refactor backup — a genuinely different, older data model (int `autoincrement()` IDs, a separate `Teacher` model instead of the flattened `User`, no NextAuth tables, no gamification). Never edit it, never diff against it as if it were authoritative for anything currently true about the schema.
+- **Cascade deletes**: `Class.teacher` is `onDelete: Cascade` — deleting a teacher `User` row deletes all their classes, including historical/paid ones. `deleteTeacherById` manually cascades `TeacherSubject`/`TeacherRating` first and relies on the schema cascade for the rest. This is a hard-delete design the whole delete flow (and its tests) assume; don't turn it into a soft-delete without a real discussion.
+- **Hand-written types drift risk**: `app/lib/types/*.types.ts` (`TeacherExtended`, `ClassData`, etc.) are **not generated from Prisma** — after any schema change, grep every `prisma.<model>.` call site for the changed model and check these hand types too. See `app/lib/types/README.md`.
+- **Naming typo preserved on purpose**: unrelated to this directory directly, but `app/lib/actions/paymets.actions.ts` (missing the "y") is baked into imports throughout the app that query `Payment` — don't "fix" the filename in isolation.
