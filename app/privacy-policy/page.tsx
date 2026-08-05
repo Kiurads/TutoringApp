@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-	title: "Privacy Policy | The Learning Nexus",
+	title: "Privacy Policy",
 };
 
 export default function PrivacyPolicyPage() {

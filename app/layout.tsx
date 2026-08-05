@@ -7,7 +7,10 @@ import Navbar from "./ui/navbar";
 import Providers from "./providers";
 
 export const metadata: Metadata = {
-	title: "The Learning Nexus",
+	title: {
+		default: "Ponte — Learn Faster with Expert Tutors",
+		template: "%s — Ponte",
+	},
 	description: "Book one-on-one tutoring sessions with expert teachers.",
 };
 

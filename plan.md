@@ -1,5 +1,5 @@
-# The Learning Nexus — Master Plan
-> The product is branded "The Learning Nexus." Earlier phases of this doc (and some still-live DigitalOcean resource names — the app, its MySQL cluster, and database are all internally named `estudyou`) predate the brand name and haven't been renamed; see Phase 11C.
+# Ponte — Master Plan
+> The product is branded "Ponte" (renamed 2026-08, from "The Learning Nexus," itself renamed from the original "eStudyou" internal codename in July 2026 — see git history for both rebrand commits). Earlier phases of this doc (and some still-live DigitalOcean resource names — the app, its MySQL cluster, and database are all internally named `estudyou`) predate both brand names and haven't been renamed; see Phase 11C.
 
 ## Completed ✅
 | Feature | Notes |

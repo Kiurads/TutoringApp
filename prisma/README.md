@@ -1,6 +1,6 @@
 # prisma/
 
-The Prisma ORM layer for eStudyou ("The Learning Nexus"): the MySQL data model (`schema.prisma`), the migration history that built it (`migrations/`), and the seed scripts that populate reference/content data. This is the single source of truth for the database shape — the app (`app/`) and the standalone `worker/` process both read/write through the client generated from `schema.prisma`.
+The Prisma ORM layer for eStudyou ("Ponte" as of 2026-08, previously "The Learning Nexus"): the MySQL data model (`schema.prisma`), the migration history that built it (`migrations/`), and the seed scripts that populate reference/content data. This is the single source of truth for the database shape — the app (`app/`) and the standalone `worker/` process both read/write through the client generated from `schema.prisma`.
 
 ## Files
 

@@ -1,6 +1,6 @@
 # app/
 
-Next.js 15 App Router root. This directory is the entire routed surface of eStudyou (product-facing name in code: "The Learning Nexus" — see the `<title>` in `layout.tsx`), plus the shared root layout/shell and its supporting files.
+Next.js 15 App Router root. This directory is the entire routed surface of eStudyou (product-facing name in code: "Ponte" as of 2026-08 — previously "The Learning Nexus," see the `title.default` in `layout.tsx`), plus the shared root layout/shell and its supporting files.
 
 ## Root shell files
 

@@ -37,7 +37,7 @@ vi.mock("@/prisma", () => ({
 }));
 
 vi.mock("@/app/lib/classes/generate-jitsi-room", () => ({
-	generateJitsiRoom: () => "learning-nexus-test-room",
+	generateJitsiRoom: () => "ponte-test-room",
 }));
 
 vi.mock("@/app/lib/notifications", () => ({ createNotification: vi.fn() }));
@@ -111,7 +111,7 @@ describe("materializeOccurrences", () => {
 					status: "scheduled",
 					requesterId: "student1",
 					regularClassId: "rc1",
-					jitsiRoom: "learning-nexus-test-room",
+					jitsiRoom: "ponte-test-room",
 					totalPrice: baseRegularClass.totalPrice,
 				}),
 			}),
