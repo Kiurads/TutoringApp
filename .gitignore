@@ -41,3 +41,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Claude Code personal/local settings — can auto-record approved command
+# strings verbatim (including any inline secrets from that command), so this
+# must never be shared/committed. See .claude/agents/ for the tracked,
+# intentionally-shared specialist-squad config instead.
+.claude/settings.local.json
