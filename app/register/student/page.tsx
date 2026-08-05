@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import RegisterStudentForm from "@/app/ui/register/student/register-student-form";
+
+export const metadata: Metadata = {
+	title: "Become a Student — The Learning Nexus",
+	description: "Sign up as a student on The Learning Nexus and start booking one-on-one tutoring sessions with expert teachers.",
+};
 
 export default function Register() {
 	return (

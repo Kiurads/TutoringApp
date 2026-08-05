@@ -1,9 +1,16 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import prisma from "@/prisma";
 
 /* ─────────────────────────────────────────────────────────────────────────────
    HOME PAGE
    ───────────────────────────────────────────────────────────────────────────── */
+
+export const metadata: Metadata = {
+	title: "The Learning Nexus — Learn Faster with Expert Tutors",
+	description:
+		"The Learning Nexus connects students with passionate teachers across dozens of subjects. Book a session, track your progress, and unlock rewards as you grow.",
+};
 
 export default async function Home() {
 	// Fetch real reviews that have a text body, most recent first

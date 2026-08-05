@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import LoginForm from "@/app/ui/login/login-form";
+
+export const metadata: Metadata = {
+	title: "Log In — The Learning Nexus",
+	description: "Log in to The Learning Nexus to book, manage, and track your tutoring sessions.",
+};
 
 interface LoginPageProps {
 	searchParams: Promise<{ verify?: string; reset?: string; passwordChanged?: string }>;
