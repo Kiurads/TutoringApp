@@ -5,15 +5,6 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { awardSparks } from "@/app/lib/gamification";
 
-export async function fetchUsers() {
-	try {
-		const users = await prisma.user.findMany();
-		return users;
-	} catch (error) {
-		console.log(error);
-	}
-}
-
 export async function fetchUserById(id: string) {
 	try {
 		const user = await prisma.user.findUnique({

@@ -53,16 +53,6 @@ The three logged-in role experiences — student, teacher, admin — live under 
 
 Route handlers (webhooks, auth, payment intents, health check, revalidation). See `app/api/README.md`.
 
-## `app/users/` — dead/debug code, not a real feature
+## `app/users/` — removed (2026-08-05)
 
-`app/users/page.tsx` renders at the route `/users`. It is **not linked from anywhere** in the codebase (confirmed via repo-wide grep for `/users`, `href="/users"`, and imports of `app/users`) and is not referenced by any nav, sidebar, or redirect. Its content:
-
-```tsx
-export default async function UsersPage() {
-	await fetchTeachersBySubjectsId(["biology"]);
-	const users = await fetchUsers();
-	...
-}
-```
-
-It hardcodes a call to `fetchTeachersBySubjectsId(["biology"])`, discards the result entirely (never used in the returned JSX), and then separately renders a raw, unstyled list of all users via `fetchUsers()`. This has every hallmark of a leftover scratch page from early development (testing a server action against a hardcoded subject) rather than a real feature. It performs an unauthenticated full-user-list query with no role gating and no styling. Flagged for a human to consider deleting — not fixed here per the read-only scope of this pass.
+Used to exist at the route `/users`: a leftover scratch page from early development that rendered every user's name and role via an unauthenticated `fetchUsers()` call, unlinked from anywhere in the app but still reachable by direct URL — a live PII leak, not just dead code. Found during an SEO audit (which flagged it as crawlable/indexable, worse than merely unused) and deleted outright along with the now-unused `fetchUsers()` export in `app/lib/actions/users.actions.ts`. `fetchTeachersBySubjectsId`, which this page also called (discarding the result), is unaffected — it's a real, tested, in-use function elsewhere (`app/ui/main/regular-classes/request-regular-class-form.tsx`).
