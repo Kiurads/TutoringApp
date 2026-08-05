@@ -4,7 +4,7 @@ Registration routes. Covers all three directories together since they're one asy
 
 ## `page.tsx` (route: `/register`)
 
-Renders `RegisterStudentForm` (`app/ui/register/student/register-student-form.tsx`) directly — no chooser, no "are you a student or teacher" branch. **This file is byte-identical to `app/register/student/page.tsx`** below; `/register` and `/register/student` are the same page, duplicated rather than one redirecting to the other. Worth collapsing if you touch either (e.g. make `/register` a thin `redirect("/register/student")`), but neither is currently broken — flagging as a minor duplication, not a bug.
+A thin `redirect("/register/student")` (as of 2026-08-05). **If you've read older docs/context claiming this file rendered `RegisterStudentForm` directly and was "byte-identical to `app/register/student/page.tsx`"** — that description was itself stale/inaccurate even before this fix: the actual prior content was a leftover, unstyled `<form>` named `SignIn` (copy-paste debris, not a real registration form, not byte-identical to anything), confirmed via a SEO audit that flagged it as duplicate-content-plus-visually-broken. Re-verify against the file before assuming otherwise. Fixed by replacing it with a redirect rather than reconciling it with the real form, since there was never a good reason for two URLs serving the same student-registration intent.
 
 ## `student/page.tsx` (route: `/register/student`)
 
