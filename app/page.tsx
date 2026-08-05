@@ -23,8 +23,21 @@ export default async function Home() {
 		rating:      r.rating.toNumber(),
 	}));
 
+	const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+	const structuredData = {
+		"@context": "https://schema.org",
+		"@type": "EducationalOrganization",
+		name: "The Learning Nexus",
+		url: baseUrl,
+		description: "Book one-on-one tutoring sessions with expert teachers.",
+	};
+
 	return (
 		<main className="min-h-screen flex flex-col">
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+			/>
 			<HeroSection />
 			<HowItWorks />
 			<ForStudents />
