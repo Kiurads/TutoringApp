@@ -27,6 +27,7 @@ const TYPE_CONFIG: Record<string, { icon: string; bg: string; fg: string }> = {
 	refund_decided:   { icon: "fa-rotate-left",     bg: "bg-info",     fg: "text-info-content"     },
 	refund_escalated: { icon: "fa-shield-halved",   bg: "bg-error",    fg: "text-error-content"    },
 	refund_resolved:  { icon: "fa-shield-halved",   bg: "bg-neutral",  fg: "text-neutral-content"  },
+	regular_class_requires_action: { icon: "fa-triangle-exclamation", bg: "bg-warning", fg: "text-warning-content" },
 };
 
 const FALLBACK = { icon: "fa-circle-info", bg: "bg-info", fg: "text-info-content" };

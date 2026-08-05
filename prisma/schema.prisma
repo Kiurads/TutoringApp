@@ -53,6 +53,7 @@ enum NotificationType {
   regular_class_refused
   regular_class_cancelled
   regular_class_payment_failed
+  regular_class_requires_action
   payout_sent
   payout_reversed
   connect_disconnected

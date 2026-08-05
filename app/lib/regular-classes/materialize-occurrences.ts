@@ -30,7 +30,7 @@ async function createChargedOccurrence(
 	const { stripeCustomerId, defaultPaymentMethodId } = rc.student;
 
 	if (!stripeCustomerId || !defaultPaymentMethodId) {
-		await prisma.class.create({
+		const cls = await prisma.class.create({
 			data: {
 				studentId: rc.studentId,
 				teacherId: rc.teacherId,
@@ -49,7 +49,7 @@ async function createChargedOccurrence(
 			"regular_class_payment_failed",
 			"Payment Method Needed",
 			"Add a payment method so your upcoming recurring classes can be charged automatically.",
-			"/main/student/regular-classes",
+			`/main/student/classes/${cls.id}`,
 		);
 		return;
 	}
@@ -98,7 +98,7 @@ async function createChargedOccurrence(
 			},
 		});
 	} catch (err) {
-		await prisma.class.create({
+		const cls = await prisma.class.create({
 			data: {
 				studentId: rc.studentId,
 				teacherId: rc.teacherId,
@@ -112,14 +112,41 @@ async function createChargedOccurrence(
 				jitsiRoom,
 			},
 		});
-		const message = err instanceof Error ? err.message : "Unknown error";
-		await createNotification(
-			rc.studentId,
-			"regular_class_payment_failed",
-			"Payment Failed",
-			`We couldn't charge your card for an upcoming recurring class: ${message}. Please update your payment method.`,
-			"/main/student/regular-classes",
-		);
+		const link = `/main/student/classes/${cls.id}`;
+
+		// EEA-issued cards can decline an off-session charge purely because
+		// PSD2 Strong Customer Authentication requires the cardholder to
+		// actively complete a 3DS challenge — impossible with nobody present
+		// for a background-worker-initiated charge. Stripe surfaces this as a
+		// card error with this specific code. It isn't a bad card, so it gets
+		// its own notification steering the student toward the fix that
+		// actually works: paying with them present, via the existing Pay Now
+		// flow (/api/payment-intent + CheckoutForm), which already handles
+		// the 3DS challenge correctly since the cardholder is there for it.
+		const requiresAuthentication =
+			typeof err === "object" &&
+			err !== null &&
+			"code" in err &&
+			(err as { code?: unknown }).code === "authentication_required";
+
+		if (requiresAuthentication) {
+			await createNotification(
+				rc.studentId,
+				"regular_class_requires_action",
+				"Payment Needs Your Confirmation",
+				"Your bank requires extra verification for an upcoming recurring class's payment. Pay now to complete it securely.",
+				link,
+			);
+		} else {
+			const message = err instanceof Error ? err.message : "Unknown error";
+			await createNotification(
+				rc.studentId,
+				"regular_class_payment_failed",
+				"Payment Failed",
+				`We couldn't charge your card for an upcoming recurring class: ${message}. Please update your payment method.`,
+				link,
+			);
+		}
 	}
 }
 
