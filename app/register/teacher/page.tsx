@@ -1,4 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+// noindex: this page is an informational dead-end (teacher accounts are
+// admin-provisioned only, see app/register/README.md), not a real signup
+// form — without this it would compete with /register/student for "become
+// a tutor" search intent despite having no actual signup path.
+export const metadata: Metadata = {
+	title: "Become a Tutor — The Learning Nexus",
+	robots: { index: false },
+};
 
 export default function TeacherRegisterPage() {
 	return (
