@@ -4,10 +4,7 @@ export default function Logo() {
 			<span className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary text-primary-content text-sm">
 				<i className="fa-solid fa-graduation-cap" />
 			</span>
-			<span>
-				The Learning{" "}
-				<span className="text-primary">Nexus</span>
-			</span>
+			<span className="text-primary">Ponte</span>
 		</span>
 	);
 }

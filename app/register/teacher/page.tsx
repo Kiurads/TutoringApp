@@ -6,7 +6,7 @@ import Link from "next/link";
 // form — without this it would compete with /register/student for "become
 // a tutor" search intent despite having no actual signup path.
 export const metadata: Metadata = {
-	title: "Become a Tutor — The Learning Nexus",
+	title: "Become a Tutor",
 	robots: { index: false },
 };
 

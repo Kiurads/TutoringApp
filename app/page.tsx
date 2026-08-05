@@ -6,10 +6,14 @@ import prisma from "@/prisma";
    HOME PAGE
    ───────────────────────────────────────────────────────────────────────────── */
 
+// No explicit `title` here — the root layout's `default` title (identical
+// to this copy) applies automatically. A title *would* additionally run
+// through the layout's `template` ("%s — Ponte"), double-appending the
+// brand name, so the home page specifically must stay title-less rather
+// than repeat itself.
 export const metadata: Metadata = {
-	title: "The Learning Nexus — Learn Faster with Expert Tutors",
 	description:
-		"The Learning Nexus connects students with passionate teachers across dozens of subjects. Book a session, track your progress, and unlock rewards as you grow.",
+		"Ponte connects students with passionate teachers across dozens of subjects. Book a session, track your progress, and unlock rewards as you grow.",
 };
 
 export default async function Home() {
@@ -34,7 +38,7 @@ export default async function Home() {
 	const structuredData = {
 		"@context": "https://schema.org",
 		"@type": "EducationalOrganization",
-		name: "The Learning Nexus",
+		name: "Ponte",
 		url: baseUrl,
 		description: "Book one-on-one tutoring sessions with expert teachers.",
 	};
@@ -84,7 +88,7 @@ function HeroSection() {
 
 				{/* Subtext */}
 				<p className="max-w-2xl text-lg text-base-content/60 leading-relaxed">
-					The Learning Nexus connects students with passionate teachers across dozens of subjects.
+					Ponte connects students with passionate teachers across dozens of subjects.
 					Book a session, track your progress, and unlock rewards as you grow.
 				</p>
 
@@ -199,7 +203,7 @@ function ForStudents() {
 						</h2>
 						<p className="text-base-content/60 leading-relaxed">
 							Whether you&apos;re cramming for an exam, filling in gaps, or exploring something new —
-							The Learning Nexus gives you the tools and the right people to get there.
+							Ponte gives you the tools and the right people to get there.
 						</p>
 						<Link href="/register/student" className="btn btn-primary self-start gap-2">
 							<i className="fa-solid fa-user-plus" />
@@ -375,7 +379,7 @@ function GamificationSection() {
 					Learning that <span className="text-primary">rewards you</span>
 				</h2>
 				<p className="mt-4 text-center text-base-content/55 max-w-xl mx-auto">
-					The Learning Nexus is the only tutoring platform with a built-in rewards system that makes
+					Ponte is the only tutoring platform with a built-in rewards system that makes
 					every session feel like progress — inside and outside the classroom.
 				</p>
 

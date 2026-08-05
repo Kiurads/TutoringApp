@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import LoginForm from "@/app/ui/login/login-form";
 
 export const metadata: Metadata = {
-	title: "Log In — The Learning Nexus",
-	description: "Log in to The Learning Nexus to book, manage, and track your tutoring sessions.",
+	title: "Log In",
+	description: "Log in to Ponte to book, manage, and track your tutoring sessions.",
 };
 
 interface LoginPageProps {

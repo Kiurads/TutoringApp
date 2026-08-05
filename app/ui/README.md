@@ -26,7 +26,7 @@ their own READMEs where present).
   component (`async function`, though it doesn't currently await anything
   itself).
 
-- **`logo.tsx`** — the "The Learning Nexus" wordmark + graduation-cap icon
+- **`logo.tsx`** — the "Ponte" wordmark + graduation-cap icon
   badge, used in the navbar and in `signout-form.tsx`'s confirmation card.
   Pure presentational, no props.
 

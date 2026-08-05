@@ -25,7 +25,7 @@ export default function Receipt({ receipt }: { receipt: PaymentReceipt }) {
 				<div>
 					<div className="flex items-center gap-2 text-xl font-bold">
 						<i className="fa-solid fa-graduation-cap text-primary" />
-						<span>The Learning Nexus</span>
+						<span>Ponte</span>
 					</div>
 					<p className="text-sm text-base-content/60 mt-1">Payment Receipt</p>
 				</div>

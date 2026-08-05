@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-	title: "Terms of Service | The Learning Nexus",
+	title: "Terms of Service",
 };
 
 export default function TermsOfServicePage() {
@@ -22,7 +22,7 @@ export default function TermsOfServicePage() {
 				<section>
 					<h2 className="text-lg font-semibold mb-2">1. Who we are</h2>
 					<p>
-						The Learning Nexus (&quot;we&quot;, &quot;us&quot;, &quot;the platform&quot;) operates an online
+						Ponte (&quot;we&quot;, &quot;us&quot;, &quot;the platform&quot;) operates an online
 						marketplace connecting students with independent tutors (&quot;teachers&quot;) for
 						one-on-one tutoring sessions (&quot;classes&quot;). By creating an account, you agree
 						to these Terms of Service and our{" "}
