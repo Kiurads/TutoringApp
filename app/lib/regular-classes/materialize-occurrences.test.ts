@@ -124,7 +124,7 @@ describe("materializeOccurrences", () => {
 			"regular_class_payment_failed",
 			"Payment Method Needed",
 			expect.any(String),
-			"/main/student/regular-classes",
+			"/main/student/classes/occ1",
 		);
 	});
 
@@ -184,7 +184,40 @@ describe("materializeOccurrences", () => {
 			"regular_class_payment_failed",
 			"Payment Failed",
 			expect.stringContaining("Card declined"),
-			"/main/student/regular-classes",
+			"/main/student/classes/occ1",
+		);
+	});
+
+	it("notifies with regular_class_requires_action when the off-session charge is declined for SCA authentication", async () => {
+		const { createNotification } = await import("@/app/lib/notifications");
+		vi.mocked(prisma.regularClass.findUnique).mockResolvedValue(withPaymentMethod as never);
+		vi.mocked(prisma.class.findUnique).mockResolvedValue(null);
+		mockPaymentIntentsCreate.mockRejectedValue({
+			code: "authentication_required",
+			message: "This payment requires authentication.",
+			payment_intent: { id: "pi_requires_action" },
+		});
+
+		const created = await materializeOccurrences("rc1");
+
+		expect(created).toBeGreaterThanOrEqual(4);
+		expect(prisma.payment.create).not.toHaveBeenCalled();
+		expect(prisma.class.create).not.toHaveBeenCalledWith(
+			expect.objectContaining({ data: expect.objectContaining({ paid: true }) }),
+		);
+		expect(createNotification).toHaveBeenCalledWith(
+			"student1",
+			"regular_class_requires_action",
+			"Payment Needs Your Confirmation",
+			expect.any(String),
+			"/main/student/classes/occ1",
+		);
+		expect(createNotification).not.toHaveBeenCalledWith(
+			"student1",
+			"regular_class_payment_failed",
+			expect.anything(),
+			expect.anything(),
+			expect.anything(),
 		);
 	});
 
