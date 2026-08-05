@@ -38,7 +38,7 @@ export async function createClassWithPreAuth(
 
 	const teacher = await prisma.user.findUnique({
 		where: { id: data.teacherId },
-		select: { pricePerHour: true, firstName: true, lastName: true },
+		select: { pricePerHour: true, firstName: true, lastName: true, timezone: true },
 	});
 	if (!teacher?.pricePerHour) return { error: "Teacher or price not found." };
 
@@ -54,7 +54,7 @@ export async function createClassWithPreAuth(
 		where: { teacherId: data.teacherId },
 		select: { dayOfWeek: true, startHour: true, startMin: true },
 	});
-	if (!isWithinAvailability(availabilitySlots, classStartTime, data.durationInHours)) {
+	if (!isWithinAvailability(availabilitySlots, classStartTime, data.durationInHours, teacher.timezone)) {
 		return { error: "The teacher is not available at the selected time." };
 	}
 

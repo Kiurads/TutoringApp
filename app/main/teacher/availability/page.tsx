@@ -28,7 +28,7 @@ export default async function TeacherAvailabilityPage() {
 					<h2 className="text-xs font-semibold text-base-content/50 uppercase tracking-wide">
 						Weekly schedule
 					</h2>
-					<AvailabilityGrid initialSlots={slots} />
+					<AvailabilityGrid initialSlots={slots} initialTimezone={user.timezone} />
 				</div>
 			</div>
 		</div>

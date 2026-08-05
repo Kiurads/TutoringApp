@@ -54,7 +54,7 @@ export async function createClassAsStudent(
 		// Specific teacher mode — calculate price now
 		const teacher = await prisma.user.findUnique({
 			where: { id: teacherId },
-			select: { pricePerHour: true, firstName: true, lastName: true },
+			select: { pricePerHour: true, firstName: true, lastName: true, timezone: true },
 		});
 
 		if (!teacher || !teacher.pricePerHour) return "Teacher not found.";
@@ -63,7 +63,7 @@ export async function createClassAsStudent(
 			where: { teacherId },
 			select: { dayOfWeek: true, startHour: true, startMin: true },
 		});
-		if (!isWithinAvailability(availabilitySlots, classStartTime, durationInHours)) {
+		if (!isWithinAvailability(availabilitySlots, classStartTime, durationInHours, teacher.timezone)) {
 			return "The teacher is not available at the selected time. Please choose a slot within their available hours.";
 		}
 
