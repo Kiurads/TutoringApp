@@ -1,10 +1,12 @@
 import { auth } from "@/auth";
 import { fetchClassById } from "@/app/lib/actions/classes.actions";
 import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
+import { fetchMessagesForClass } from "@/app/lib/actions/messages.actions";
 import ClassInfoCard from "@/app/ui/main/classes/details/class-info-card";
 import ClassActionModals from "@/app/ui/main/classes/details/class-action-modals";
 import JoinClassCard from "@/app/ui/main/classes/details/join-class-card";
 import CompleteClassButton from "@/app/ui/main/classes/details/complete-class-button";
+import MessageThread from "@/app/ui/main/classes/details/message-thread";
 import Link from "next/link";
 
 export default async function TeacherClassDetailsPage(props: {
@@ -65,6 +67,10 @@ export default async function TeacherClassDetailsPage(props: {
 	const hasActions = canAccept || canRefuse || canCancel || canComplete;
 	const otherPartyName = classData.student.name;
 
+	const initialMessages = classData.teacher
+		? await fetchMessagesForClass(id)
+		: [];
+
 	return (
 		<div className="flex flex-col gap-6">
 			<Link href="/main/teacher/classes" className="btn btn-ghost btn-sm w-fit gap-2">
@@ -103,6 +109,15 @@ export default async function TeacherClassDetailsPage(props: {
 						)}
 					</div>
 				</div>
+			)}
+
+			{classData.teacher && currentUser && (
+				<MessageThread
+					classId={id}
+					initialMessages={initialMessages}
+					currentUserId={currentUser.id}
+					otherPartyName={otherPartyName}
+				/>
 			)}
 		</div>
 	);

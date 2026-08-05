@@ -57,6 +57,7 @@ enum NotificationType {
   payout_sent
   payout_reversed
   connect_disconnected
+  message_received
 }
 
 enum BadgeCategory {
@@ -175,6 +176,7 @@ model User {
   userBadges              UserBadge[]
   teacherAvailability     TeacherAvailability[]
   questClaims             QuestClaim[]
+  messagesSent            Message[]            @relation("MessageSender")
 }
 
 model Subject {
@@ -231,6 +233,7 @@ model Class {
   payments      Payment[]
   refundRequest RefundRequest?
   regularClass  RegularClass?   @relation(fields: [regularClassId], references: [id], onDelete: SetNull)
+  messages      Message[]
 
   @@unique([regularClassId, startTime])
   @@index([studentId])
@@ -262,6 +265,25 @@ model RefundRequest {
   @@index([status])
   @@index([studentId])
   @@index([teacherId])
+}
+
+// Scoped to a single Class (booking) rather than a general student<->teacher
+// inbox — every message needs a concrete pairing to belong to, matching how
+// trust-and-safety-minded competitors (Outschool, Wyzant) keep coordination
+// anchored to a booking instead of open-ended contact. No read-tracking
+// field: the existing Notification "message_received" ping already covers
+// the "you have something new" signal, so this stays a simple ordered log.
+model Message {
+  id        String   @id @default(cuid())
+  classId   String
+  senderId  String
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+
+  class  Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  sender User  @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([classId, createdAt])
 }
 
 model RegularClass {

@@ -3,12 +3,14 @@ import { fetchClassById } from "@/app/lib/actions/classes.actions";
 import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
 import { fetchReviewByClassId } from "@/app/lib/actions/ratings.actions";
 import { fetchRefundRequestByClassId } from "@/app/lib/actions/refund-requests.actions";
+import { fetchMessagesForClass } from "@/app/lib/actions/messages.actions";
 import { canPayForClass } from "@/app/lib/classes/can-pay-for-class";
 import ClassInfoCard from "@/app/ui/main/classes/details/class-info-card";
 import ClassActionModals from "@/app/ui/main/classes/details/class-action-modals";
 import JoinClassCard from "@/app/ui/main/classes/details/join-class-card";
 import LeaveReviewForm from "@/app/ui/main/classes/review/leave-review-form";
 import NoShowReportSection from "@/app/ui/main/classes/no-show-report-section";
+import MessageThread from "@/app/ui/main/classes/details/message-thread";
 import Link from "next/link";
 
 export default async function StudentClassDetailsPage(props: {
@@ -82,6 +84,10 @@ export default async function StudentClassDetailsPage(props: {
 
 	const otherPartyName = classData.teacher?.name ?? "the teacher";
 
+	const initialMessages = classData.teacher
+		? await fetchMessagesForClass(id)
+		: [];
+
 	return (
 		<div className="flex flex-col gap-6">
 			<Link href="/main/student/classes" className="btn btn-ghost btn-sm w-fit gap-2">
@@ -145,6 +151,15 @@ export default async function StudentClassDetailsPage(props: {
 				<NoShowReportSection
 					classId={id}
 					refundRequest={refundRequest}
+				/>
+			)}
+
+			{classData.teacher && currentUser && (
+				<MessageThread
+					classId={id}
+					initialMessages={initialMessages}
+					currentUserId={currentUser.id}
+					otherPartyName={otherPartyName}
 				/>
 			)}
 		</div>
