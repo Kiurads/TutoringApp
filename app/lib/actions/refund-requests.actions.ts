@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import prisma from "@/prisma";
-import { revalidatePath } from "next/cache";
+import revalidatePath from "@/app/utils/revalidate-localized-path";
 import { redirect } from "next/navigation";
 import { fetchUserByEmail } from "./users.actions";
 import { createNotification } from "@/app/lib/notifications";

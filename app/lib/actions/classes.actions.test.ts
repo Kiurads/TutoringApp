@@ -283,7 +283,8 @@ describe("cancelClassById", () => {
       data: { status: "cancelled" },
     });
     expect(prisma.class.delete).not.toHaveBeenCalled();
-    expect(revalidatePath).toHaveBeenCalledWith("/main/student/classes");
+    expect(revalidatePath).toHaveBeenCalledWith("/en/main/student/classes");
+    expect(revalidatePath).toHaveBeenCalledWith("/pt/main/student/classes");
     expect(redirect).toHaveBeenCalledWith("/main/student/classes?toast=cancelled");
   });
 

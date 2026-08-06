@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import revalidatePath from "@/app/utils/revalidate-localized-path";
 import { auth } from "@/auth";
 import prisma from "@/prisma";
 import { createNotification } from "@/app/lib/notifications";

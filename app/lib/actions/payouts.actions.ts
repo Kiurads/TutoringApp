@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import { getStripe } from "@/app/lib/stripe";
-import { revalidatePath } from "next/cache";
+import revalidatePath from "@/app/utils/revalidate-localized-path";
 import type { ConnectStatus } from "@prisma/client";
 import prisma from "@/prisma";
 import { fetchUserByEmail } from "@/app/lib/actions/users.actions";

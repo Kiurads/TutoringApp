@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/prisma";
-import { revalidatePath } from "next/cache";
+import revalidatePath from "@/app/utils/revalidate-localized-path";
 
 export interface NotificationData {
 	id: string;

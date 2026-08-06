@@ -331,7 +331,9 @@ describe("createReview", () => {
 
 		await createReview("c1", "t1", 5, null);
 
-		expect(revalidatePath).toHaveBeenCalledWith("/main/student/classes/c1");
-		expect(revalidatePath).toHaveBeenCalledWith("/main/student/teachers");
+		expect(revalidatePath).toHaveBeenCalledWith("/en/main/student/classes/c1");
+		expect(revalidatePath).toHaveBeenCalledWith("/pt/main/student/classes/c1");
+		expect(revalidatePath).toHaveBeenCalledWith("/en/main/student/teachers");
+		expect(revalidatePath).toHaveBeenCalledWith("/pt/main/student/teachers");
 	});
 });

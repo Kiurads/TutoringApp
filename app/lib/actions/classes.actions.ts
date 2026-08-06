@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import prisma from "@/prisma";
 import { User } from "@prisma/client";
-import { revalidatePath } from "next/cache";
+import revalidatePath from "@/app/utils/revalidate-localized-path";
 import { redirect } from "next/navigation";
 import { fetchUserByEmail } from "./users.actions";
 import { decimalToHours } from "@/utils/decimal-to-time";

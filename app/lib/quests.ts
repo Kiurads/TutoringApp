@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import prisma from "@/prisma";
-import { revalidatePath } from "next/cache";
+import revalidatePath from "@/app/utils/revalidate-localized-path";
 import { fetchUserByEmail } from "./actions/users.actions";
 import { awardGems, awardSparks } from "./gamification";
 import { getWeekStart } from "./gamification-utils";

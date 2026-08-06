@@ -232,7 +232,8 @@ describe("retryFailedPayout", () => {
 		const result = await retryFailedPayout("pay1");
 
 		expect(mockTransferPayoutForClass).toHaveBeenCalledWith("class1");
-		expect(revalidatePath).toHaveBeenCalledWith("/main/admin/payments");
+		expect(revalidatePath).toHaveBeenCalledWith("/en/main/admin/payments");
+		expect(revalidatePath).toHaveBeenCalledWith("/pt/main/admin/payments");
 		expect(result).toEqual({});
 	});
 });
