@@ -62,6 +62,91 @@ describe("auth.config authorized callback", () => {
 
 		expect(result).toBe(true);
 	});
+
+	describe("/pt locale prefix (next-intl, as-needed mode)", () => {
+		it("redirects unauthenticated users away from protected /pt routes", () => {
+			const result = authConfig.callbacks.authorized({
+				auth: null,
+				request: { nextUrl: nextUrl("/pt/main/teacher/dashboard") },
+			} as never);
+
+			expect(result).toBe(false);
+		});
+
+		it("allows unauthenticated users on public /pt routes", () => {
+			const result = authConfig.callbacks.authorized({
+				auth: null,
+				request: { nextUrl: nextUrl("/pt/login") },
+			} as never);
+
+			expect(result).toBe(true);
+		});
+
+		it("redirects a logged-in user on /pt/ (home) to their /pt-prefixed dashboard", () => {
+			const result = authConfig.callbacks.authorized({
+				auth: { user: { role: "student", teacherPreferencesSet: true } },
+				request: { nextUrl: nextUrl("/pt") },
+			} as never);
+
+			expect(result).toBeInstanceOf(Response);
+			expect((result as Response).headers.get("location")).toBe(
+				"https://example.com/pt/main/student/dashboard",
+			);
+		});
+
+		it("redirects a role mismatch on a /pt route to the /pt-prefixed role dashboard", () => {
+			const result = authConfig.callbacks.authorized({
+				auth: { user: { role: "student", teacherPreferencesSet: true } },
+				request: { nextUrl: nextUrl("/pt/main/teacher/dashboard") },
+			} as never);
+
+			expect(result).toBeInstanceOf(Response);
+			expect((result as Response).headers.get("location")).toBe(
+				"https://example.com/pt/main/student/dashboard",
+			);
+		});
+
+		it("forces a teacher who hasn't set teaching preferences to the /pt-prefixed onboarding page", () => {
+			const result = authConfig.callbacks.authorized({
+				auth: { user: { role: "teacher", teacherPreferencesSet: false } },
+				request: { nextUrl: nextUrl("/pt/main/teacher/classes") },
+			} as never);
+
+			expect(result).toBeInstanceOf(Response);
+			expect((result as Response).headers.get("location")).toBe(
+				"https://example.com/pt/main/teacher/onboarding",
+			);
+		});
+
+		it("does not redirect away from the /pt-prefixed onboarding page itself", () => {
+			const result = authConfig.callbacks.authorized({
+				auth: { user: { role: "teacher", teacherPreferencesSet: false } },
+				request: { nextUrl: nextUrl("/pt/main/teacher/onboarding") },
+			} as never);
+
+			expect(result).toBe(true);
+		});
+
+		it("allows a /pt route on the user's own role page through untouched", () => {
+			const result = authConfig.callbacks.authorized({
+				auth: { user: { role: "student", teacherPreferencesSet: true } },
+				request: { nextUrl: nextUrl("/pt/main/student/classes") },
+			} as never);
+
+			expect(result).toBe(true);
+		});
+
+		it("does not treat a route merely starting with 'pt' as locale-prefixed", () => {
+			// Guards against the /^\/pt(\/|$)/ match being too loose — a route
+			// literally named /ptsomething must not be mistaken for /pt/something.
+			const result = authConfig.callbacks.authorized({
+				auth: null,
+				request: { nextUrl: nextUrl("/ptsomething") },
+			} as never);
+
+			expect(result).toBe(true);
+		});
+	});
 });
 
 describe("auth.config jwt callback", () => {
