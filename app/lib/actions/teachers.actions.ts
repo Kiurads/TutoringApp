@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/prisma";
-import { revalidatePath } from "next/cache";
+import revalidatePath from "@/app/utils/revalidate-localized-path";
 import UserDetails from "../types/user.types";
 import { TeacherDetails, TeacherExtended } from "../types/teachers.types";
 import { isWithinAvailability } from "../availability/check-availability";

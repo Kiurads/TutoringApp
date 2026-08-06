@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import prisma from "@/prisma";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import revalidatePath from "@/app/utils/revalidate-localized-path";
 import { STORE_ITEMS } from "@/app/lib/store-catalog";
 import type { StoreItemKey } from "@/app/lib/store-catalog";
 

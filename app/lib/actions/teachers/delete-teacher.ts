@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/prisma";
-import { revalidatePath } from "next/cache";
+import revalidatePath from "@/app/utils/revalidate-localized-path";
 
 // Deliberately does not redirect() here — this is called directly from a
 // client component's onClick (not a <form action>), and redirect() throws a

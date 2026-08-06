@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import prisma from "@/prisma";
-import { revalidatePath } from "next/cache";
+import revalidatePath from "@/app/utils/revalidate-localized-path";
 
 // Marks the one-time welcome tour as seen — called when the user finishes
 // or explicitly skips it (see app/ui/onboarding/welcome-tour-modal.tsx).
