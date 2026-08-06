@@ -6,12 +6,28 @@ import { poppins } from "@/app/ui/fonts";
 import Navbar from "./ui/navbar";
 import Providers from "./providers";
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
 export const metadata: Metadata = {
+	metadataBase: new URL(appUrl),
 	title: {
 		default: "Ponte — Learn Faster with Expert Tutors",
 		template: "%s — Ponte",
 	},
 	description: "Book one-on-one tutoring sessions with expert teachers.",
+	openGraph: {
+		title: "Ponte — Learn Faster with Expert Tutors",
+		description: "Book one-on-one tutoring sessions with expert teachers.",
+		url: appUrl,
+		siteName: "Ponte",
+		locale: "en_US",
+		type: "website",
+	},
+	twitter: {
+		card: "summary_large_image",
+		title: "Ponte — Learn Faster with Expert Tutors",
+		description: "Book one-on-one tutoring sessions with expert teachers.",
+	},
 };
 
 export default function RootLayout({
