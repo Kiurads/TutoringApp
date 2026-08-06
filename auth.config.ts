@@ -45,22 +45,31 @@ export const authConfig = {
 			const isLoggedIn = !!auth?.user;
 			const role = auth?.user?.role;
 
+			// Locale-prefixed routing (next-intl, "as-needed" mode): English,
+			// the default locale, keeps today's unprefixed paths; Portuguese
+			// carries a /pt prefix. Strip it before matching so the rest of
+			// this callback's path logic stays exactly as it was pre-i18n,
+			// then re-add it (localePrefix) when building redirect targets.
+			const ptMatch = nextUrl.pathname.match(/^\/pt(\/|$)/);
+			const localePrefix = ptMatch ? "/pt" : "";
+			const path = ptMatch ? nextUrl.pathname.slice(3) || "/" : nextUrl.pathname;
+
 			const roleBasePaths: Record<string, string> = {
 				student: "/main/student",
 				teacher: "/main/teacher",
 				admin: "/main/admin",
 			};
 
-			const isOnHomePage = nextUrl.pathname === "/";
+			const isOnHomePage = path === "/";
 			const isOnRolePage = role
-				? nextUrl.pathname.startsWith(roleBasePaths[role])
+				? path.startsWith(roleBasePaths[role])
 				: false;
 
 			if (!isLoggedIn) {
 				if (
-					nextUrl.pathname.startsWith("/main/student") ||
-					nextUrl.pathname.startsWith("/main/teacher") ||
-					nextUrl.pathname.startsWith("/main/admin")
+					path.startsWith("/main/student") ||
+					path.startsWith("/main/teacher") ||
+					path.startsWith("/main/admin")
 				) {
 					return false; // redirect to /login
 				}
@@ -68,12 +77,12 @@ export const authConfig = {
 			}
 
 			if (!role) {
-				return Response.redirect(new URL("/unauthorized", nextUrl));
+				return Response.redirect(new URL(`${localePrefix}/unauthorized`, nextUrl));
 			}
 
 			if (isOnHomePage || !isOnRolePage) {
 				return Response.redirect(
-					new URL(`${roleBasePaths[role]}/dashboard`, nextUrl)
+					new URL(`${localePrefix}${roleBasePaths[role]}/dashboard`, nextUrl)
 				);
 			}
 
@@ -84,9 +93,9 @@ export const authConfig = {
 			if (
 				role === "teacher" &&
 				auth?.user?.teacherPreferencesSet === false &&
-				nextUrl.pathname !== teacherOnboardingPath
+				path !== teacherOnboardingPath
 			) {
-				return Response.redirect(new URL(teacherOnboardingPath, nextUrl));
+				return Response.redirect(new URL(`${localePrefix}${teacherOnboardingPath}`, nextUrl));
 			}
 
 			return true; // allow access

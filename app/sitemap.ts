@@ -7,6 +7,10 @@ import type { MetadataRoute } from "next";
 // something that immediately redirects doesn't help — list the canonical
 // target instead. Revisit once public teacher/subject pages exist (#146) —
 // this should then query them from the DB rather than staying a fixed list.
+//
+// Each route gets one entry per locale (English unprefixed, Portuguese under
+// /pt — next-intl "as-needed" mode, see i18n/routing.ts) so both are
+// independently indexable.
 export default function sitemap(): MetadataRoute.Sitemap {
 	const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -19,10 +23,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
 		{ path: "/terms-of-service", priority: 0.2, changeFrequency: "yearly" as const },
 	];
 
-	return routes.map((route) => ({
-		url: `${baseUrl}${route.path}`,
-		lastModified: new Date(),
-		changeFrequency: route.changeFrequency,
-		priority: route.priority,
-	}));
+	const locales = [{ prefix: "" }, { prefix: "/pt" }];
+
+	return locales.flatMap(({ prefix }) =>
+		routes.map((route) => ({
+			url: `${baseUrl}${prefix}${route.path}`,
+			lastModified: new Date(),
+			changeFrequency: route.changeFrequency,
+			priority: route.priority,
+		})),
+	);
 }

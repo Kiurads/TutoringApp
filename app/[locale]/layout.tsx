@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
-import "./globals.css";
+import "@/app/globals.css";
 import Script from "next/script";
+import { hasLocale } from "next-intl";
+import { NextIntlClientProvider } from "next-intl";
+import { setRequestLocale } from "next-intl/server";
+import { notFound } from "next/navigation";
 
+import { routing } from "@/i18n/routing";
 import { poppins } from "@/app/ui/fonts";
-import Navbar from "./ui/navbar";
-import Providers from "./providers";
+import Navbar from "@/app/ui/navbar";
+import Providers from "@/app/providers";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -30,23 +35,40 @@ export const metadata: Metadata = {
 	},
 };
 
-export default function RootLayout({
+export function generateStaticParams() {
+	return routing.locales.map((locale) => ({ locale }));
+}
+
+export default async function RootLayout({
 	children,
+	params,
 }: Readonly<{
 	children: React.ReactNode;
+	params: Promise<{ locale: string }>;
 }>) {
+	const { locale } = await params;
+	if (!hasLocale(routing.locales, locale)) {
+		notFound();
+	}
+
+	// Required by next-intl so static rendering + generateStaticParams work
+	// correctly for this locale's subtree, not just the request-scoped config.
+	setRequestLocale(locale);
+
 	return (
-		<html data-theme="light" lang="en" suppressHydrationWarning>
+		<html data-theme="light" lang={locale} suppressHydrationWarning>
 			<body className={`${poppins.className} bg-base-100 text-base-content min-h-screen flex flex-col`}>
 				{/* Blocking script — must be first child of body, runs before paint */}
 				<script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}}())` }} />
 				<Script src="https://kit.fontawesome.com/c0fa11f9f4.js"></Script>
-				<Providers>
-					<Navbar />
-					<main className="flex-1 flex flex-col">
-						{children}
-					</main>
-				</Providers>
+				<NextIntlClientProvider>
+					<Providers>
+						<Navbar />
+						<main className="flex-1 flex flex-col">
+							{children}
+						</main>
+					</Providers>
+				</NextIntlClientProvider>
 			</body>
 		</html>
 	);

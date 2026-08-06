@@ -10,7 +10,10 @@ export default function robots(): MetadataRoute.Robots {
 	return {
 		rules: {
 			userAgent: "*",
-			disallow: ["/main/", "/api/"],
+			// Portuguese routes carry a /pt prefix (next-intl, "as-needed" mode
+			// — see i18n/routing.ts); English stays unprefixed. Both variants of
+			// /main/ need disallowing.
+			disallow: ["/main/", "/pt/main/", "/api/"],
 		},
 		sitemap: `${baseUrl}/sitemap.xml`,
 	};
