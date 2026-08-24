@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 // The booked-classes tables mark a row as pending/unpaid with a colored
 // left border alone — no backup for colorblind users. This renders a small
 // icon (with a title/aria-label) alongside that same color, so the signal
@@ -9,12 +13,14 @@ export default function RowStatusIcon({
 	isPending: boolean;
 	isUnpaid: boolean;
 }) {
+	const t = useTranslations("RowStatusIcon");
+
 	if (isPending) {
 		return (
 			<i
 				className="fa-solid fa-hourglass-half text-warning text-xs ml-1.5"
-				title="Pending"
-				aria-label="Pending"
+				title={t("pending")}
+				aria-label={t("pending")}
 			></i>
 		);
 	}
@@ -22,8 +28,8 @@ export default function RowStatusIcon({
 		return (
 			<i
 				className="fa-solid fa-circle-exclamation text-error text-xs ml-1.5"
-				title="Unpaid"
-				aria-label="Unpaid"
+				title={t("unpaid")}
+				aria-label={t("unpaid")}
 			></i>
 		);
 	}

@@ -333,6 +333,53 @@
 			"preferences": "Preferências"
 		}
 	},
+	"ToastNotification": {
+		"created": "Pedido de aula enviado. Será notificado quando um professor o aceitar.",
+		"accepted": "Aula aceite com sucesso.",
+		"refused": "Pedido de aula recusado.",
+		"cancelled": "Aula cancelada com sucesso.",
+		"claimed": "Aula reivindicada! O estudante será notificado.",
+		"paid": "Pagamento efetuado com sucesso! A sua aula está confirmada.",
+		"purchased": "Compra efetuada com sucesso!",
+		"deleted": "Professor eliminado com sucesso.",
+		"resolved": "Disputa resolvida com sucesso.",
+		"dismiss": "Fechar"
+	},
+	"StudentClassesPage": {
+		"title": "As Minhas Aulas",
+		"subtitle": "Veja e faça a gestão das suas sessões agendadas"
+	},
+	"StudentBookedClasses": {
+		"title": "As Minhas Aulas",
+		"noClasses": "Ainda não tem aulas marcadas.",
+		"tabAll": "Todas",
+		"tabPending": "Pendentes",
+		"tabUnpaid": "Por pagar",
+		"noClassesInCategory": "Sem aulas nesta categoria.",
+		"subject": "Disciplina",
+		"teacher": "Professor",
+		"date": "Data",
+		"duration": "Duração",
+		"price": "Preço",
+		"status": "Estado",
+		"paid": "Pago",
+		"actions": "Ações",
+		"finding": "A procurar…"
+	},
+	"AddClassButton": {
+		"newClass": "Nova Aula"
+	},
+	"RowStatusIcon": {
+		"pending": "Pendente",
+		"unpaid": "Por pagar"
+	},
+	"FirstVisitWarning": {
+		"warning": "Atenção! As aulas que não forem pagas até ao último dia antes da aula são canceladas automaticamente!",
+		"close": "Fechar"
+	},
+	"StudentTableButtons": {
+		"theTeacher": "o professor"
+	},
 	"AdminLayout": {
 		"panelName": "Painel de Administração",
 		"loggedInAs": "Sessão iniciada como:",

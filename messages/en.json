@@ -333,6 +333,53 @@
 			"preferences": "Preferences"
 		}
 	},
+	"ToastNotification": {
+		"created": "Class request sent. You'll be notified when a teacher accepts.",
+		"accepted": "Class accepted successfully.",
+		"refused": "Class request refused.",
+		"cancelled": "Class cancelled successfully.",
+		"claimed": "Class claimed! The student will be notified.",
+		"paid": "Payment successful! Your class is confirmed.",
+		"purchased": "Purchase successful!",
+		"deleted": "Teacher deleted successfully.",
+		"resolved": "Dispute resolved successfully.",
+		"dismiss": "Dismiss"
+	},
+	"StudentClassesPage": {
+		"title": "My Classes",
+		"subtitle": "View and manage your scheduled sessions"
+	},
+	"StudentBookedClasses": {
+		"title": "My Classes",
+		"noClasses": "You have no booked classes yet.",
+		"tabAll": "All",
+		"tabPending": "Pending",
+		"tabUnpaid": "Unpaid",
+		"noClassesInCategory": "No classes in this category.",
+		"subject": "Subject",
+		"teacher": "Teacher",
+		"date": "Date",
+		"duration": "Duration",
+		"price": "Price",
+		"status": "Status",
+		"paid": "Paid",
+		"actions": "Actions",
+		"finding": "Finding…"
+	},
+	"AddClassButton": {
+		"newClass": "New Class"
+	},
+	"RowStatusIcon": {
+		"pending": "Pending",
+		"unpaid": "Unpaid"
+	},
+	"FirstVisitWarning": {
+		"warning": "Attention! Classes that are not paid for by the last day before the class are automatically cancelled!",
+		"close": "Close"
+	},
+	"StudentTableButtons": {
+		"theTeacher": "the teacher"
+	},
 	"AdminLayout": {
 		"panelName": "Admin Panel",
 		"loggedInAs": "Logged in as:",

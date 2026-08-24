@@ -2,56 +2,22 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
-const TOASTS: Record<string, { message: string; alertClass: string; icon: string }> = {
-	created: {
-		message: "Class request sent. You'll be notified when a teacher accepts.",
-		alertClass: "alert-success",
-		icon: "fa-circle-check",
-	},
-	accepted: {
-		message: "Class accepted successfully.",
-		alertClass: "alert-success",
-		icon: "fa-circle-check",
-	},
-	refused: {
-		message: "Class request refused.",
-		alertClass: "alert-warning",
-		icon: "fa-triangle-exclamation",
-	},
-	cancelled: {
-		message: "Class cancelled successfully.",
-		alertClass: "alert-info",
-		icon: "fa-circle-info",
-	},
-	claimed: {
-		message: "Class claimed! The student will be notified.",
-		alertClass: "alert-success",
-		icon: "fa-circle-check",
-	},
-	paid: {
-		message: "Payment successful! Your class is confirmed.",
-		alertClass: "alert-success",
-		icon: "fa-sack-dollar",
-	},
-	purchased: {
-		message: "Purchase successful!",
-		alertClass: "alert-success",
-		icon: "fa-gem",
-	},
-	deleted: {
-		message: "Teacher deleted successfully.",
-		alertClass: "alert-success",
-		icon: "fa-circle-check",
-	},
-	resolved: {
-		message: "Dispute resolved successfully.",
-		alertClass: "alert-success",
-		icon: "fa-circle-check",
-	},
+const TOASTS: Record<string, { alertClass: string; icon: string }> = {
+	created: { alertClass: "alert-success", icon: "fa-circle-check" },
+	accepted: { alertClass: "alert-success", icon: "fa-circle-check" },
+	refused: { alertClass: "alert-warning", icon: "fa-triangle-exclamation" },
+	cancelled: { alertClass: "alert-info", icon: "fa-circle-info" },
+	claimed: { alertClass: "alert-success", icon: "fa-circle-check" },
+	paid: { alertClass: "alert-success", icon: "fa-sack-dollar" },
+	purchased: { alertClass: "alert-success", icon: "fa-gem" },
+	deleted: { alertClass: "alert-success", icon: "fa-circle-check" },
+	resolved: { alertClass: "alert-success", icon: "fa-circle-check" },
 };
 
 export default function ToastNotification({ toast }: { toast?: string }) {
+	const t = useTranslations("ToastNotification");
 	const router = useRouter();
 	// Capture the initial value so it survives after the URL is cleaned
 	const [initialToast] = useState(toast);
@@ -98,12 +64,12 @@ export default function ToastNotification({ toast }: { toast?: string }) {
 			>
 				<div className="flex items-center gap-2">
 					<i className={`fa-solid ${config.icon}`}></i>
-					<span>{config.message}</span>
+					<span>{t(initialToast as string)}</span>
 				</div>
 				<button
 					onClick={dismiss}
 					className="btn btn-ghost btn-xs"
-					aria-label="Dismiss"
+					aria-label={t("dismiss")}
 				>
 					<i className="fa-solid fa-xmark"></i>
 				</button>

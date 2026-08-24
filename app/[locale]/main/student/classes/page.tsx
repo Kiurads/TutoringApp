@@ -6,6 +6,7 @@ import FirstVisitWarning from "@/app/ui/main/classes/first-visit-warning";
 import ToastNotification from "@/app/ui/toast-notification";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 export default async function ClassesPage(props: {
 	searchParams: Promise<{ toast?: string }>;
@@ -14,15 +15,18 @@ export default async function ClassesPage(props: {
 
 	if (!session?.user?.email) redirect("/login");
 
-	const { toast } = await props.searchParams;
-	const bookedClasses = await fetchBookedClassesByUser(session.user.email);
+	const [{ toast }, bookedClasses, t] = await Promise.all([
+		props.searchParams,
+		fetchBookedClassesByUser(session.user.email),
+		getTranslations("StudentClassesPage"),
+	]);
 
 	return (
 		<div className="flex flex-col gap-6">
 			<div>
-				<h1 className="text-2xl font-bold">My Classes</h1>
+				<h1 className="text-2xl font-bold">{t("title")}</h1>
 				<p className="text-base-content/60 mt-1">
-					View and manage your scheduled sessions
+					{t("subtitle")}
 				</p>
 			</div>
 			<ToastNotification toast={toast} />
