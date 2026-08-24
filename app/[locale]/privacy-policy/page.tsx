@@ -1,97 +1,69 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 export const metadata = {
 	title: "Privacy Policy",
 };
 
-export default function PrivacyPolicyPage() {
+export default async function PrivacyPolicyPage() {
+	const t = await getTranslations("PrivacyPolicyPage");
+
 	return (
 		<div className="max-w-3xl mx-auto px-4 py-12">
-			<h1 className="text-3xl font-bold mb-2">Privacy Policy</h1>
-			<p className="text-sm text-base-content/60 mb-6">Last updated: July 24, 2026</p>
+			<h1 className="text-3xl font-bold mb-2">{t("title")}</h1>
+			<p className="text-sm text-base-content/60 mb-6">{t("lastUpdated")}</p>
 
 			<div role="alert" className="alert alert-warning mb-8 text-sm">
 				<i className="fa-solid fa-triangle-exclamation" />
-				<span>
-					This is a draft template, not final legal copy. Have a lawyer review and adapt it
-					to your jurisdiction (e.g. GDPR, CCPA) before relying on it in production.
-				</span>
+				<span>{t("disclaimer")}</span>
 			</div>
 
 			<div className="flex flex-col gap-6 text-sm leading-relaxed">
 				<section>
-					<h2 className="text-lg font-semibold mb-2">1. Information we collect</h2>
-					<p>
-						When you create an account we collect your name, email address, password (stored
-						as a salted hash, never in plain text), and optionally a phone number. When you
-						book or teach classes we store related scheduling, subject, and review data. We do
-						not collect or store payment card details ourselves — see below.
-					</p>
+					<h2 className="text-lg font-semibold mb-2">{t("section1Title")}</h2>
+					<p>{t("section1Body")}</p>
 				</section>
 
 				<section>
-					<h2 className="text-lg font-semibold mb-2">2. Payment information</h2>
-					<p>
-						Payments are processed by Stripe. Card details are sent directly to Stripe and never
-						pass through or are stored on our servers. Teachers who set up payouts provide bank
-						account and identity verification details directly to Stripe through its own
-						onboarding flow — we only receive and store Stripe&apos;s account status (e.g. whether
-						payouts are enabled), not the underlying documents.
-					</p>
+					<h2 className="text-lg font-semibold mb-2">{t("section2Title")}</h2>
+					<p>{t("section2Body")}</p>
 				</section>
 
 				<section>
-					<h2 className="text-lg font-semibold mb-2">3. How we use your information</h2>
-					<p>
-						We use your information to operate the platform: matching students with teachers,
-						processing payments and payouts, sending transactional emails (booking
-						confirmations, verification, password resets), and improving the service.
-					</p>
+					<h2 className="text-lg font-semibold mb-2">{t("section3Title")}</h2>
+					<p>{t("section3Body")}</p>
 				</section>
 
 				<section>
-					<h2 className="text-lg font-semibold mb-2">4. Third parties we share data with</h2>
-					<p>
-						We use Stripe for payment processing and payouts, Resend for transactional email
-						delivery, and Jitsi for hosting video class sessions. Each processes only the data
-						necessary to provide their service to us.
-					</p>
+					<h2 className="text-lg font-semibold mb-2">{t("section4Title")}</h2>
+					<p>{t("section4Body")}</p>
 				</section>
 
 				<section>
-					<h2 className="text-lg font-semibold mb-2">5. Cookies and sessions</h2>
-					<p>
-						We use a session cookie to keep you signed in. We do not use third-party advertising
-						or tracking cookies.
-					</p>
+					<h2 className="text-lg font-semibold mb-2">{t("section5Title")}</h2>
+					<p>{t("section5Body")}</p>
 				</section>
 
 				<section>
-					<h2 className="text-lg font-semibold mb-2">6. Your rights</h2>
-					<p>
-						You can review and update most of your account information from your profile
-						settings. To request a copy or deletion of your data, contact the platform&apos;s
-						support contact.
-					</p>
+					<h2 className="text-lg font-semibold mb-2">{t("section6Title")}</h2>
+					<p>{t("section6Body")}</p>
 				</section>
 
 				<section>
-					<h2 className="text-lg font-semibold mb-2">7. Changes to this policy</h2>
-					<p>
-						We may update this policy from time to time. Material changes will be reflected here
-						with an updated date.
-					</p>
+					<h2 className="text-lg font-semibold mb-2">{t("section7Title")}</h2>
+					<p>{t("section7Body")}</p>
 				</section>
 
 				<section>
-					<h2 className="text-lg font-semibold mb-2">8. Contact</h2>
+					<h2 className="text-lg font-semibold mb-2">{t("section8Title")}</h2>
 					<p>
-						Questions about this policy can be sent to the platform&apos;s support contact. See
-						also our{" "}
-						<Link href="/terms-of-service" className="link link-primary">
-							Terms of Service
-						</Link>
-						.
+						{t.rich("section8Body", {
+							termsLink: (chunks) => (
+								<Link href="/terms-of-service" className="link link-primary">
+									{chunks}
+								</Link>
+							),
+						})}
 					</p>
 				</section>
 			</div>
