@@ -287,5 +287,64 @@
 	"ClaimQuestButton": {
 		"claimed": "Resgatado",
 		"claim": "Resgatar +{reward}"
+	},
+	"StudentSidebar": {
+		"portalName": "Portal do Estudante",
+		"sections": {
+			"overview": "Visão Geral",
+			"learning": "Aprendizagem",
+			"rewards": "Recompensas",
+			"account": "Conta"
+		},
+		"nav": {
+			"dashboard": "Painel",
+			"classes": "Aulas",
+			"recurringClasses": "Aulas Recorrentes",
+			"calendar": "Calendário",
+			"subjects": "Disciplinas",
+			"teachers": "Professores",
+			"store": "Loja de Gemas",
+			"profile": "Perfil",
+			"preferences": "Preferências"
+		}
+	},
+	"TeacherSidebar": {
+		"portalName": "Painel do Professor",
+		"online": "Online",
+		"offline": "Offline",
+		"updating": "A atualizar…",
+		"sections": {
+			"overview": "Visão Geral",
+			"teaching": "Ensino",
+			"peopleMoney": "Pessoas e Dinheiro",
+			"account": "Conta"
+		},
+		"nav": {
+			"dashboard": "Painel",
+			"classes": "Aulas",
+			"recurringClasses": "Aulas Recorrentes",
+			"calendar": "Calendário",
+			"availability": "Disponibilidade",
+			"students": "Estudantes",
+			"earnings": "Ganhos",
+			"payouts": "Pagamentos",
+			"refundRequests": "Pedidos de Reembolso",
+			"profile": "Perfil",
+			"preferences": "Preferências"
+		}
+	},
+	"AdminLayout": {
+		"panelName": "Painel de Administração",
+		"loggedInAs": "Sessão iniciada como:",
+		"nav": {
+			"dashboard": "Painel",
+			"teachers": "Professores",
+			"students": "Estudantes",
+			"classes": "Aulas",
+			"payments": "Pagamentos",
+			"subjects": "Disciplinas",
+			"refundRequests": "Pedidos de Reembolso",
+			"settings": "Definições"
+		}
 	}
 }

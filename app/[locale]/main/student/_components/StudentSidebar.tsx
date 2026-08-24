@@ -2,39 +2,40 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import NotificationDropdown from "@/app/ui/main/notifications/notification-dropdown";
 import type { NotificationData } from "@/app/lib/actions/notifications.actions";
 
-type NavItem = { href: string; icon: string; label: string; dataTour?: string };
+type NavItem = { href: string; icon: string; labelKey: string; dataTour?: string };
 
-const sections: { heading: string; items: NavItem[] }[] = [
+const sections: { headingKey: string; items: NavItem[] }[] = [
 	{
-		heading: "Overview",
+		headingKey: "overview",
 		items: [
-			{ href: "/main/student/dashboard", icon: "fa-house-user", label: "Dashboard", dataTour: "nav-dashboard" },
+			{ href: "/main/student/dashboard", icon: "fa-house-user", labelKey: "dashboard", dataTour: "nav-dashboard" },
 		],
 	},
 	{
-		heading: "Learning",
+		headingKey: "learning",
 		items: [
-			{ href: "/main/student/classes",         icon: "fa-school",          label: "Classes", dataTour: "nav-classes" },
-			{ href: "/main/student/regular-classes", icon: "fa-rotate",          label: "Recurring Classes", dataTour: "nav-recurring-classes" },
-			{ href: "/main/student/calendar",        icon: "fa-calendar-days",   label: "Calendar", dataTour: "nav-calendar" },
-			{ href: "/main/student/subjects",        icon: "fa-book",            label: "Subjects", dataTour: "nav-subjects" },
-			{ href: "/main/student/teachers",        icon: "fa-chalkboard-user", label: "Teachers", dataTour: "nav-teachers" },
+			{ href: "/main/student/classes",         icon: "fa-school",          labelKey: "classes", dataTour: "nav-classes" },
+			{ href: "/main/student/regular-classes", icon: "fa-rotate",          labelKey: "recurringClasses", dataTour: "nav-recurring-classes" },
+			{ href: "/main/student/calendar",        icon: "fa-calendar-days",   labelKey: "calendar", dataTour: "nav-calendar" },
+			{ href: "/main/student/subjects",        icon: "fa-book",            labelKey: "subjects", dataTour: "nav-subjects" },
+			{ href: "/main/student/teachers",        icon: "fa-chalkboard-user", labelKey: "teachers", dataTour: "nav-teachers" },
 		],
 	},
 	{
-		heading: "Rewards",
+		headingKey: "rewards",
 		items: [
-			{ href: "/main/student/store", icon: "fa-gem", label: "Gem Store", dataTour: "nav-store" },
+			{ href: "/main/student/store", icon: "fa-gem", labelKey: "store", dataTour: "nav-store" },
 		],
 	},
 	{
-		heading: "Account",
+		headingKey: "account",
 		items: [
-			{ href: "/main/student/profile",    icon: "fa-circle-user",           label: "Profile", dataTour: "nav-profile" },
-			{ href: "/main/student/onboarding", icon: "fa-wand-magic-sparkles",   label: "Preferences", dataTour: "nav-preferences" },
+			{ href: "/main/student/profile",    icon: "fa-circle-user",           labelKey: "profile", dataTour: "nav-profile" },
+			{ href: "/main/student/onboarding", icon: "fa-wand-magic-sparkles",   labelKey: "preferences", dataTour: "nav-preferences" },
 		],
 	},
 ];
@@ -53,6 +54,7 @@ export default function StudentSidebar({
 	children: React.ReactNode;
 }) {
 	const pathname = usePathname();
+	const t = useTranslations("StudentSidebar");
 
 	return (
 		<div className="drawer lg:drawer-open flex-1">
@@ -80,7 +82,7 @@ export default function StudentSidebar({
 					<div className="flex items-center justify-between px-4 pt-4 pb-3 shrink-0">
 						<div className="flex items-center gap-2 text-xl font-bold">
 							<i className="fa-solid fa-graduation-cap text-primary"></i>
-							<span>Student Portal</span>
+							<span>{t("portalName")}</span>
 						</div>
 						<NotificationDropdown
 							initialNotifications={initialNotifications}
@@ -94,10 +96,10 @@ export default function StudentSidebar({
 					{/* Nav sections */}
 					<nav className="flex-1 px-3 pb-4 flex flex-col gap-4 overflow-y-auto">
 						{sections.map((section, si) => (
-							<div key={section.heading}>
+							<div key={section.headingKey}>
 								{/* Section label */}
 								<p className="text-[10px] font-bold uppercase tracking-widest text-base-content/35 px-2 mb-1">
-									{section.heading}
+									{t(`sections.${section.headingKey}`)}
 								</p>
 
 								{/* Section items */}
@@ -116,7 +118,7 @@ export default function StudentSidebar({
 													}`}
 												>
 													<i className={`fa-solid ${link.icon} w-4 text-center`}></i>
-													<span>{link.label}</span>
+													<span>{t(`nav.${link.labelKey}`)}</span>
 												</Link>
 											</li>
 										);

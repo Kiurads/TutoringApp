@@ -3,46 +3,47 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 
 const navItems = [
 	{
 		href: "/main/admin/dashboard",
-		label: "Dashboard",
+		labelKey: "dashboard",
 		icon: "fa-solid fa-chart-line",
 	},
 	{
 		href: "/main/admin/teachers",
-		label: "Teachers",
+		labelKey: "teachers",
 		icon: "fa-solid fa-chalkboard-user",
 	},
 	{
 		href: "/main/admin/students",
-		label: "Students",
+		labelKey: "students",
 		icon: "fa-solid fa-user-graduate",
 	},
 	{
 		href: "/main/admin/classes",
-		label: "Classes",
+		labelKey: "classes",
 		icon: "fa-solid fa-school",
 	},
 	{
 		href: "/main/admin/payments",
-		label: "Payments",
+		labelKey: "payments",
 		icon: "fa-solid fa-credit-card",
 	},
 	{
 		href: "/main/admin/subjects",
-		label: "Subjects",
+		labelKey: "subjects",
 		icon: "fa-solid fa-book",
 	},
 	{
 		href: "/main/admin/refund-requests",
-		label: "Refund Requests",
+		labelKey: "refundRequests",
 		icon: "fa-solid fa-rotate-left",
 	},
 	{
 		href: "/main/admin/settings",
-		label: "Settings",
+		labelKey: "settings",
 		icon: "fa-solid fa-gear",
 	},
 ];
@@ -54,6 +55,7 @@ export default function AdminLayout({
 }) {
 	const pathname = usePathname();
 	const { data: session } = useSession();
+	const t = useTranslations("AdminLayout");
 
 	return (
 		<div className="drawer lg:drawer-open">
@@ -92,12 +94,12 @@ export default function AdminLayout({
 							<div className="bg-primary text-primary-content p-3 rounded-xl">
 								<i className="fa-solid fa-user-shield text-xl"></i>
 							</div>
-							<h2 className="text-lg font-bold">Admin Panel</h2>
+							<h2 className="text-lg font-bold">{t("panelName")}</h2>
 						</div>
 
 						{/* Navigation */}
 						<ul className="menu gap-2">
-							{navItems.map(({ href, label, icon }) => (
+							{navItems.map(({ href, labelKey, icon }) => (
 								<li key={href}>
 									<Link
 										href={href}
@@ -108,7 +110,7 @@ export default function AdminLayout({
 										}`}
 									>
 										<i className={icon}></i>
-										{label}
+										{t(`nav.${labelKey}`)}
 									</Link>
 								</li>
 							))}
@@ -117,7 +119,7 @@ export default function AdminLayout({
 
 					{/* Footer section */}
 					<div className="mt-8 border-t pt-4 text-sm text-base-content/50">
-						<p className="font-semibold mb-1 text-base-content/70">Logged in as:</p>
+						<p className="font-semibold mb-1 text-base-content/70">{t("loggedInAs")}</p>
 						<p className="truncate">{session?.user?.email ?? "—"}</p>
 					</div>
 				</aside>

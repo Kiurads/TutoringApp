@@ -287,5 +287,64 @@
 	"ClaimQuestButton": {
 		"claimed": "Claimed",
 		"claim": "Claim +{reward}"
+	},
+	"StudentSidebar": {
+		"portalName": "Student Portal",
+		"sections": {
+			"overview": "Overview",
+			"learning": "Learning",
+			"rewards": "Rewards",
+			"account": "Account"
+		},
+		"nav": {
+			"dashboard": "Dashboard",
+			"classes": "Classes",
+			"recurringClasses": "Recurring Classes",
+			"calendar": "Calendar",
+			"subjects": "Subjects",
+			"teachers": "Teachers",
+			"store": "Gem Store",
+			"profile": "Profile",
+			"preferences": "Preferences"
+		}
+	},
+	"TeacherSidebar": {
+		"portalName": "Teacher Panel",
+		"online": "Online",
+		"offline": "Offline",
+		"updating": "Updating…",
+		"sections": {
+			"overview": "Overview",
+			"teaching": "Teaching",
+			"peopleMoney": "People & Money",
+			"account": "Account"
+		},
+		"nav": {
+			"dashboard": "Dashboard",
+			"classes": "Classes",
+			"recurringClasses": "Recurring Classes",
+			"calendar": "Calendar",
+			"availability": "Availability",
+			"students": "Students",
+			"earnings": "Earnings",
+			"payouts": "Payouts",
+			"refundRequests": "Refund Requests",
+			"profile": "Profile",
+			"preferences": "Preferences"
+		}
+	},
+	"AdminLayout": {
+		"panelName": "Admin Panel",
+		"loggedInAs": "Logged in as:",
+		"nav": {
+			"dashboard": "Dashboard",
+			"teachers": "Teachers",
+			"students": "Students",
+			"classes": "Classes",
+			"payments": "Payments",
+			"subjects": "Subjects",
+			"refundRequests": "Refund Requests",
+			"settings": "Settings"
+		}
 	}
 }
