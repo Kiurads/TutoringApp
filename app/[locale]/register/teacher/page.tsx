@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 // noindex: this page is an informational dead-end (teacher accounts are
 // admin-provisioned only, see app/register/README.md), not a real signup
@@ -10,7 +11,9 @@ export const metadata: Metadata = {
 	robots: { index: false },
 };
 
-export default function TeacherRegisterPage() {
+export default async function TeacherRegisterPage() {
+	const t = await getTranslations("RegisterTeacherPage");
+
 	return (
 		<div className="hero bg-base-200 min-h-screen">
 			<div className="hero-content flex-col max-w-md text-center">
@@ -30,17 +33,16 @@ export default function TeacherRegisterPage() {
 						/>
 					</svg>
 				</div>
-				<h1 className="text-3xl font-bold">Teacher Accounts</h1>
+				<h1 className="text-3xl font-bold">{t("title")}</h1>
 				<p className="text-base-content/70 mt-2">
-					Teacher accounts are created by administrators. If you are a
-					teacher and need an account, please contact your administrator.
+					{t("body")}
 				</p>
 				<div className="flex flex-col gap-3 mt-6 w-full">
 					<Link href="/login" className="btn btn-primary w-full">
-						Log in
+						{t("logIn")}
 					</Link>
 					<Link href="/register/student" className="btn btn-ghost w-full">
-						Sign up as a student
+						{t("signUpAsStudent")}
 					</Link>
 				</div>
 			</div>
