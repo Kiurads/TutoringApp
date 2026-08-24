@@ -1,8 +1,11 @@
 import { signOut } from "@/auth";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import Logo from "@/app/ui/logo";
 
-export default function SignOutForm() {
+export default async function SignOutForm() {
+	const t = await getTranslations("SignOutForm");
+
 	return (
 		<form
 			action={async () => {
@@ -16,10 +19,10 @@ export default function SignOutForm() {
 				<Logo />
 			</div>
 			<div className="form-control text-center text-bold text-md">
-				<p className="">Do you want to be signed out?</p>
+				<p className="">{t("confirm")}</p>
 			</div>
 			<div className="pt-2 col-span-6 flex items-center gap-4">
-				<button className="grow btn btn-primary">Sign Out</button>
+				<button className="grow btn btn-primary">{t("submit")}</button>
 			</div>
 		</form>
 	);

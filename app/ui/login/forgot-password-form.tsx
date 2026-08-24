@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 import { requestPasswordReset } from "@/app/lib/auth/request-password-reset";
 import Logo from "@/app/ui/logo";
 
 export default function ForgotPasswordForm() {
+	const t = useTranslations("ForgotPasswordForm");
 	const [message, formAction, isPending] = useActionState(
 		requestPasswordReset,
 		undefined
@@ -17,8 +19,7 @@ export default function ForgotPasswordForm() {
 				<Logo />
 			</div>
 			<p className="text-sm text-base-content/60">
-				Enter your email and we&apos;ll send you a link to reset your
-				password.
+				{t("instructions")}
 			</p>
 			{message && (
 				<div role="alert" className="alert alert-info">
@@ -40,7 +41,7 @@ export default function ForgotPasswordForm() {
 			)}
 			<div className="form-control">
 				<label htmlFor="Email" className="label">
-					<span className="label-text">Email</span>
+					<span className="label-text">{t("email")}</span>
 				</label>
 
 				<input
@@ -54,13 +55,13 @@ export default function ForgotPasswordForm() {
 
 			<div className="pt-2 col-span-6 flex items-center gap-4">
 				<button type="submit" className="grow btn btn-primary" disabled={isPending}>
-					{isPending ? <span className="loading loading-spinner loading-sm"></span> : "Send reset link"}
+					{isPending ? <span className="loading loading-spinner loading-sm"></span> : t("submit")}
 				</button>
 			</div>
 
 			<p className="mt-2 text-sm text-base-content/60">
 				<Link href="/login" className="text-base-content underline">
-					Back to login
+					{t("backToLogin")}
 				</Link>
 			</p>
 		</form>

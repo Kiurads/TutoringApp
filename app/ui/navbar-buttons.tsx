@@ -1,14 +1,15 @@
 import { auth } from "@/auth";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 export default async function NavbarButtons() {
-	const session = await auth();
+	const [session, t] = await Promise.all([auth(), getTranslations("Navbar")]);
 
 	if (session && session.user && session.user.email) {
 		return (
 			<Link href="/signout" className="btn btn-outline btn-sm gap-2">
 				<i className="fa-solid fa-right-from-bracket" />
-				Sign out
+				{t("signOut")}
 			</Link>
 		);
 	} else {
@@ -17,13 +18,13 @@ export default async function NavbarButtons() {
 				<div className="mx-2">
 					<Link href="/register/student" className="btn btn-primary">
 						<i className="fa-solid fa-user-plus text-l"></i>
-						Register
+						{t("register")}
 					</Link>
 				</div>
 				<div className="mx-2">
 					<Link href="/login" className="btn btn-outline">
 						<i className="fa-solid fa-user text-l"></i>
-						Login
+						{t("login")}
 					</Link>
 				</div>
 			</div>
