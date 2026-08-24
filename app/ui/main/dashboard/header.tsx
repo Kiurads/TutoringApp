@@ -2,7 +2,9 @@ import { fetchClassesByUser } from "@/app/lib/actions/classes.actions";
 import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
 import { getFrameClass } from "@/app/lib/frame-utils";
 import getAvatar from "@/utils/get-avatar";
+import getIntlLocale from "@/app/utils/get-intl-locale";
 import Image from "next/image";
+import { getTranslations } from "next-intl/server";
 
 export default async function DashboardHeader(props: { userEmail: string }) {
 	const user = await fetchUserByEmail(props.userEmail);
@@ -11,7 +13,12 @@ export default async function DashboardHeader(props: { userEmail: string }) {
 		return <div>User not found.</div>;
 	}
 
-	const classes = await fetchClassesByUser(user);
+	const [classes, t, tRoles, intlLocale] = await Promise.all([
+		fetchClassesByUser(user),
+		getTranslations("DashboardHeader"),
+		getTranslations("Common.roles"),
+		getIntlLocale("en-US"),
+	]);
 
 	const activeFrame = user.studentGameProfile?.activeFrame ?? null;
 	const frameClass = user.role === "student" ? getFrameClass(activeFrame) : "";
@@ -21,9 +28,9 @@ export default async function DashboardHeader(props: { userEmail: string }) {
 			<div className="card-body">
 				<div className="flex items-start justify-between gap-4">
 					<div className="flex flex-col gap-1">
-						<span className="badge badge-primary capitalize">{user.role}</span>
+						<span className="badge badge-primary capitalize">{tRoles(user.role)}</span>
 						<h3 className="card-title text-2xl mt-1">
-							Welcome back, {user.firstName}!
+							{t("welcomeBack", { name: user.firstName })}
 						</h3>
 						<p className="text-sm text-base-content/60">{user.email}</p>
 					</div>
@@ -40,9 +47,9 @@ export default async function DashboardHeader(props: { userEmail: string }) {
 
 				<div className="flex gap-6 mt-2 pt-3 border-t border-base-300">
 					<div>
-						<p className="text-xs text-base-content/60">Member since</p>
+						<p className="text-xs text-base-content/60">{t("memberSince")}</p>
 						<p className="text-sm font-medium">
-							{user.createdAt.toLocaleDateString("en-us", {
+							{user.createdAt.toLocaleDateString(intlLocale, {
 								year: "numeric",
 								month: "short",
 								day: "numeric",
@@ -50,7 +57,7 @@ export default async function DashboardHeader(props: { userEmail: string }) {
 						</p>
 					</div>
 					<div>
-						<p className="text-xs text-base-content/60">Total classes</p>
+						<p className="text-xs text-base-content/60">{t("totalClasses")}</p>
 						<p className="text-sm font-medium">{classes.length}</p>
 					</div>
 				</div>

@@ -1,6 +1,11 @@
 {
 	"Common": {
-		"appName": "Ponte"
+		"appName": "Ponte",
+		"roles": {
+			"student": "Estudante",
+			"teacher": "Professor",
+			"admin": "Administrador"
+		}
 	},
 	"Navbar": {
 		"register": "Registar",
@@ -216,5 +221,71 @@
 		"section8Body": "Podemos atualizar estes termos periodicamente. A utilização continuada da plataforma após uma atualização constitui aceitação dos termos revistos.",
 		"section9Title": "9. Contacto",
 		"section9Body": "Questões sobre estes termos podem ser enviadas para o suporte da plataforma."
+	},
+	"StudentDashboardPage": {
+		"personalizeTitle": "Personalize a sua experiência",
+		"personalizeBody": "Diga-nos qual é o seu estilo de aprendizagem e os seus objetivos — vamos usá-los para recomendar os melhores professores para si.",
+		"getStarted": "Começar"
+	},
+	"DashboardHeader": {
+		"welcomeBack": "Bem-vindo de volta, {name}!",
+		"memberSince": "Membro desde",
+		"totalClasses": "Total de aulas"
+	},
+	"NextUpCard": {
+		"title": "A seguir",
+		"noUpcoming": "Sem sessões agendadas.",
+		"with": "com",
+		"studentLabel": "Estudante:",
+		"at": "às",
+		"tbd": "A definir",
+		"inDaysHours": "em {days}d {hours}h",
+		"inHours": "em {hours}h",
+		"soon": "brevemente",
+		"viewDetails": "Ver detalhes"
+	},
+	"AcademicArcWidget": {
+		"title": "Percurso Académico",
+		"insightGems": "Gemas de Conhecimento",
+		"weekStreak": "sequência de {count} semanas",
+		"gemsToNextTier": "{current} / {next} gemas para o próximo nível",
+		"maxTierReached": "Nível máximo atingido!",
+		"recentBadges": "Distintivos recentes",
+		"noBadgesYet": "Conclua aulas para ganhar distintivos."
+	},
+	"ClassStatusBadge": {
+		"requested": "Pedida",
+		"scheduled": "Agendada",
+		"completed": "Concluída",
+		"refused": "Recusada",
+		"cancelled": "Cancelada"
+	},
+	"UpcomingClasses": {
+		"title": "Próximas Aulas",
+		"noClasses": "Sem aulas agendadas.",
+		"subject": "Disciplina",
+		"teacher": "Professor",
+		"date": "Data",
+		"duration": "Duração",
+		"price": "Preço",
+		"status": "Estado",
+		"tbd": "A definir"
+	},
+	"StudentPayments": {
+		"title": "Histórico de Pagamentos",
+		"totalSpent": "Total gasto",
+		"noPayments": "Ainda sem pagamentos.",
+		"teacher": "Professor",
+		"amount": "Valor",
+		"date": "Data",
+		"receipt": "Recibo",
+		"view": "Ver"
+	},
+	"WeeklyQuestsWidget": {
+		"title": "Missões Semanais"
+	},
+	"ClaimQuestButton": {
+		"claimed": "Resgatado",
+		"claim": "Resgatar +{reward}"
 	}
 }

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { claimWeeklyQuest } from "@/app/lib/quests";
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export default function ClaimQuestButton({ questKey, completed, claimed, reward }: Props) {
+	const t = useTranslations("ClaimQuestButton");
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
 	const [error, setError] = useState<string | null>(null);
@@ -20,7 +22,7 @@ export default function ClaimQuestButton({ questKey, completed, claimed, reward 
 	if (claimed || justClaimed) {
 		return (
 			<span className="badge badge-success badge-sm gap-1 shrink-0">
-				<i className="fa-solid fa-check text-[10px]"></i> Claimed
+				<i className="fa-solid fa-check text-[10px]"></i> {t("claimed")}
 			</span>
 		);
 	}
@@ -54,7 +56,7 @@ export default function ClaimQuestButton({ questKey, completed, claimed, reward 
 				{isPending ? (
 					<span className="loading loading-spinner loading-xs"></span>
 				) : (
-					<>Claim +{reward}</>
+					<>{t("claim", { reward })}</>
 				)}
 			</button>
 			{error && <span className="text-[10px] text-error">{error}</span>}

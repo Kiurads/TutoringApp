@@ -1,13 +1,17 @@
 import prisma from "@/prisma";
 import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
 import { getTierName, getTierProgress } from "@/app/lib/gamification-utils";
+import { getTranslations } from "next-intl/server";
 
 export default async function AcademicArcWidget({
 	userEmail,
 }: {
 	userEmail: string;
 }) {
-	const user = await fetchUserByEmail(userEmail);
+	const [user, t] = await Promise.all([
+		fetchUserByEmail(userEmail),
+		getTranslations("AcademicArcWidget"),
+	]);
 	if (!user) return null;
 
 	const profile = await prisma.studentGameProfile.findUnique({
@@ -34,7 +38,7 @@ export default async function AcademicArcWidget({
 			<div className="card-body gap-4">
 				<div className="flex items-center justify-between">
 					<h3 className="text-xs font-semibold text-base-content/50 uppercase tracking-wide">
-						Academic Arc
+						{t("title")}
 					</h3>
 					<span className="badge badge-primary badge-outline text-xs">
 						{tierName}
@@ -45,14 +49,14 @@ export default async function AcademicArcWidget({
 				<div className="flex items-center gap-2">
 					<i className="fa-solid fa-gem text-info text-lg"></i>
 					<span className="text-2xl font-bold">{gems.toLocaleString()}</span>
-					<span className="text-base-content/50 text-sm">Insight Gems</span>
+					<span className="text-base-content/50 text-sm">{t("insightGems")}</span>
 				</div>
 
 				{/* Weekly activity streak */}
 				{currentStreak > 0 && (
 					<div className="flex items-center gap-2 text-sm">
 						<i className="fa-solid fa-fire text-warning"></i>
-						<span className="font-semibold">{currentStreak}-week streak</span>
+						<span className="font-semibold">{t("weekStreak", { count: currentStreak })}</span>
 						{streakFreezes > 0 && (
 							<span className="badge badge-info badge-outline badge-sm gap-1">
 								<i className="fa-solid fa-snowflake text-[10px]"></i>
@@ -66,7 +70,7 @@ export default async function AcademicArcWidget({
 				{!isMaxTier && (
 					<div className="flex flex-col gap-1">
 						<div className="flex justify-between text-xs text-base-content/50">
-							<span>{progress.current} / {progress.next} gems to next tier</span>
+							<span>{t("gemsToNextTier", { current: progress.current, next: progress.next })}</span>
 							<span>{progress.pct}%</span>
 						</div>
 						<progress
@@ -78,14 +82,14 @@ export default async function AcademicArcWidget({
 				)}
 				{isMaxTier && (
 					<p className="text-xs text-success font-medium">
-						<i className="fa-solid fa-check-circle mr-1"></i>Max tier reached!
+						<i className="fa-solid fa-check-circle mr-1"></i>{t("maxTierReached")}
 					</p>
 				)}
 
 				{/* Recent badges */}
 				{recentBadges.length > 0 && (
 					<div className="flex flex-col gap-2">
-						<p className="text-xs text-base-content/50">Recent badges</p>
+						<p className="text-xs text-base-content/50">{t("recentBadges")}</p>
 						<div className="flex gap-2 flex-wrap">
 							{recentBadges.map((ub) => (
 								<div
@@ -105,7 +109,7 @@ export default async function AcademicArcWidget({
 
 				{recentBadges.length === 0 && (
 					<p className="text-xs text-base-content/40">
-						Complete classes to earn badges.
+						{t("noBadgesYet")}
 					</p>
 				)}
 			</div>
