@@ -3,42 +3,43 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { toggleTeacherOnline } from "@/app/lib/actions/teachers.actions";
 import NotificationDropdown from "@/app/ui/main/notifications/notification-dropdown";
 import type { NotificationData } from "@/app/lib/actions/notifications.actions";
 
-type NavItem = { href: string; icon: string; label: string; dataTour?: string };
+type NavItem = { href: string; icon: string; labelKey: string; dataTour?: string };
 
-const sections: { heading: string; items: NavItem[] }[] = [
+const sections: { headingKey: string; items: NavItem[] }[] = [
 	{
-		heading: "Overview",
+		headingKey: "overview",
 		items: [
-			{ href: "/main/teacher/dashboard", icon: "fa-house-user",     label: "Dashboard", dataTour: "nav-dashboard" },
+			{ href: "/main/teacher/dashboard", icon: "fa-house-user",     labelKey: "dashboard", dataTour: "nav-dashboard" },
 		],
 	},
 	{
-		heading: "Teaching",
+		headingKey: "teaching",
 		items: [
-			{ href: "/main/teacher/classes",         icon: "fa-school",         label: "Classes", dataTour: "nav-classes" },
-			{ href: "/main/teacher/regular-classes", icon: "fa-rotate",         label: "Recurring Classes", dataTour: "nav-recurring-classes" },
-			{ href: "/main/teacher/calendar",        icon: "fa-calendar-days",  label: "Calendar", dataTour: "nav-calendar" },
-			{ href: "/main/teacher/availability",    icon: "fa-clock",          label: "Availability", dataTour: "nav-availability" },
+			{ href: "/main/teacher/classes",         icon: "fa-school",         labelKey: "classes", dataTour: "nav-classes" },
+			{ href: "/main/teacher/regular-classes", icon: "fa-rotate",         labelKey: "recurringClasses", dataTour: "nav-recurring-classes" },
+			{ href: "/main/teacher/calendar",        icon: "fa-calendar-days",  labelKey: "calendar", dataTour: "nav-calendar" },
+			{ href: "/main/teacher/availability",    icon: "fa-clock",          labelKey: "availability", dataTour: "nav-availability" },
 		],
 	},
 	{
-		heading: "People & Money",
+		headingKey: "peopleMoney",
 		items: [
-			{ href: "/main/teacher/students",        icon: "fa-user-graduate",  label: "Students", dataTour: "nav-students" },
-			{ href: "/main/teacher/earnings",        icon: "fa-dollar-sign",    label: "Earnings", dataTour: "nav-earnings" },
-			{ href: "/main/teacher/payouts",         icon: "fa-money-bill-transfer", label: "Payouts", dataTour: "nav-payouts" },
-			{ href: "/main/teacher/refund-requests", icon: "fa-rotate-left",    label: "Refund Requests", dataTour: "nav-refund-requests" },
+			{ href: "/main/teacher/students",        icon: "fa-user-graduate",  labelKey: "students", dataTour: "nav-students" },
+			{ href: "/main/teacher/earnings",        icon: "fa-dollar-sign",    labelKey: "earnings", dataTour: "nav-earnings" },
+			{ href: "/main/teacher/payouts",         icon: "fa-money-bill-transfer", labelKey: "payouts", dataTour: "nav-payouts" },
+			{ href: "/main/teacher/refund-requests", icon: "fa-rotate-left",    labelKey: "refundRequests", dataTour: "nav-refund-requests" },
 		],
 	},
 	{
-		heading: "Account",
+		headingKey: "account",
 		items: [
-			{ href: "/main/teacher/profile",    icon: "fa-circle-user",         label: "Profile", dataTour: "nav-profile" },
-			{ href: "/main/teacher/onboarding", icon: "fa-wand-magic-sparkles", label: "Preferences", dataTour: "nav-preferences" },
+			{ href: "/main/teacher/profile",    icon: "fa-circle-user",         labelKey: "profile", dataTour: "nav-profile" },
+			{ href: "/main/teacher/onboarding", icon: "fa-wand-magic-sparkles", labelKey: "preferences", dataTour: "nav-preferences" },
 		],
 	},
 ];
@@ -59,6 +60,7 @@ export default function TeacherSidebar({
 	children: React.ReactNode;
 }) {
 	const pathname = usePathname();
+	const t = useTranslations("TeacherSidebar");
 	const [isOnline, setIsOnline] = useState(initialIsOnline);
 	const [isPending, startTransition] = useTransition();
 
@@ -95,7 +97,7 @@ export default function TeacherSidebar({
 					<div className="flex items-center justify-between px-4 pt-4 pb-3 shrink-0">
 						<div className="flex items-center gap-2 text-xl font-bold">
 							<i className="fa-solid fa-graduation-cap text-primary"></i>
-							<span>Teacher Panel</span>
+							<span>{t("portalName")}</span>
 						</div>
 						<NotificationDropdown
 							initialNotifications={initialNotifications}
@@ -120,7 +122,7 @@ export default function TeacherSidebar({
 									isOnline ? "bg-success-content animate-pulse" : "bg-base-content/40"
 								}`}
 							/>
-							{isPending ? "Updating…" : isOnline ? "Online" : "Offline"}
+							{isPending ? t("updating") : isOnline ? t("online") : t("offline")}
 						</button>
 					</div>
 
@@ -130,10 +132,10 @@ export default function TeacherSidebar({
 					{/* Nav sections */}
 					<nav className="flex-1 px-3 pb-4 flex flex-col gap-4 overflow-y-auto">
 						{sections.map((section, si) => (
-							<div key={section.heading}>
+							<div key={section.headingKey}>
 								{/* Section label */}
 								<p className="text-[10px] font-bold uppercase tracking-widest text-base-content/35 px-2 mb-1">
-									{section.heading}
+									{t(`sections.${section.headingKey}`)}
 								</p>
 
 								{/* Section items */}
@@ -152,7 +154,7 @@ export default function TeacherSidebar({
 													}`}
 												>
 													<i className={`fa-solid ${link.icon} w-4 text-center`}></i>
-													<span>{link.label}</span>
+													<span>{t(`nav.${link.labelKey}`)}</span>
 												</Link>
 											</li>
 										);
