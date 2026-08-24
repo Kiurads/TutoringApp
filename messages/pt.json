@@ -59,5 +59,118 @@
 		"body": "As contas de professor são criadas por administradores. Se é professor e precisa de uma conta, contacte o seu administrador.",
 		"logIn": "Iniciar sessão",
 		"signUpAsStudent": "Inscrever-se como estudante"
+	},
+	"HomePage": {
+		"hero": {
+			"badge": "Explicações personalizadas, ao seu ritmo",
+			"headline": "Aprenda mais depressa com <highlight>professores especialistas</highlight> feitos para si",
+			"subtext": "A Ponte liga estudantes a professores apaixonados em dezenas de disciplinas. Marque uma aula, acompanhe o seu progresso e desbloqueie recompensas à medida que evolui.",
+			"ctaStudent": "Começar a aprender — é grátis",
+			"ctaTeacher": "Tornar-se professor",
+			"trust": {
+				"securePayments": "Pagamentos seguros",
+				"verifiedTutors": "Professores verificados",
+				"flexibleScheduling": "Horários flexíveis",
+				"noHiddenFees": "Sem custos escondidos"
+			}
+		},
+		"howItWorks": {
+			"label": "Processo simples",
+			"title": "A funcionar em <highlight>3 passos</highlight>",
+			"subtitle": "Sem processos de admissão complicados. Sem confusão. Basta encontrar um professor e começar a aprender.",
+			"steps": {
+				"1": {
+					"title": "Crie o seu perfil",
+					"desc": "Registe-se em segundos, defina os seus objetivos de aprendizagem e diga-nos em que disciplinas precisa de ajuda."
+				},
+				"2": {
+					"title": "Encontre o seu professor",
+					"desc": "Explore professores verificados por disciplina, disponibilidade e preço. Veja as suas avaliações e escolha o mais adequado."
+				},
+				"3": {
+					"title": "Marque e aprenda",
+					"desc": "Escolha um horário que lhe convenha, pague com segurança e apareça pronto para aprender. É assim tão simples."
+				}
+			}
+		},
+		"forStudents": {
+			"label": "Para estudantes",
+			"title": "Tudo o que precisa para <highlight>dominar qualquer disciplina</highlight>",
+			"body": "Quer esteja a preparar-se para um exame, a colmatar lacunas ou a explorar algo novo — a Ponte dá-lhe as ferramentas e as pessoas certas para lá chegar.",
+			"cta": "Inscrever-se como estudante",
+			"features": {
+				"smartMatching": { "title": "Correspondência inteligente", "desc": "Diga-nos o seu estilo e objetivos — apresentamos-lhe os professores com maior probabilidade de se identificar consigo." },
+				"flexibleBooking": { "title": "Marcações flexíveis", "desc": "Peça aulas para já ou planeie com antecedência. Reagende com facilidade se surgir um imprevisto." },
+				"securePayments": { "title": "Pagamentos seguros", "desc": "Os pagamentos por cartão ficam retidos com segurança até a sua aula ser confirmada, com reembolsos justos em caso de cancelamento." },
+				"trackProgress": { "title": "Acompanhe o seu progresso", "desc": "Veja todas as aulas, disciplinas e avaliações num único painel. Observe a sua evolução ao longo do tempo." },
+				"earnRewards": { "title": "Ganhe recompensas", "desc": "Acumule gemas por cada aula e avaliação. Troque-as por bónus e molduras de perfil exclusivas." },
+				"leaveReviews": { "title": "Deixe avaliações honestas", "desc": "Avalie o seu professor após cada aula e ajude a comunidade a encontrar os melhores professores." }
+			}
+		},
+		"subjects": {
+			"label": "Explorar disciplinas",
+			"title": "Professores para <highlight>todas as disciplinas</highlight>",
+			"subtitle": "Desde o essencial escolar até cursos de nível universitário, os nossos professores cobrem tudo.",
+			"mathematics": "Matemática",
+			"physics": "Física",
+			"chemistry": "Química",
+			"biology": "Biologia",
+			"programming": "Programação",
+			"languages": "Línguas",
+			"history": "História",
+			"music": "Música",
+			"artDesign": "Arte e Design",
+			"economics": "Economia",
+			"literature": "Literatura",
+			"manyMore": "e muito mais"
+		},
+		"forTeachers": {
+			"label": "Para professores",
+			"title": "Transforme o seu conhecimento num <highlight>rendimento sustentável</highlight>",
+			"body": "Junte-se a uma rede crescente de educadores apaixonados. Defina o seu preço, escolha os seus horários e concentre-se no que ama — ensinar. Nós tratamos do resto.",
+			"cta": "Comece a ensinar hoje",
+			"perks": {
+				"setRates": { "title": "Defina os seus preços", "desc": "Cobre o que a sua experiência vale. Sem limites da plataforma aos seus ganhos." },
+				"ownSchedule": { "title": "Controle o seu horário", "desc": "Publique a sua disponibilidade semanal e receba apenas pedidos que se ajustem à sua agenda." },
+				"guaranteedPayment": { "title": "Pagamento garantido", "desc": "Os pagamentos são pré-autorizados na marcação. Recebe assim que comparece." },
+				"buildReputation": { "title": "Construa a sua reputação", "desc": "Ganhe Sparks e suba no ranking de Mentor Milestones à medida que ensina." },
+				"growStudentBase": { "title": "Aumente a sua base de estudantes", "desc": "Seja descoberto através da nossa pesquisa por disciplina e sistema de correspondência prioritária." },
+				"earningsDashboard": { "title": "Painel de ganhos", "desc": "Acompanhe a sua receita, aulas concluídas e retenção de estudantes ao longo do tempo." }
+			}
+		},
+		"gamification": {
+			"label": "Recompensas e Gamificação",
+			"title": "Aprendizagem que <highlight>o recompensa</highlight>",
+			"subtitle": "A Ponte é a única plataforma de explicações com um sistema de recompensas integrado que faz com que cada aula pareça progresso — dentro e fora da sala de aula.",
+			"items": {
+				"gems": { "title": "Gemas de Conhecimento", "desc": "Ganhe gemas por cada aula que concluir, pagamento que fizer ou avaliação que deixar. Quanto mais participa, mais ganha." },
+				"tiers": { "title": "Progressão de Nível", "desc": "Suba de Novato a Lenda à medida que acumula gemas. Cada nível desbloqueia novos benefícios e mostra a sua dedicação." },
+				"badges": { "title": "Distintivos de Conquista", "desc": "Desbloqueie distintivos especiais por marcos alcançados — primeira aula, presença perfeita, sequências de 10 aulas e muito mais." },
+				"store": { "title": "Loja de Gemas", "desc": "Gaste gemas em Molduras de Perfil que o destacam, Impulsos de Estudo para descontos em aulas, ou Correspondência Prioritária para um emparelhamento mais rápido." }
+			}
+		},
+		"testimonials": {
+			"label": "Avaliações de estudantes",
+			"title": "A confiança de estudantes <highlight>e professores</highlight>",
+			"anonymousStudent": "Estudante anónimo",
+			"reviewFor": "Avaliação para {name}"
+		},
+		"finalCta": {
+			"label": "Comece agora",
+			"title": "A sua próxima aula está <highlight>a um clique</highlight>",
+			"subtitle": "Quer esteja aqui para aprender ou para ensinar, a inscrição demora menos de um minuto.",
+			"studentCard": {
+				"title": "Quero aprender",
+				"body": "Encontre o professor certo para a sua disciplina, marque uma aula e comece a progredir hoje mesmo.",
+				"cta": "Inscrever-se como estudante"
+			},
+			"teacherCard": {
+				"title": "Quero ensinar",
+				"body": "Defina os seus preços, publique a sua disponibilidade e construa uma base de estudantes estável, nos seus próprios termos.",
+				"cta": "Inscrever-se como professor"
+			},
+			"alreadyHaveAccount": "Já tem uma conta?",
+			"signIn": "Iniciar sessão"
+		}
 	}
 }

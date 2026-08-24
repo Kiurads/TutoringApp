@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import prisma from "@/prisma";
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -63,7 +64,15 @@ export default async function Home() {
 
 /* ── Hero ───────────────────────────────────────────────────────────────────── */
 
-function HeroSection() {
+async function HeroSection() {
+	const t = await getTranslations("HomePage.hero");
+	const trustChips = [
+		{ icon: "fa-shield-halved", text: t("trust.securePayments") },
+		{ icon: "fa-star",          text: t("trust.verifiedTutors") },
+		{ icon: "fa-clock",         text: t("trust.flexibleScheduling") },
+		{ icon: "fa-lock",          text: t("trust.noHiddenFees") },
+	];
+
 	return (
 		<section className="relative overflow-hidden bg-base-100">
 			{/* Background blobs */}
@@ -74,44 +83,40 @@ function HeroSection() {
 				{/* Pill badge */}
 				<span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
 					<i className="fa-solid fa-bolt text-xs" />
-					Personalized tutoring, on your schedule
+					{t("badge")}
 				</span>
 
 				{/* Headline */}
 				<h1 className="max-w-4xl text-5xl font-extrabold leading-tight sm:text-6xl lg:text-7xl">
-					Learn faster with{" "}
-					<span className="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent bg-300% animate-gradient">
-						expert tutors
-					</span>{" "}
-					built for you
+					{t.rich("headline", {
+						highlight: (chunks) => (
+							<span className="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent bg-300% animate-gradient">
+								{chunks}
+							</span>
+						),
+					})}
 				</h1>
 
 				{/* Subtext */}
 				<p className="max-w-2xl text-lg text-base-content/60 leading-relaxed">
-					Ponte connects students with passionate teachers across dozens of subjects.
-					Book a session, track your progress, and unlock rewards as you grow.
+					{t("subtext")}
 				</p>
 
 				{/* CTAs */}
 				<div className="flex flex-wrap justify-center gap-4 mt-2">
 					<Link href="/register/student" className="btn btn-primary btn-lg gap-2 shadow-lg">
 						<i className="fa-solid fa-graduation-cap" />
-						Start Learning — it&apos;s free
+						{t("ctaStudent")}
 					</Link>
 					<Link href="/register/teacher" className="btn btn-outline btn-lg gap-2">
 						<i className="fa-solid fa-chalkboard-user" />
-						Become a Tutor
+						{t("ctaTeacher")}
 					</Link>
 				</div>
 
 				{/* Floating trust chips */}
 				<div className="flex flex-wrap justify-center gap-3 mt-4">
-					{[
-						{ icon: "fa-shield-halved", text: "Secure payments" },
-						{ icon: "fa-star",          text: "Verified tutors" },
-						{ icon: "fa-clock",         text: "Flexible scheduling" },
-						{ icon: "fa-lock",          text: "No hidden fees" },
-					].map(({ icon, text }) => (
+					{trustChips.map(({ icon, text }) => (
 						<span key={text} className="flex items-center gap-1.5 text-sm text-base-content/50">
 							<i className={`fa-solid ${icon} text-primary text-xs`} />
 							{text}
@@ -125,37 +130,23 @@ function HeroSection() {
 
 /* ── How it works ───────────────────────────────────────────────────────────── */
 
-function HowItWorks() {
+async function HowItWorks() {
+	const t = await getTranslations("HomePage.howItWorks");
 	const steps = [
-		{
-			n: "1",
-			icon: "fa-user-pen",
-			title: "Create your profile",
-			desc: "Sign up in seconds, set your learning goals, and tell us which subjects you need help with.",
-		},
-		{
-			n: "2",
-			icon: "fa-magnifying-glass",
-			title: "Find your tutor",
-			desc: "Browse verified tutors by subject, availability, and price. See their ratings and pick the right fit.",
-		},
-		{
-			n: "3",
-			icon: "fa-calendar-check",
-			title: "Book & Learn",
-			desc: "Pick a time that works for you, pay securely, and show up ready to learn. It's that simple.",
-		},
+		{ n: "1", icon: "fa-user-pen",           title: t("steps.1.title"), desc: t("steps.1.desc") },
+		{ n: "2", icon: "fa-magnifying-glass",   title: t("steps.2.title"), desc: t("steps.2.desc") },
+		{ n: "3", icon: "fa-calendar-check",     title: t("steps.3.title"), desc: t("steps.3.desc") },
 	];
 
 	return (
 		<section className="bg-base-100">
 			<div className="mx-auto max-w-screen-xl px-6 py-20 lg:py-28">
-				<SectionLabel text="Simple process" />
+				<SectionLabel text={t("label")} />
 				<h2 className="mt-3 text-center text-4xl font-bold">
-					Up and running in <span className="text-primary">3 steps</span>
+					{t.rich("title", { highlight: (chunks) => <span className="text-primary">{chunks}</span> })}
 				</h2>
 				<p className="mt-4 text-center text-base-content/55 max-w-xl mx-auto">
-					No lengthy onboarding. No confusion. Just find a tutor and start learning.
+					{t("subtitle")}
 				</p>
 
 				<div className="mt-14 grid gap-8 sm:grid-cols-3 relative">
@@ -180,14 +171,15 @@ function HowItWorks() {
 
 /* ── For Students ───────────────────────────────────────────────────────────── */
 
-function ForStudents() {
+async function ForStudents() {
+	const t = await getTranslations("HomePage.forStudents");
 	const features = [
-		{ icon: "fa-sliders",          title: "Smart matching",          desc: "Tell us your style and goals — we surface the tutors most likely to click with you." },
-		{ icon: "fa-calendar-days",    title: "Flexible booking",         desc: "Request on-demand sessions or plan ahead. Reschedule with ease if life gets in the way." },
-		{ icon: "fa-credit-card",      title: "Secure payments",          desc: "Card payments are held safely until your session is confirmed, with fair cancellation refunds." },
-		{ icon: "fa-chart-line",       title: "Track your progress",      desc: "See every session, subject, and rating in one dashboard. Watch yourself improve over time." },
-		{ icon: "fa-gem",              title: "Earn rewards",             desc: "Collect gems for every class and review. Spend them on boosts and exclusive profile frames." },
-		{ icon: "fa-comment-dots",     title: "Leave honest reviews",     desc: "Rate your tutor after each session and help the community find the best teachers." },
+		{ icon: "fa-sliders",          title: t("features.smartMatching.title"),   desc: t("features.smartMatching.desc") },
+		{ icon: "fa-calendar-days",    title: t("features.flexibleBooking.title"), desc: t("features.flexibleBooking.desc") },
+		{ icon: "fa-credit-card",      title: t("features.securePayments.title"),  desc: t("features.securePayments.desc") },
+		{ icon: "fa-chart-line",       title: t("features.trackProgress.title"),   desc: t("features.trackProgress.desc") },
+		{ icon: "fa-gem",              title: t("features.earnRewards.title"),     desc: t("features.earnRewards.desc") },
+		{ icon: "fa-comment-dots",     title: t("features.leaveReviews.title"),    desc: t("features.leaveReviews.desc") },
 	];
 
 	return (
@@ -197,17 +189,16 @@ function ForStudents() {
 
 					{/* Left copy */}
 					<div className="flex flex-col gap-6">
-						<SectionLabel text="For students" color="primary" />
+						<SectionLabel text={t("label")} color="primary" />
 						<h2 className="text-4xl font-bold leading-tight">
-							Everything you need to <span className="text-primary">master any subject</span>
+							{t.rich("title", { highlight: (chunks) => <span className="text-primary">{chunks}</span> })}
 						</h2>
 						<p className="text-base-content/60 leading-relaxed">
-							Whether you&apos;re cramming for an exam, filling in gaps, or exploring something new —
-							Ponte gives you the tools and the right people to get there.
+							{t("body")}
 						</p>
 						<Link href="/register/student" className="btn btn-primary self-start gap-2">
 							<i className="fa-solid fa-user-plus" />
-							Join as a student
+							{t("cta")}
 						</Link>
 					</div>
 
@@ -235,31 +226,32 @@ function ForStudents() {
 
 /* ── Subjects ───────────────────────────────────────────────────────────────── */
 
-function SubjectsSection() {
+async function SubjectsSection() {
+	const t = await getTranslations("HomePage.subjects");
 	const subjects = [
-		{ icon: "fa-square-root-variable", label: "Mathematics",  color: "text-blue-500",   bg: "bg-blue-500/10"   },
-		{ icon: "fa-atom",                 label: "Physics",       color: "text-purple-500", bg: "bg-purple-500/10" },
-		{ icon: "fa-flask",                label: "Chemistry",     color: "text-green-500",  bg: "bg-green-500/10"  },
-		{ icon: "fa-dna",                  label: "Biology",       color: "text-emerald-500",bg: "bg-emerald-500/10"},
-		{ icon: "fa-laptop-code",          label: "Programming",   color: "text-cyan-500",   bg: "bg-cyan-500/10"   },
-		{ icon: "fa-language",             label: "Languages",     color: "text-orange-500", bg: "bg-orange-500/10" },
-		{ icon: "fa-landmark",             label: "History",       color: "text-amber-500",  bg: "bg-amber-500/10"  },
-		{ icon: "fa-music",                label: "Music",         color: "text-pink-500",   bg: "bg-pink-500/10"   },
-		{ icon: "fa-palette",              label: "Art & Design",  color: "text-rose-500",   bg: "bg-rose-500/10"   },
-		{ icon: "fa-chart-bar",            label: "Economics",     color: "text-indigo-500", bg: "bg-indigo-500/10" },
-		{ icon: "fa-book",                 label: "Literature",    color: "text-yellow-600", bg: "bg-yellow-500/10" },
-		{ icon: "fa-plus",                 label: "& many more",   color: "text-base-content/40", bg: "bg-base-300" },
+		{ icon: "fa-square-root-variable", label: t("mathematics"), color: "text-blue-500",   bg: "bg-blue-500/10"   },
+		{ icon: "fa-atom",                 label: t("physics"),     color: "text-purple-500", bg: "bg-purple-500/10" },
+		{ icon: "fa-flask",                label: t("chemistry"),   color: "text-green-500",  bg: "bg-green-500/10"  },
+		{ icon: "fa-dna",                  label: t("biology"),     color: "text-emerald-500",bg: "bg-emerald-500/10"},
+		{ icon: "fa-laptop-code",          label: t("programming"), color: "text-cyan-500",   bg: "bg-cyan-500/10"   },
+		{ icon: "fa-language",             label: t("languages"),   color: "text-orange-500", bg: "bg-orange-500/10" },
+		{ icon: "fa-landmark",             label: t("history"),     color: "text-amber-500",  bg: "bg-amber-500/10"  },
+		{ icon: "fa-music",                label: t("music"),       color: "text-pink-500",   bg: "bg-pink-500/10"   },
+		{ icon: "fa-palette",              label: t("artDesign"),   color: "text-rose-500",   bg: "bg-rose-500/10"   },
+		{ icon: "fa-chart-bar",            label: t("economics"),   color: "text-indigo-500", bg: "bg-indigo-500/10" },
+		{ icon: "fa-book",                 label: t("literature"),  color: "text-yellow-600", bg: "bg-yellow-500/10" },
+		{ icon: "fa-plus",                 label: t("manyMore"),    color: "text-base-content/40", bg: "bg-base-300" },
 	];
 
 	return (
 		<section className="bg-base-100">
 			<div className="mx-auto max-w-screen-xl px-6 py-20 lg:py-28">
-				<SectionLabel text="Browse subjects" />
+				<SectionLabel text={t("label")} />
 				<h2 className="mt-3 text-center text-4xl font-bold">
-					Tutors for <span className="text-primary">every subject</span>
+					{t.rich("title", { highlight: (chunks) => <span className="text-primary">{chunks}</span> })}
 				</h2>
 				<p className="mt-4 text-center text-base-content/55 max-w-xl mx-auto">
-					From school essentials to university-level courses, our tutors cover it all.
+					{t("subtitle")}
 				</p>
 
 				<div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
@@ -282,14 +274,15 @@ function SubjectsSection() {
 
 /* ── For Teachers ───────────────────────────────────────────────────────────── */
 
-function ForTeachers() {
+async function ForTeachers() {
+	const t = await getTranslations("HomePage.forTeachers");
 	const perks = [
-		{ icon: "fa-money-bill-trend-up", title: "Set your own rates",    desc: "Charge what your expertise is worth. No platform caps on your earnings." },
-		{ icon: "fa-clock",               title: "Own your schedule",      desc: "Publish weekly availability and only receive requests that fit your calendar." },
-		{ icon: "fa-shield-halved",       title: "Guaranteed payment",     desc: "Payments are pre-authorised at booking. You get paid when you show up." },
-		{ icon: "fa-ranking-star",        title: "Build your reputation",  desc: "Earn Sparks and climb the Mentor Milestones ranking as you teach." },
-		{ icon: "fa-users",               title: "Grow your student base", desc: "Get discovered through our subject search and priority matching system." },
-		{ icon: "fa-chart-pie",           title: "Earnings dashboard",     desc: "Track your revenue, completed classes, and student retention over time." },
+		{ icon: "fa-money-bill-trend-up", title: t("perks.setRates.title"),          desc: t("perks.setRates.desc") },
+		{ icon: "fa-clock",               title: t("perks.ownSchedule.title"),       desc: t("perks.ownSchedule.desc") },
+		{ icon: "fa-shield-halved",       title: t("perks.guaranteedPayment.title"), desc: t("perks.guaranteedPayment.desc") },
+		{ icon: "fa-ranking-star",        title: t("perks.buildReputation.title"),   desc: t("perks.buildReputation.desc") },
+		{ icon: "fa-users",               title: t("perks.growStudentBase.title"),   desc: t("perks.growStudentBase.desc") },
+		{ icon: "fa-chart-pie",           title: t("perks.earningsDashboard.title"), desc: t("perks.earningsDashboard.desc") },
 	];
 
 	return (
@@ -316,17 +309,16 @@ function ForTeachers() {
 
 					{/* Right copy */}
 					<div className="flex flex-col gap-6 order-1 lg:order-2">
-						<SectionLabel text="For teachers" color="secondary" />
+						<SectionLabel text={t("label")} color="secondary" />
 						<h2 className="text-4xl font-bold leading-tight">
-							Turn your knowledge into a <span className="text-secondary">sustainable income</span>
+							{t.rich("title", { highlight: (chunks) => <span className="text-secondary">{chunks}</span> })}
 						</h2>
 						<p className="text-base-content/60 leading-relaxed">
-							Join a growing network of passionate educators. Set your price, choose your hours,
-							and focus on what you love — teaching. We handle the rest.
+							{t("body")}
 						</p>
 						<Link href="/register/teacher" className="btn btn-secondary self-start gap-2">
 							<i className="fa-solid fa-chalkboard-user" />
-							Start teaching today
+							{t("cta")}
 						</Link>
 					</div>
 				</div>
@@ -337,36 +329,13 @@ function ForTeachers() {
 
 /* ── Gamification ───────────────────────────────────────────────────────────── */
 
-function GamificationSection() {
+async function GamificationSection() {
+	const t = await getTranslations("HomePage.gamification");
 	const items = [
-		{
-			icon: "fa-gem",
-			color: "text-cyan-400",
-			bg: "bg-cyan-400/10",
-			title: "Insight Gems",
-			desc: "Earn gems for every class you complete, payment you make, or review you leave. The more you engage, the more you earn.",
-		},
-		{
-			icon: "fa-trophy",
-			color: "text-amber-400",
-			bg: "bg-amber-400/10",
-			title: "Tier Progression",
-			desc: "Climb from Newcomer to Legend as you accumulate gems. Each tier unlocks new perks and shows off your dedication.",
-		},
-		{
-			icon: "fa-medal",
-			color: "text-rose-400",
-			bg: "bg-rose-400/10",
-			title: "Achievement Badges",
-			desc: "Unlock special badges for milestones — first class, perfect attendance, 10-session streaks, and more.",
-		},
-		{
-			icon: "fa-store",
-			color: "text-purple-400",
-			bg: "bg-purple-400/10",
-			title: "Gem Store",
-			desc: "Spend gems on Profile Frames that set you apart, Study Boosts for class discounts, or Priority Match for faster pairing.",
-		},
+		{ icon: "fa-gem",    color: "text-cyan-400",   bg: "bg-cyan-400/10",   title: t("items.gems.title"),   desc: t("items.gems.desc") },
+		{ icon: "fa-trophy", color: "text-amber-400",  bg: "bg-amber-400/10",  title: t("items.tiers.title"),  desc: t("items.tiers.desc") },
+		{ icon: "fa-medal",  color: "text-rose-400",   bg: "bg-rose-400/10",   title: t("items.badges.title"), desc: t("items.badges.desc") },
+		{ icon: "fa-store",  color: "text-purple-400", bg: "bg-purple-400/10", title: t("items.store.title"),  desc: t("items.store.desc") },
 	];
 
 	return (
@@ -374,13 +343,12 @@ function GamificationSection() {
 			<div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
 
 			<div className="relative mx-auto max-w-screen-xl px-6 py-20 lg:py-28">
-				<SectionLabel text="Rewards & Gamification" />
+				<SectionLabel text={t("label")} />
 				<h2 className="mt-3 text-center text-4xl font-bold">
-					Learning that <span className="text-primary">rewards you</span>
+					{t.rich("title", { highlight: (chunks) => <span className="text-primary">{chunks}</span> })}
 				</h2>
 				<p className="mt-4 text-center text-base-content/55 max-w-xl mx-auto">
-					Ponte is the only tutoring platform with a built-in rewards system that makes
-					every session feel like progress — inside and outside the classroom.
+					{t("subtitle")}
 				</p>
 
 				<div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -409,13 +377,15 @@ type ReviewItem = {
 	rating: number;
 };
 
-function TestimonialsSection({ reviews }: { reviews: ReviewItem[] }) {
+async function TestimonialsSection({ reviews }: { reviews: ReviewItem[] }) {
+	const t = await getTranslations("HomePage.testimonials");
+
 	return (
 		<section className="bg-base-200">
 			<div className="mx-auto max-w-screen-xl px-6 py-20 lg:py-28">
-				<SectionLabel text="Student reviews" />
+				<SectionLabel text={t("label")} />
 				<h2 className="mt-3 text-center text-4xl font-bold">
-					Trusted by students <span className="text-accent">&amp; teachers</span>
+					{t.rich("title", { highlight: (chunks) => <span className="text-accent">{chunks}</span> })}
 				</h2>
 
 				<div className="mt-12 columns-1 gap-5 sm:columns-2 lg:columns-3">
@@ -434,8 +404,8 @@ function TestimonialsSection({ reviews }: { reviews: ReviewItem[] }) {
 										<i className="fa-solid fa-user-secret text-sm" />
 									</div>
 									<div>
-										<p className="text-sm font-semibold text-base-content/40">Anonymous student</p>
-										<p className="text-xs text-base-content/50">Review for {r.teacherName}</p>
+										<p className="text-sm font-semibold text-base-content/40">{t("anonymousStudent")}</p>
+										<p className="text-xs text-base-content/50">{t("reviewFor", { name: r.teacherName })}</p>
 									</div>
 								</div>
 							</div>
@@ -449,16 +419,18 @@ function TestimonialsSection({ reviews }: { reviews: ReviewItem[] }) {
 
 /* ── Final CTA ──────────────────────────────────────────────────────────────── */
 
-function FinalCTA() {
+async function FinalCTA() {
+	const t = await getTranslations("HomePage.finalCta");
+
 	return (
 		<section className="bg-base-100">
 			<div className="mx-auto max-w-screen-xl px-6 py-20 lg:py-28">
-				<SectionLabel text="Get started" />
+				<SectionLabel text={t("label")} />
 				<h2 className="mt-3 text-center text-4xl font-bold">
-					Your next session is <span className="text-primary">one click away</span>
+					{t.rich("title", { highlight: (chunks) => <span className="text-primary">{chunks}</span> })}
 				</h2>
 				<p className="mt-4 text-center text-base-content/55 max-w-xl mx-auto">
-					Whether you&apos;re here to learn or to teach, joining takes under a minute.
+					{t("subtitle")}
 				</p>
 
 				<div className="mt-12 grid gap-6 sm:grid-cols-2 max-w-3xl mx-auto">
@@ -469,14 +441,14 @@ function FinalCTA() {
 								<i className="fa-solid fa-graduation-cap text-primary-content text-xl" />
 							</span>
 							<div>
-								<h3 className="text-xl font-bold">I want to learn</h3>
+								<h3 className="text-xl font-bold">{t("studentCard.title")}</h3>
 								<p className="mt-1 text-primary-content/70 text-sm leading-relaxed">
-									Find the right tutor for your subject, book a session, and start making progress today.
+									{t("studentCard.body")}
 								</p>
 							</div>
 							<Link href="/register/student" className="btn bg-primary-content text-primary hover:bg-primary-content/90 border-none gap-2 self-start mt-auto">
 								<i className="fa-solid fa-user-plus" />
-								Sign up as a student
+								{t("studentCard.cta")}
 							</Link>
 						</div>
 					</div>
@@ -488,23 +460,23 @@ function FinalCTA() {
 								<i className="fa-solid fa-chalkboard-user text-secondary text-xl" />
 							</span>
 							<div>
-								<h3 className="text-xl font-bold">I want to teach</h3>
+								<h3 className="text-xl font-bold">{t("teacherCard.title")}</h3>
 								<p className="mt-1 text-base-content/55 text-sm leading-relaxed">
-									Set your rates, publish your availability, and grow a steady student base on your own terms.
+									{t("teacherCard.body")}
 								</p>
 							</div>
 							<Link href="/register/teacher" className="btn btn-secondary gap-2 self-start mt-auto">
 								<i className="fa-solid fa-chalkboard-user" />
-								Sign up as a tutor
+								{t("teacherCard.cta")}
 							</Link>
 						</div>
 					</div>
 				</div>
 
 				<p className="mt-8 text-center text-base-content/40 text-sm">
-					Already have an account?{" "}
+					{t("alreadyHaveAccount")}{" "}
 					<Link href="/login" className="underline hover:text-base-content/70 transition-colors">
-						Sign in
+						{t("signIn")}
 					</Link>
 				</p>
 			</div>
