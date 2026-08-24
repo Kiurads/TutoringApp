@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import useIntlLocale from "@/app/utils/use-intl-locale";
 import AddClassButton from "./add-class-button";
 import ClassesTableButtons from "./student-table-buttons";
 import ClassStatusBadge from "./class-status-badge";
@@ -28,6 +30,8 @@ function firstCellBorder(c: BookedClass, filter: Filter) {
 export default function BookedClasses(props: { bookedClasses: BookedClass[] }) {
 	const { bookedClasses } = props;
 	const router = useRouter();
+	const t = useTranslations("StudentBookedClasses");
+	const intlLocale = useIntlLocale("en-GB");
 	const [filter, setFilter] = useState<Filter>("all");
 
 	const pendingCount = bookedClasses.filter(isPending).length;
@@ -40,22 +44,22 @@ export default function BookedClasses(props: { bookedClasses: BookedClass[] }) {
 	});
 
 	const tabs: { key: Filter; label: string; count: number; badgeClass: string }[] = [
-		{ key: "all", label: "All", count: bookedClasses.length, badgeClass: "badge-ghost" },
-		{ key: "pending", label: "Pending", count: pendingCount, badgeClass: "badge-warning" },
-		{ key: "unpaid", label: "Unpaid", count: unpaidCount, badgeClass: "badge-error" },
+		{ key: "all", label: t("tabAll"), count: bookedClasses.length, badgeClass: "badge-ghost" },
+		{ key: "pending", label: t("tabPending"), count: pendingCount, badgeClass: "badge-warning" },
+		{ key: "unpaid", label: t("tabUnpaid"), count: unpaidCount, badgeClass: "badge-error" },
 	];
 
 	return (
 		<div className="overflow-x-auto rounded-lg border border-base-300 bg-base-100">
 			{/* Header */}
 			<div className="flex items-center justify-between px-4 py-3 border-b border-base-300">
-				<h2 className="text-lg font-semibold">My Classes</h2>
+				<h2 className="text-lg font-semibold">{t("title")}</h2>
 				<AddClassButton />
 			</div>
 
 			{bookedClasses.length === 0 ? (
 				<p className="text-center py-10 text-base-content/50">
-					You have no booked classes yet.
+					{t("noClasses")}
 				</p>
 			) : (
 				<>
@@ -77,20 +81,20 @@ export default function BookedClasses(props: { bookedClasses: BookedClass[] }) {
 
 					{filtered.length === 0 ? (
 						<p className="text-center py-10 text-base-content/50">
-							No classes in this category.
+							{t("noClassesInCategory")}
 						</p>
 					) : (
 						<table className="min-w-full divide-y divide-base-300 text-sm">
 							<thead>
 								<tr className="bg-base-200">
-									<th className="px-3 py-2 font-medium text-base-content text-left">Subject</th>
-									<th className="px-3 py-2 font-medium text-base-content text-left hidden sm:table-cell">Teacher</th>
-									<th className="px-3 py-2 font-medium text-base-content text-left">Date</th>
-									<th className="px-3 py-2 font-medium text-base-content text-left hidden md:table-cell">Duration</th>
-									<th className="px-3 py-2 font-medium text-base-content text-left hidden md:table-cell">Price</th>
-									<th className="px-3 py-2 font-medium text-base-content text-left">Status</th>
-									<th className="px-3 py-2 font-medium text-base-content text-left hidden sm:table-cell">Paid</th>
-									<th className="px-3 py-2 font-medium text-base-content text-left">Actions</th>
+									<th className="px-3 py-2 font-medium text-base-content text-left">{t("subject")}</th>
+									<th className="px-3 py-2 font-medium text-base-content text-left hidden sm:table-cell">{t("teacher")}</th>
+									<th className="px-3 py-2 font-medium text-base-content text-left">{t("date")}</th>
+									<th className="px-3 py-2 font-medium text-base-content text-left hidden md:table-cell">{t("duration")}</th>
+									<th className="px-3 py-2 font-medium text-base-content text-left hidden md:table-cell">{t("price")}</th>
+									<th className="px-3 py-2 font-medium text-base-content text-left">{t("status")}</th>
+									<th className="px-3 py-2 font-medium text-base-content text-left hidden sm:table-cell">{t("paid")}</th>
+									<th className="px-3 py-2 font-medium text-base-content text-left">{t("actions")}</th>
 								</tr>
 							</thead>
 							<tbody className="divide-y divide-base-300">
@@ -106,15 +110,15 @@ export default function BookedClasses(props: { bookedClasses: BookedClass[] }) {
 										</td>
 										<td className="px-3 py-2 text-base-content hidden sm:table-cell">
 											{classData.teacher?.name ?? (
-												<span className="badge badge-warning badge-sm">Finding…</span>
+												<span className="badge badge-warning badge-sm">{t("finding")}</span>
 											)}
 										</td>
 										<td className="px-3 py-2 text-base-content text-xs whitespace-nowrap">
 											<span className="block">
-												{classData.startTime.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+												{classData.startTime.toLocaleDateString(intlLocale, { day: "numeric", month: "short", year: "numeric" })}
 											</span>
 											<span className="text-base-content/50">
-												{classData.startTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+												{classData.startTime.toLocaleTimeString(intlLocale, { hour: "2-digit", minute: "2-digit" })}
 											</span>
 										</td>
 										<td className="px-3 py-2 text-base-content hidden md:table-cell">

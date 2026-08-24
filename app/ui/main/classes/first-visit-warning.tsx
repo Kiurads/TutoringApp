@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 export default function FirstVisitWarning() {
+	const t = useTranslations("FirstVisitWarning");
 	const [isFirstVisit, setIsFirstVisit] = useState(false);
 
 	useEffect(() => {
@@ -25,14 +27,13 @@ export default function FirstVisitWarning() {
 			{isFirstVisit && (
 				<div className="alert alert-warning flex justify-between items-center mb-4">
 					<span>
-						Attention! Classes that are not paid for by the last day
-						before the class are automatically cancelled!
+						{t("warning")}
 					</span>
 					<button
 						onClick={closeWarning}
 						className="btn btn-sm btn-ghost"
 					>
-						Close
+						{t("close")}
 					</button>
 				</div>
 			)}
