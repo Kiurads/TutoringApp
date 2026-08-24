@@ -380,6 +380,55 @@
 	"StudentTableButtons": {
 		"theTeacher": "o professor"
 	},
+	"ClassActionModals": {
+		"counterOfferBanner": {
+			"title": "O professor propôs um novo horário",
+			"accept": "Aceitar",
+			"decline": "Recusar"
+		},
+		"actions": {
+			"acceptClass": "Aceitar Aula",
+			"suggestAlternativeTime": "Sugerir Horário Alternativo",
+			"refuse": "Recusar",
+			"payNow": "Pagar Agora",
+			"cancelClass": "Cancelar Aula"
+		},
+		"acceptModal": {
+			"title": "Aceitar Pedido",
+			"body": "Aceitar a aula de <strong>{subject}</strong> com <strong>{otherPartyName}</strong>?"
+		},
+		"refuseModal": {
+			"title": "Recusar Pedido",
+			"body": "Recusar a aula de <strong>{subject}</strong> com <strong>{otherPartyName}</strong>?"
+		},
+		"cancelModal": {
+			"title": "Confirmar Cancelamento",
+			"body": "Cancelar a aula de <strong>{subject}</strong> com <strong>{otherPartyName}</strong>?"
+		},
+		"counterModal": {
+			"title": "Sugerir Horário Alternativo",
+			"body": "Proponha um novo horário para a aula de <strong>{subject}</strong> com <strong>{otherPartyName}</strong>.",
+			"newDateTime": "Nova data e hora",
+			"sendProposal": "Enviar Proposta"
+		},
+		"payModal": {
+			"title": "Pagar Aula",
+			"initFailed": "Não foi possível iniciar o pagamento. Por favor, tente novamente.",
+			"summary": "{subject} com {otherPartyName}"
+		},
+		"common": {
+			"confirm": "Confirmar",
+			"goBack": "Voltar",
+			"close": "Fechar"
+		},
+		"refund": {
+			"fullRefund": "Tem direito a reembolso total.",
+			"partialRefund": "Tem direito a um reembolso de 50% (cancelamento dentro de 24h do início).",
+			"noRefund": "Não há reembolso disponível (cancelamento dentro de 12h do início).",
+			"dependsOnTiming": "Poderá ser emitido um reembolso, dependendo do momento do cancelamento.",
+			"holdReleased": "A retenção no seu cartão será libertada de imediato."
+		}
+	},
 	"AdminLayout": {
 		"panelName": "Painel de Administração",
 		"loggedInAs": "Sessão iniciada como:",

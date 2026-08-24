@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition, useState, useRef, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import {
 	acceptClassById,
 	refuseClassById,
@@ -10,6 +11,7 @@ import {
 	declineCounterOffer,
 } from "@/app/lib/actions/classes.actions";
 import CheckoutForm from "@/app/ui/payment/checkout-form";
+import useIntlLocale from "@/app/utils/use-intl-locale";
 
 type ModalType = "accept" | "refuse" | "cancel" | "pay" | "counter";
 
@@ -46,20 +48,23 @@ export default function ClassActionModals({
 	startTime,
 	totalPrice,
 }: Props) {
+	const t = useTranslations("ClassActionModals");
+	const intlLocale = useIntlLocale("en-GB");
+
 	// Compute refund tier for the cancel modal
 	const hoursUntil = startTime
 		? (new Date(startTime).getTime() - Date.now()) / 3_600_000
 		: null;
 	const refundNote = isPaid
 		? hoursUntil === null
-			? "A refund may be issued depending on timing."
+			? t("refund.dependsOnTiming")
 			: hoursUntil > 24
-				? "You are eligible for a full refund."
+				? t("refund.fullRefund")
 				: hoursUntil > 12
-					? "You are eligible for a 50% refund (cancellation within 24h of start)."
-					: "No refund is available (cancellation within 12h of start)."
+					? t("refund.partialRefund")
+					: t("refund.noRefund")
 		: hasPreAuth
-			? "Your card hold will be released immediately."
+			? t("refund.holdReleased")
 			: null;
 	const [isPending, startTransition] = useTransition();
 	const [open, setOpen] = useState<ModalType | null>(null);
@@ -97,7 +102,7 @@ export default function ClassActionModals({
 
 	// Format counterOfferTime from ISO string to datetime-local input default
 	const counterOfferFormatted = counterOfferTime
-		? new Date(counterOfferTime).toLocaleString("en-GB", {
+		? new Date(counterOfferTime).toLocaleString(intlLocale, {
 				weekday: "short",
 				year: "numeric",
 				month: "short",
@@ -167,7 +172,7 @@ export default function ClassActionModals({
 				setClientSecret(data.clientSecret);
 			}
 		} catch {
-			setPayFetchError("Failed to initialize payment. Please try again.");
+			setPayFetchError(t("payModal.initFailed"));
 		} finally {
 			setPayLoading(false);
 		}
@@ -181,7 +186,7 @@ export default function ClassActionModals({
 					<div className="flex items-center gap-2">
 						<i className="fa-solid fa-clock-rotate-left text-lg"></i>
 						<div>
-							<p className="font-semibold text-sm">Teacher proposed a new time</p>
+							<p className="font-semibold text-sm">{t("counterOfferBanner.title")}</p>
 							<p className="text-sm">{counterOfferFormatted}</p>
 						</div>
 					</div>
@@ -192,14 +197,14 @@ export default function ClassActionModals({
 							disabled={isPending}
 						>
 							{isPending ? <span className="loading loading-spinner loading-xs" /> : <i className="fa-solid fa-check" />}
-							Accept
+							{t("counterOfferBanner.accept")}
 						</button>
 						<button
 							className="btn btn-outline btn-error btn-sm gap-1"
 							onClick={confirmDeclineCounter}
 							disabled={isPending}
 						>
-							<i className="fa-solid fa-xmark" /> Decline
+							<i className="fa-solid fa-xmark" /> {t("counterOfferBanner.decline")}
 						</button>
 					</div>
 				</div>
@@ -212,7 +217,7 @@ export default function ClassActionModals({
 						className="btn btn-success gap-2 sm:w-auto w-full"
 						onClick={() => setOpen("accept")}
 					>
-						<i className="fa-solid fa-check"></i> Accept Class
+						<i className="fa-solid fa-check"></i> {t("actions.acceptClass")}
 					</button>
 				)}
 				{canCounterOffer && (
@@ -220,7 +225,7 @@ export default function ClassActionModals({
 						className="btn btn-outline btn-warning gap-2 sm:w-auto w-full"
 						onClick={() => { setCounterError(null); setCounterTime(""); setOpen("counter"); }}
 					>
-						<i className="fa-solid fa-clock-rotate-left"></i> Suggest Alternative Time
+						<i className="fa-solid fa-clock-rotate-left"></i> {t("actions.suggestAlternativeTime")}
 					</button>
 				)}
 				{canRefuse && (
@@ -228,12 +233,12 @@ export default function ClassActionModals({
 						className="btn btn-outline btn-error gap-2 sm:w-auto w-full"
 						onClick={() => setOpen("refuse")}
 					>
-						<i className="fa-solid fa-xmark"></i> Refuse
+						<i className="fa-solid fa-xmark"></i> {t("actions.refuse")}
 					</button>
 				)}
 				{canPay && (
 					<button className="btn btn-primary gap-2 sm:w-auto w-full" onClick={openPay}>
-						<i className="fa-solid fa-money-bill-wave"></i> Pay Now
+						<i className="fa-solid fa-money-bill-wave"></i> {t("actions.payNow")}
 					</button>
 				)}
 				{canCancel && (
@@ -244,7 +249,7 @@ export default function ClassActionModals({
 							setOpen("cancel");
 						}}
 					>
-						<i className="fa-solid fa-trash"></i> Cancel Class
+						<i className="fa-solid fa-trash"></i> {t("actions.cancelClass")}
 					</button>
 				)}
 			</div>
@@ -255,10 +260,9 @@ export default function ClassActionModals({
 					<div className="text-5xl text-success mb-4">
 						<i className="fa-solid fa-circle-check"></i>
 					</div>
-					<h3 className="font-bold text-lg mb-2">Accept Request</h3>
+					<h3 className="font-bold text-lg mb-2">{t("acceptModal.title")}</h3>
 					<p className="text-base-content/70 text-sm mb-6">
-						Accept the <strong>{subject}</strong> class with{" "}
-						<strong>{otherPartyName}</strong>?
+						{t.rich("acceptModal.body", { subject, otherPartyName, strong: (chunks) => <strong>{chunks}</strong> })}
 					</p>
 					<div className="flex gap-3">
 						<button
@@ -269,7 +273,7 @@ export default function ClassActionModals({
 							{isPending ? (
 								<span className="loading loading-spinner loading-sm"></span>
 							) : (
-								"Confirm"
+								t("common.confirm")
 							)}
 						</button>
 						<button
@@ -277,7 +281,7 @@ export default function ClassActionModals({
 							onClick={() => setOpen(null)}
 							disabled={isPending}
 						>
-							Go Back
+							{t("common.goBack")}
 						</button>
 					</div>
 				</div>
@@ -293,10 +297,9 @@ export default function ClassActionModals({
 					<div className="text-5xl text-error mb-4">
 						<i className="fa-solid fa-circle-xmark"></i>
 					</div>
-					<h3 className="font-bold text-lg mb-2">Refuse Request</h3>
+					<h3 className="font-bold text-lg mb-2">{t("refuseModal.title")}</h3>
 					<p className="text-base-content/70 text-sm mb-6">
-						Refuse the <strong>{subject}</strong> class with{" "}
-						<strong>{otherPartyName}</strong>?
+						{t.rich("refuseModal.body", { subject, otherPartyName, strong: (chunks) => <strong>{chunks}</strong> })}
 					</p>
 					<div className="flex gap-3">
 						<button
@@ -307,7 +310,7 @@ export default function ClassActionModals({
 							{isPending ? (
 								<span className="loading loading-spinner loading-sm"></span>
 							) : (
-								"Confirm"
+								t("common.confirm")
 							)}
 						</button>
 						<button
@@ -315,7 +318,7 @@ export default function ClassActionModals({
 							onClick={() => setOpen(null)}
 							disabled={isPending}
 						>
-							Go Back
+							{t("common.goBack")}
 						</button>
 					</div>
 				</div>
@@ -331,10 +334,9 @@ export default function ClassActionModals({
 					<div className="text-5xl text-warning mb-4">
 						<i className="fa-solid fa-triangle-exclamation"></i>
 					</div>
-					<h3 className="font-bold text-lg mb-2">Confirm Cancellation</h3>
+					<h3 className="font-bold text-lg mb-2">{t("cancelModal.title")}</h3>
 					<p className="text-base-content/70 text-sm mb-4">
-						Cancel the <strong>{subject}</strong> class with{" "}
-						<strong>{otherPartyName}</strong>?
+						{t.rich("cancelModal.body", { subject, otherPartyName, strong: (chunks) => <strong>{chunks}</strong> })}
 					</p>
 					{refundNote && (
 						<div role="alert" className="alert alert-info text-sm py-2 mb-4">
@@ -360,7 +362,7 @@ export default function ClassActionModals({
 							{isPending ? (
 								<span className="loading loading-spinner loading-sm"></span>
 							) : (
-								"Confirm"
+								t("common.confirm")
 							)}
 						</button>
 						<button
@@ -368,7 +370,7 @@ export default function ClassActionModals({
 							onClick={() => setOpen(null)}
 							disabled={isPending}
 						>
-							Go Back
+							{t("common.goBack")}
 						</button>
 					</div>
 				</div>
@@ -384,20 +386,19 @@ export default function ClassActionModals({
 					<button
 						className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
 						onClick={() => !isPending && setOpen(null)}
-						aria-label="Close"
+						aria-label={t("common.close")}
 					>
 						<i className="fa-solid fa-xmark"></i>
 					</button>
 					<div className="text-4xl text-warning mb-3 text-center">
 						<i className="fa-solid fa-clock-rotate-left"></i>
 					</div>
-					<h3 className="font-bold text-lg mb-1 text-center">Suggest Alternative Time</h3>
+					<h3 className="font-bold text-lg mb-1 text-center">{t("counterModal.title")}</h3>
 					<p className="text-base-content/70 text-sm mb-5 text-center">
-						Propose a new time for the <strong>{subject}</strong> class with{" "}
-						<strong>{otherPartyName}</strong>.
+						{t.rich("counterModal.body", { subject, otherPartyName, strong: (chunks) => <strong>{chunks}</strong> })}
 					</p>
 					<div className="flex flex-col gap-1.5 mb-4">
-						<label htmlFor="counter-offer-time" className="text-sm font-medium">New date &amp; time</label>
+						<label htmlFor="counter-offer-time" className="text-sm font-medium">{t("counterModal.newDateTime")}</label>
 						<input
 							id="counter-offer-time"
 							type="datetime-local"
@@ -421,7 +422,7 @@ export default function ClassActionModals({
 							{isPending ? (
 								<span className="loading loading-spinner loading-sm"></span>
 							) : (
-								"Send Proposal"
+								t("counterModal.sendProposal")
 							)}
 						</button>
 						<button
@@ -429,7 +430,7 @@ export default function ClassActionModals({
 							onClick={() => setOpen(null)}
 							disabled={isPending}
 						>
-							Go Back
+							{t("common.goBack")}
 						</button>
 					</div>
 				</div>
@@ -445,11 +446,11 @@ export default function ClassActionModals({
 					<button
 						className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
 						onClick={() => !payLoading && setOpen(null)}
-						aria-label="Close"
+						aria-label={t("common.close")}
 					>
 						<i className="fa-solid fa-xmark"></i>
 					</button>
-					<h3 className="font-bold text-lg mb-4">Pay for Class</h3>
+					<h3 className="font-bold text-lg mb-4">{t("payModal.title")}</h3>
 
 					{payLoading && (
 						<div className="flex justify-center py-8">
@@ -468,7 +469,7 @@ export default function ClassActionModals({
 						<>
 							<div className="flex justify-between items-center text-sm p-3 bg-base-200 rounded-lg mb-4">
 								<span className="text-base-content/70">
-									{subject} with {otherPartyName}
+									{t("payModal.summary", { subject, otherPartyName })}
 								</span>
 								<span className="font-bold text-lg">{totalPrice}€</span>
 							</div>
