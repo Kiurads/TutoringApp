@@ -1,8 +1,12 @@
 import { fetchWeeklyQuests } from "@/app/lib/quests";
+import { getTranslations } from "next-intl/server";
 import ClaimQuestButton from "./claim-quest-button";
 
 export default async function WeeklyQuestsWidget() {
-	const quests = await fetchWeeklyQuests();
+	const [quests, t] = await Promise.all([
+		fetchWeeklyQuests(),
+		getTranslations("WeeklyQuestsWidget"),
+	]);
 	if (quests.length === 0) return null;
 
 	return (
@@ -11,7 +15,7 @@ export default async function WeeklyQuestsWidget() {
 				<div className="flex items-center gap-2">
 					<i className="fa-solid fa-flag-checkered text-secondary"></i>
 					<h3 className="text-xs font-semibold text-base-content/50 uppercase tracking-wide">
-						Weekly Quests
+						{t("title")}
 					</h3>
 				</div>
 

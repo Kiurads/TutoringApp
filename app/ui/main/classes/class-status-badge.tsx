@@ -1,5 +1,10 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 export default function ClassStatusBadge(props: { status: string }) {
 	const { status } = props;
+	const t = useTranslations("ClassStatusBadge");
 
 	return (
 		<span
@@ -13,7 +18,7 @@ export default function ClassStatusBadge(props: { status: string }) {
 					: "badge-warning"
 			}`}
 		>
-			{status}
+			{t.has(status) ? t(status) : status}
 		</span>
 	);
 }

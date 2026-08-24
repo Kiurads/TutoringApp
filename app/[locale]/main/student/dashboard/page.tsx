@@ -9,6 +9,7 @@ import WeeklyQuestsWidget from "@/app/ui/main/dashboard/weekly-quests-widget";
 import WelcomeTourModal from "@/app/ui/onboarding/welcome-tour-modal";
 import { fetchPaymentsByUserId } from "@/app/lib/actions/paymets.actions";
 import { fetchUserByEmail } from "@/app/lib/actions/users.actions";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
 export default async function DashboardStudent({
@@ -21,10 +22,11 @@ export default async function DashboardStudent({
 	if (!session?.user?.email) redirect("/login");
 
 	const userEmail = session.user.email!;
-	const [payments, user, { tour }] = await Promise.all([
+	const [payments, user, { tour }, t] = await Promise.all([
 		fetchPaymentsByUserId(userEmail),
 		fetchUserByEmail(userEmail),
 		searchParams,
+		getTranslations("StudentDashboardPage"),
 	]);
 
 	// First-time visit: send students through preferences before they ever
@@ -50,13 +52,13 @@ export default async function DashboardStudent({
 				<div role="alert" className="alert shadow-sm animate-fade-in">
 					<i className="fa-solid fa-wand-magic-sparkles text-primary text-lg shrink-0" />
 					<div className="flex-1">
-						<p className="font-semibold text-sm">Personalise your experience</p>
+						<p className="font-semibold text-sm">{t("personalizeTitle")}</p>
 						<p className="text-xs text-base-content/60">
-							Tell us your learning style and goals — we&apos;ll use it to recommend the best teachers for you.
+							{t("personalizeBody")}
 						</p>
 					</div>
 					<Link href="/main/student/onboarding" className="btn btn-primary btn-sm shrink-0">
-						Get started
+						{t("getStarted")}
 					</Link>
 				</div>
 			)}

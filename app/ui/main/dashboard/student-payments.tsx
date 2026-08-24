@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+import getIntlLocale from "@/app/utils/get-intl-locale";
 
 interface Payment {
 	id: string;
@@ -7,13 +9,17 @@ interface Payment {
 	date: Date;
 }
 
-export default function StudentPayments({ payments }: { payments: Payment[] }) {
+export default async function StudentPayments({ payments }: { payments: Payment[] }) {
 	const totalSpent = payments.reduce((sum, p) => sum + p.amount, 0);
+	const [t, intlLocale] = await Promise.all([
+		getTranslations("StudentPayments"),
+		getIntlLocale("en-GB"),
+	]);
 
 	return (
 		<div className="rounded-lg border border-base-300 bg-base-100">
 			<div className="flex items-center justify-between px-4 py-3 border-b border-base-300">
-				<h2 className="text-lg font-semibold">Payment History</h2>
+				<h2 className="text-lg font-semibold">{t("title")}</h2>
 				{payments.length > 0 && (
 					<span className="badge badge-ghost">{payments.length}</span>
 				)}
@@ -21,24 +27,24 @@ export default function StudentPayments({ payments }: { payments: Payment[] }) {
 
 			{payments.length > 0 && (
 				<div className="flex items-center justify-between px-4 py-3 bg-base-200 border-b border-base-300">
-					<span className="text-sm text-base-content/60">Total spent</span>
+					<span className="text-sm text-base-content/60">{t("totalSpent")}</span>
 					<span className="font-bold text-lg">{totalSpent.toFixed(2)}€</span>
 				</div>
 			)}
 
 			{payments.length === 0 ? (
 				<p className="text-center py-10 text-base-content/50">
-					No payments yet.
+					{t("noPayments")}
 				</p>
 			) : (
 				<div className="overflow-x-auto">
 					<table className="w-full divide-y divide-base-300 text-sm">
 						<thead>
 							<tr className="bg-base-200">
-								<th className="px-4 py-2 font-medium text-base-content text-left">Teacher</th>
-								<th className="px-4 py-2 font-medium text-base-content text-left">Amount</th>
-								<th className="px-4 py-2 font-medium text-base-content text-left">Date</th>
-								<th className="px-4 py-2 font-medium text-base-content text-left">Receipt</th>
+								<th className="px-4 py-2 font-medium text-base-content text-left">{t("teacher")}</th>
+								<th className="px-4 py-2 font-medium text-base-content text-left">{t("amount")}</th>
+								<th className="px-4 py-2 font-medium text-base-content text-left">{t("date")}</th>
+								<th className="px-4 py-2 font-medium text-base-content text-left">{t("receipt")}</th>
 							</tr>
 						</thead>
 						<tbody className="divide-y divide-base-300">
@@ -51,14 +57,14 @@ export default function StudentPayments({ payments }: { payments: Payment[] }) {
 										{payment.amount.toFixed(2)}€
 									</td>
 									<td className="px-4 py-2 text-base-content text-xs whitespace-nowrap">
-										{payment.date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+										{payment.date.toLocaleDateString(intlLocale, { day: "numeric", month: "short", year: "numeric" })}
 									</td>
 									<td className="px-4 py-2">
 										<Link
 											href={`/main/student/payments/${payment.id}/receipt`}
 											className="link link-primary text-xs whitespace-nowrap"
 										>
-											<i className="fa-solid fa-receipt" /> View
+											<i className="fa-solid fa-receipt" /> {t("view")}
 										</Link>
 									</td>
 								</tr>

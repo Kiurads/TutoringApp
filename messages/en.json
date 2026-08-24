@@ -1,6 +1,11 @@
 {
 	"Common": {
-		"appName": "Ponte"
+		"appName": "Ponte",
+		"roles": {
+			"student": "Student",
+			"teacher": "Teacher",
+			"admin": "Admin"
+		}
 	},
 	"Navbar": {
 		"register": "Register",
@@ -216,5 +221,71 @@
 		"section8Body": "We may update these terms from time to time. Continued use of the platform after an update constitutes acceptance of the revised terms.",
 		"section9Title": "9. Contact",
 		"section9Body": "Questions about these terms can be sent to the platform's support contact."
+	},
+	"StudentDashboardPage": {
+		"personalizeTitle": "Personalise your experience",
+		"personalizeBody": "Tell us your learning style and goals — we'll use it to recommend the best teachers for you.",
+		"getStarted": "Get started"
+	},
+	"DashboardHeader": {
+		"welcomeBack": "Welcome back, {name}!",
+		"memberSince": "Member since",
+		"totalClasses": "Total classes"
+	},
+	"NextUpCard": {
+		"title": "Next Up",
+		"noUpcoming": "No upcoming sessions scheduled.",
+		"with": "with",
+		"studentLabel": "Student:",
+		"at": "at",
+		"tbd": "TBD",
+		"inDaysHours": "in {days}d {hours}h",
+		"inHours": "in {hours}h",
+		"soon": "soon",
+		"viewDetails": "View details"
+	},
+	"AcademicArcWidget": {
+		"title": "Academic Arc",
+		"insightGems": "Insight Gems",
+		"weekStreak": "{count}-week streak",
+		"gemsToNextTier": "{current} / {next} gems to next tier",
+		"maxTierReached": "Max tier reached!",
+		"recentBadges": "Recent badges",
+		"noBadgesYet": "Complete classes to earn badges."
+	},
+	"ClassStatusBadge": {
+		"requested": "Requested",
+		"scheduled": "Scheduled",
+		"completed": "Completed",
+		"refused": "Refused",
+		"cancelled": "Cancelled"
+	},
+	"UpcomingClasses": {
+		"title": "Upcoming Classes",
+		"noClasses": "No upcoming classes scheduled.",
+		"subject": "Subject",
+		"teacher": "Teacher",
+		"date": "Date",
+		"duration": "Duration",
+		"price": "Price",
+		"status": "Status",
+		"tbd": "TBD"
+	},
+	"StudentPayments": {
+		"title": "Payment History",
+		"totalSpent": "Total spent",
+		"noPayments": "No payments yet.",
+		"teacher": "Teacher",
+		"amount": "Amount",
+		"date": "Date",
+		"receipt": "Receipt",
+		"view": "View"
+	},
+	"WeeklyQuestsWidget": {
+		"title": "Weekly Quests"
+	},
+	"ClaimQuestButton": {
+		"claimed": "Claimed",
+		"claim": "Claim +{reward}"
 	}
 }
