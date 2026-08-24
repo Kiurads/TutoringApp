@@ -41,5 +41,23 @@
 	"SignOutForm": {
 		"confirm": "Deseja terminar a sessão?",
 		"submit": "Terminar sessão"
+	},
+	"RegisterStudentForm": {
+		"firstName": "Nome",
+		"lastName": "Apelido",
+		"phoneNumber": "Número de telefone (opcional)",
+		"email": "Email",
+		"password": "Palavra-passe",
+		"confirmPassword": "Confirmar palavra-passe",
+		"agreeToTerms": "Concordo com os <terms>termos e condições</terms> e a <privacy>política de privacidade</privacy>.",
+		"submit": "Criar conta",
+		"alreadyHaveAccount": "Já tem uma conta?",
+		"logIn": "Iniciar sessão"
+	},
+	"RegisterTeacherPage": {
+		"title": "Contas de Professor",
+		"body": "As contas de professor são criadas por administradores. Se é professor e precisa de uma conta, contacte o seu administrador.",
+		"logIn": "Iniciar sessão",
+		"signUpAsStudent": "Inscrever-se como estudante"
 	}
 }

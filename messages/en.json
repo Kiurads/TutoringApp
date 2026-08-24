@@ -41,5 +41,23 @@
 	"SignOutForm": {
 		"confirm": "Do you want to be signed out?",
 		"submit": "Sign Out"
+	},
+	"RegisterStudentForm": {
+		"firstName": "First Name",
+		"lastName": "Last Name",
+		"phoneNumber": "Phone Number (optional)",
+		"email": "Email",
+		"password": "Password",
+		"confirmPassword": "Confirm Password",
+		"agreeToTerms": "I agree to the <terms>terms and conditions</terms> and <privacy>privacy policy</privacy>.",
+		"submit": "Create an account",
+		"alreadyHaveAccount": "Already have an account?",
+		"logIn": "Log in"
+	},
+	"RegisterTeacherPage": {
+		"title": "Teacher Accounts",
+		"body": "Teacher accounts are created by administrators. If you are a teacher and need an account, please contact your administrator.",
+		"logIn": "Log in",
+		"signUpAsStudent": "Sign up as a student"
 	}
 }

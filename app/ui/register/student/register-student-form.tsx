@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 import { registerStudent } from "@/app/lib/auth/register-student";
 import Logo from "@/app/ui/logo";
 
 export default function RegisterStudentForm() {
+	const t = useTranslations("RegisterStudentForm");
 	const [errorMessage, formAction, isPending] = useActionState(
 		registerStudent,
 		undefined
@@ -36,7 +38,7 @@ export default function RegisterStudentForm() {
 			)}
 			<div className="form-control">
 				<label htmlFor="FirstName" className="label">
-					<span className="label-text">First Name</span>
+					<span className="label-text">{t("firstName")}</span>
 				</label>
 
 				<input
@@ -50,7 +52,7 @@ export default function RegisterStudentForm() {
 
 			<div className="form-control">
 				<label htmlFor="LastName" className="label">
-					<span className="label-text">Last Name</span>
+					<span className="label-text">{t("lastName")}</span>
 				</label>
 
 				<input
@@ -64,7 +66,7 @@ export default function RegisterStudentForm() {
 
 			<div className="form-control">
 				<label htmlFor="PhoneNumber" className="label">
-					<span className="label-text">Phone Number (optional)</span>
+					<span className="label-text">{t("phoneNumber")}</span>
 				</label>
 
 				<input
@@ -77,7 +79,7 @@ export default function RegisterStudentForm() {
 
 			<div className="form-control">
 				<label htmlFor="Email" className="label">
-					<span className="label-text">Email</span>
+					<span className="label-text">{t("email")}</span>
 				</label>
 
 				<input
@@ -91,14 +93,14 @@ export default function RegisterStudentForm() {
 
 			<div className="form-control">
 				<label htmlFor="Password" className="label">
-					<span className="label-text">Password</span>
+					<span className="label-text">{t("password")}</span>
 				</label>
 
 				<input
 					type="password"
 					id="Password"
 					name="password"
-					placeholder="Password"
+					placeholder={t("password")}
 					required
 					className="input input-bordered validator"
 				/>
@@ -106,14 +108,14 @@ export default function RegisterStudentForm() {
 
 			<div className="form-control">
 				<label htmlFor="ConfirmPassword" className="label">
-					<span className="label-text">Confirm Password</span>
+					<span className="label-text">{t("confirmPassword")}</span>
 				</label>
 
 				<input
 					type="password"
 					id="ConfirmPassword"
 					name="confirmPassword"
-					placeholder="Confirm password"
+					placeholder={t("confirmPassword")}
 					required
 					className="input input-bordered validator"
 				/>
@@ -129,38 +131,41 @@ export default function RegisterStudentForm() {
 						className="checkbox checkbox-sm"
 					/>
 					<span className="label-text text-sm text-base-content/60">
-						I agree to the{" "}
-						<a
-							href="/terms-of-service"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-base-content underline"
-						>
-							terms and conditions
-						</a>{" "}
-						and{" "}
-						<a
-							href="/privacy-policy"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-base-content underline"
-						>
-							privacy policy
-						</a>
-						.
+						{t.rich("agreeToTerms", {
+							terms: (chunks) => (
+								<a
+									href="/terms-of-service"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-base-content underline"
+								>
+									{chunks}
+								</a>
+							),
+							privacy: (chunks) => (
+								<a
+									href="/privacy-policy"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-base-content underline"
+								>
+									{chunks}
+								</a>
+							),
+						})}
 					</span>
 				</label>
 			</div>
 
 			<div className="col-span-6 sm:flex sm:items-center sm:gap-4">
 				<button type="submit" className="btn btn-primary" disabled={isPending}>
-					{isPending ? <span className="loading loading-spinner loading-sm"></span> : "Create an account"}
+					{isPending ? <span className="loading loading-spinner loading-sm"></span> : t("submit")}
 				</button>
 
 				<p className="mt-4 text-sm text-base-content/60 sm:mt-0">
-					Already have an account?{" "}
+					{t("alreadyHaveAccount")}{" "}
 					<Link href="/login" className="text-base-content underline">
-						Log in
+						{t("logIn")}
 					</Link>
 					.
 				</p>
