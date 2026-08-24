@@ -1,10 +1,12 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 import { resetPassword } from "@/app/lib/auth/reset-password";
 import Logo from "@/app/ui/logo";
 
 export default function ResetPasswordForm({ token }: { token: string }) {
+	const t = useTranslations("ResetPasswordForm");
 	const [errorMessage, formAction, isPending] = useActionState(
 		resetPassword,
 		undefined
@@ -36,7 +38,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
 			)}
 			<div className="form-control">
 				<label htmlFor="Password" className="label">
-					<span className="label-text">New password</span>
+					<span className="label-text">{t("newPassword")}</span>
 				</label>
 
 				<input
@@ -50,7 +52,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
 
 			<div className="form-control">
 				<label htmlFor="ConfirmPassword" className="label">
-					<span className="label-text">Confirm new password</span>
+					<span className="label-text">{t("confirmPassword")}</span>
 				</label>
 
 				<input
@@ -64,7 +66,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
 
 			<div className="pt-2 col-span-6 flex items-center gap-4">
 				<button type="submit" className="grow btn btn-primary" disabled={isPending}>
-					{isPending ? <span className="loading loading-spinner loading-sm"></span> : "Reset password"}
+					{isPending ? <span className="loading loading-spinner loading-sm"></span> : t("submit")}
 				</button>
 			</div>
 		</form>

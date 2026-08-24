@@ -1,5 +1,45 @@
 {
 	"Common": {
 		"appName": "Ponte"
+	},
+	"Navbar": {
+		"register": "Register",
+		"login": "Login",
+		"signOut": "Sign out"
+	},
+	"LoginPage": {
+		"verifySuccess": "Your email has been verified. You can now log in.",
+		"verifyMissingToken": "That verification link is missing its token.",
+		"verifyInvalidToken": "That verification link is invalid or has already been used.",
+		"verifyExpiredToken": "That verification link has expired.",
+		"verifyUserNotFound": "We couldn't find an account for that verification link.",
+		"resetSuccess": "Your password has been reset. You can now log in.",
+		"passwordChanged": "Your password was changed. Please log in again to continue."
+	},
+	"LoginForm": {
+		"email": "Email",
+		"password": "Password",
+		"forgotPassword": "Forgot password?",
+		"submit": "Login"
+	},
+	"ForgotPasswordForm": {
+		"instructions": "Enter your email and we'll send you a link to reset your password.",
+		"email": "Email",
+		"submit": "Send reset link",
+		"backToLogin": "Back to login"
+	},
+	"ResetPasswordPage": {
+		"invalidTitle": "Invalid reset link",
+		"invalidBody": "This password reset link is missing or malformed. Please request a new one.",
+		"requestNewLink": "Request a new link"
+	},
+	"ResetPasswordForm": {
+		"newPassword": "New password",
+		"confirmPassword": "Confirm new password",
+		"submit": "Reset password"
+	},
+	"SignOutForm": {
+		"confirm": "Do you want to be signed out?",
+		"submit": "Sign Out"
 	}
 }

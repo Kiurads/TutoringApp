@@ -1,5 +1,45 @@
 {
 	"Common": {
 		"appName": "Ponte"
+	},
+	"Navbar": {
+		"register": "Registar",
+		"login": "Iniciar sessão",
+		"signOut": "Terminar sessão"
+	},
+	"LoginPage": {
+		"verifySuccess": "O seu email foi verificado. Já pode iniciar sessão.",
+		"verifyMissingToken": "Esse link de verificação não tem token.",
+		"verifyInvalidToken": "Esse link de verificação é inválido ou já foi utilizado.",
+		"verifyExpiredToken": "Esse link de verificação expirou.",
+		"verifyUserNotFound": "Não encontrámos nenhuma conta associada a esse link de verificação.",
+		"resetSuccess": "A sua palavra-passe foi reposta. Já pode iniciar sessão.",
+		"passwordChanged": "A sua palavra-passe foi alterada. Inicie sessão novamente para continuar."
+	},
+	"LoginForm": {
+		"email": "Email",
+		"password": "Palavra-passe",
+		"forgotPassword": "Esqueceu-se da palavra-passe?",
+		"submit": "Iniciar sessão"
+	},
+	"ForgotPasswordForm": {
+		"instructions": "Introduza o seu email e enviaremos um link para repor a sua palavra-passe.",
+		"email": "Email",
+		"submit": "Enviar link de reposição",
+		"backToLogin": "Voltar ao início de sessão"
+	},
+	"ResetPasswordPage": {
+		"invalidTitle": "Link de reposição inválido",
+		"invalidBody": "Este link de reposição de palavra-passe está em falta ou é inválido. Por favor, solicite um novo.",
+		"requestNewLink": "Solicitar novo link"
+	},
+	"ResetPasswordForm": {
+		"newPassword": "Nova palavra-passe",
+		"confirmPassword": "Confirmar nova palavra-passe",
+		"submit": "Repor palavra-passe"
+	},
+	"SignOutForm": {
+		"confirm": "Deseja terminar a sessão?",
+		"submit": "Terminar sessão"
 	}
 }

@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { authenticate } from "@/app/lib/auth/authenticate";
 import Logo from "@/app/ui/logo";
 
 export default function LoginForm() {
+	const t = useTranslations("LoginForm");
 	const [errorMessage, formAction, isPending] = useActionState(
 		authenticate,
 		undefined
@@ -49,7 +51,7 @@ export default function LoginForm() {
 			)}
 			<div className="form-control">
 				<label htmlFor="Email" className="label">
-					<span className="label-text">Email</span>
+					<span className="label-text">{t("email")}</span>
 				</label>
 
 				<input
@@ -63,14 +65,14 @@ export default function LoginForm() {
 
 			<div className="form-control">
 				<label htmlFor="Password" className="label">
-					<span className="label-text">Password</span>
+					<span className="label-text">{t("password")}</span>
 				</label>
 
 				<input
 					type="password"
 					id="Password"
 					name="password"
-					placeholder="Password"
+					placeholder={t("password")}
 					required
 					className="input input-bordered validator"
 				/>
@@ -81,7 +83,7 @@ export default function LoginForm() {
 					href="/forgot-password"
 					className="label-text-alt link link-hover"
 				>
-					Forgot password?
+					{t("forgotPassword")}
 				</Link>
 			</div>
 
@@ -91,7 +93,7 @@ export default function LoginForm() {
 					className="grow btn btn-primary"
 					disabled={isPending}
 				>
-					{isPending ? <span className="loading loading-spinner loading-sm"></span> : "Login"}
+					{isPending ? <span className="loading loading-spinner loading-sm"></span> : t("submit")}
 				</button>
 			</div>
 		</form>
