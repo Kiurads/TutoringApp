@@ -59,5 +59,118 @@
 		"body": "Teacher accounts are created by administrators. If you are a teacher and need an account, please contact your administrator.",
 		"logIn": "Log in",
 		"signUpAsStudent": "Sign up as a student"
+	},
+	"HomePage": {
+		"hero": {
+			"badge": "Personalized tutoring, on your schedule",
+			"headline": "Learn faster with <highlight>expert tutors</highlight> built for you",
+			"subtext": "Ponte connects students with passionate teachers across dozens of subjects. Book a session, track your progress, and unlock rewards as you grow.",
+			"ctaStudent": "Start Learning — it's free",
+			"ctaTeacher": "Become a Tutor",
+			"trust": {
+				"securePayments": "Secure payments",
+				"verifiedTutors": "Verified tutors",
+				"flexibleScheduling": "Flexible scheduling",
+				"noHiddenFees": "No hidden fees"
+			}
+		},
+		"howItWorks": {
+			"label": "Simple process",
+			"title": "Up and running in <highlight>3 steps</highlight>",
+			"subtitle": "No lengthy onboarding. No confusion. Just find a tutor and start learning.",
+			"steps": {
+				"1": {
+					"title": "Create your profile",
+					"desc": "Sign up in seconds, set your learning goals, and tell us which subjects you need help with."
+				},
+				"2": {
+					"title": "Find your tutor",
+					"desc": "Browse verified tutors by subject, availability, and price. See their ratings and pick the right fit."
+				},
+				"3": {
+					"title": "Book & Learn",
+					"desc": "Pick a time that works for you, pay securely, and show up ready to learn. It's that simple."
+				}
+			}
+		},
+		"forStudents": {
+			"label": "For students",
+			"title": "Everything you need to <highlight>master any subject</highlight>",
+			"body": "Whether you're cramming for an exam, filling in gaps, or exploring something new — Ponte gives you the tools and the right people to get there.",
+			"cta": "Join as a student",
+			"features": {
+				"smartMatching": { "title": "Smart matching", "desc": "Tell us your style and goals — we surface the tutors most likely to click with you." },
+				"flexibleBooking": { "title": "Flexible booking", "desc": "Request on-demand sessions or plan ahead. Reschedule with ease if life gets in the way." },
+				"securePayments": { "title": "Secure payments", "desc": "Card payments are held safely until your session is confirmed, with fair cancellation refunds." },
+				"trackProgress": { "title": "Track your progress", "desc": "See every session, subject, and rating in one dashboard. Watch yourself improve over time." },
+				"earnRewards": { "title": "Earn rewards", "desc": "Collect gems for every class and review. Spend them on boosts and exclusive profile frames." },
+				"leaveReviews": { "title": "Leave honest reviews", "desc": "Rate your tutor after each session and help the community find the best teachers." }
+			}
+		},
+		"subjects": {
+			"label": "Browse subjects",
+			"title": "Tutors for <highlight>every subject</highlight>",
+			"subtitle": "From school essentials to university-level courses, our tutors cover it all.",
+			"mathematics": "Mathematics",
+			"physics": "Physics",
+			"chemistry": "Chemistry",
+			"biology": "Biology",
+			"programming": "Programming",
+			"languages": "Languages",
+			"history": "History",
+			"music": "Music",
+			"artDesign": "Art & Design",
+			"economics": "Economics",
+			"literature": "Literature",
+			"manyMore": "& many more"
+		},
+		"forTeachers": {
+			"label": "For teachers",
+			"title": "Turn your knowledge into a <highlight>sustainable income</highlight>",
+			"body": "Join a growing network of passionate educators. Set your price, choose your hours, and focus on what you love — teaching. We handle the rest.",
+			"cta": "Start teaching today",
+			"perks": {
+				"setRates": { "title": "Set your own rates", "desc": "Charge what your expertise is worth. No platform caps on your earnings." },
+				"ownSchedule": { "title": "Own your schedule", "desc": "Publish weekly availability and only receive requests that fit your calendar." },
+				"guaranteedPayment": { "title": "Guaranteed payment", "desc": "Payments are pre-authorised at booking. You get paid when you show up." },
+				"buildReputation": { "title": "Build your reputation", "desc": "Earn Sparks and climb the Mentor Milestones ranking as you teach." },
+				"growStudentBase": { "title": "Grow your student base", "desc": "Get discovered through our subject search and priority matching system." },
+				"earningsDashboard": { "title": "Earnings dashboard", "desc": "Track your revenue, completed classes, and student retention over time." }
+			}
+		},
+		"gamification": {
+			"label": "Rewards & Gamification",
+			"title": "Learning that <highlight>rewards you</highlight>",
+			"subtitle": "Ponte is the only tutoring platform with a built-in rewards system that makes every session feel like progress — inside and outside the classroom.",
+			"items": {
+				"gems": { "title": "Insight Gems", "desc": "Earn gems for every class you complete, payment you make, or review you leave. The more you engage, the more you earn." },
+				"tiers": { "title": "Tier Progression", "desc": "Climb from Newcomer to Legend as you accumulate gems. Each tier unlocks new perks and shows off your dedication." },
+				"badges": { "title": "Achievement Badges", "desc": "Unlock special badges for milestones — first class, perfect attendance, 10-session streaks, and more." },
+				"store": { "title": "Gem Store", "desc": "Spend gems on Profile Frames that set you apart, Study Boosts for class discounts, or Priority Match for faster pairing." }
+			}
+		},
+		"testimonials": {
+			"label": "Student reviews",
+			"title": "Trusted by students <highlight>& teachers</highlight>",
+			"anonymousStudent": "Anonymous student",
+			"reviewFor": "Review for {name}"
+		},
+		"finalCta": {
+			"label": "Get started",
+			"title": "Your next session is <highlight>one click away</highlight>",
+			"subtitle": "Whether you're here to learn or to teach, joining takes under a minute.",
+			"studentCard": {
+				"title": "I want to learn",
+				"body": "Find the right tutor for your subject, book a session, and start making progress today.",
+				"cta": "Sign up as a student"
+			},
+			"teacherCard": {
+				"title": "I want to teach",
+				"body": "Set your rates, publish your availability, and grow a steady student base on your own terms.",
+				"cta": "Sign up as a tutor"
+			},
+			"alreadyHaveAccount": "Already have an account?",
+			"signIn": "Sign in"
+		}
 	}
 }
