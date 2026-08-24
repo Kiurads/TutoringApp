@@ -380,6 +380,55 @@
 	"StudentTableButtons": {
 		"theTeacher": "the teacher"
 	},
+	"ClassActionModals": {
+		"counterOfferBanner": {
+			"title": "Teacher proposed a new time",
+			"accept": "Accept",
+			"decline": "Decline"
+		},
+		"actions": {
+			"acceptClass": "Accept Class",
+			"suggestAlternativeTime": "Suggest Alternative Time",
+			"refuse": "Refuse",
+			"payNow": "Pay Now",
+			"cancelClass": "Cancel Class"
+		},
+		"acceptModal": {
+			"title": "Accept Request",
+			"body": "Accept the <strong>{subject}</strong> class with <strong>{otherPartyName}</strong>?"
+		},
+		"refuseModal": {
+			"title": "Refuse Request",
+			"body": "Refuse the <strong>{subject}</strong> class with <strong>{otherPartyName}</strong>?"
+		},
+		"cancelModal": {
+			"title": "Confirm Cancellation",
+			"body": "Cancel the <strong>{subject}</strong> class with <strong>{otherPartyName}</strong>?"
+		},
+		"counterModal": {
+			"title": "Suggest Alternative Time",
+			"body": "Propose a new time for the <strong>{subject}</strong> class with <strong>{otherPartyName}</strong>.",
+			"newDateTime": "New date & time",
+			"sendProposal": "Send Proposal"
+		},
+		"payModal": {
+			"title": "Pay for Class",
+			"initFailed": "Failed to initialize payment. Please try again.",
+			"summary": "{subject} with {otherPartyName}"
+		},
+		"common": {
+			"confirm": "Confirm",
+			"goBack": "Go Back",
+			"close": "Close"
+		},
+		"refund": {
+			"fullRefund": "You are eligible for a full refund.",
+			"partialRefund": "You are eligible for a 50% refund (cancellation within 24h of start).",
+			"noRefund": "No refund is available (cancellation within 12h of start).",
+			"dependsOnTiming": "A refund may be issued depending on timing.",
+			"holdReleased": "Your card hold will be released immediately."
+		}
+	},
 	"AdminLayout": {
 		"panelName": "Admin Panel",
 		"loggedInAs": "Logged in as:",
